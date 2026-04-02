@@ -22,7 +22,7 @@ cp style.css dist/
 mkdir -p dist/assets
 cp _build/js/release/build/main/main.js dist/assets/main.js
 
-# Rewrite index.html to use the new path
+# Rewrite index.html to use the new asset path
 sed -i "s|./_build/js/release/build/main/main.js|./assets/main.js|g" dist/index.html
 
 echo "Build complete! Output in dist/"
