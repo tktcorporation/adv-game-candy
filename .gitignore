@@ -4,3 +4,5 @@ dist/
 .mooncakes/
 .moonagent/
 .github/workflows/
+node_modules/
+test-results/

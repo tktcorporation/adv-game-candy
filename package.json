@@ -1,0 +1,24 @@
+{
+  "name": "adv-game-candy",
+  "version": "1.0.0",
+  "description": "廃墟となったカフェ「月灯り」を復興させる、ストーリー駆動のカフェ経営ゲーム。",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:45247/git/tktcorporation/adv-game-candy"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "rolldown": "^1.0.0-rc.13",
+    "serve": "^14.2.6"
+  }
+}
