@@ -12,17 +12,9 @@ fi
 moon update
 moon build --target js --release
 
-# Assemble dist directory
+# Bundle with rolldown (minify + copy static files)
 rm -rf dist
-mkdir -p dist
-cp index.html dist/
-cp style.css dist/
-
-# Copy JS output and rewrite the import path
-mkdir -p dist/assets
-cp _build/js/release/build/main/main.js dist/assets/main.js
-
-# Rewrite index.html to use the new asset path
-sed -i "s|./_build/js/release/build/main/main.js|./assets/main.js|g" dist/index.html
+npm install --prefer-offline --no-audit 2>/dev/null || npm install
+npx rolldown -c rolldown.config.mjs
 
 echo "Build complete! Output in dist/"
