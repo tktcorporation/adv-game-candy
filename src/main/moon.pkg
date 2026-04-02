@@ -1,0 +1,13 @@
+import {
+  "tktcorporation/cafe_game/game",
+  "tktcorporation/cafe_game/ui",
+  "mizchi/luna/dom" @dom,
+  "mizchi/js/browser/dom" @js_dom,
+}
+
+supported_targets = "js"
+
+options(
+  "is-main": true,
+  link: { "js": { "exports": [ "main" ], "format": "esm" } },
+)

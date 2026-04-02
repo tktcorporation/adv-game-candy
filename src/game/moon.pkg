@@ -1,0 +1,6 @@
+import {
+  "tktcorporation/cafe_game/data",
+  "mizchi/signals",
+}
+
+supported_targets = "js"

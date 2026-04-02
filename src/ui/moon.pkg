@@ -1,0 +1,8 @@
+import {
+  "tktcorporation/cafe_game/data",
+  "tktcorporation/cafe_game/game",
+  "mizchi/luna/dom" @dom,
+  "mizchi/signals",
+}
+
+supported_targets = "js"
