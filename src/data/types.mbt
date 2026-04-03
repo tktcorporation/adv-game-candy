@@ -77,11 +77,22 @@ pub(all) struct Recipe {
 }
 
 /// Customer character definition
+///
+/// 各キャラクターの設定資料。外見・仕草・表情のフィールドは
+/// シナリオ執筆時の描写一貫性と、将来の立ち絵・キャラ図鑑UIに使用。
 pub(all) struct Character {
   id : String
   name : String
   age : Int
   background : String
+  /// 外見: 髪型、服装、体格、印象的な身体的特徴
+  appearance : String
+  /// 仕草・癖: その人特有の動作パターン（緊張時、リラックス時など）
+  mannerisms : String
+  /// 表情の特徴: デフォルト表情、笑い方、怒り方など
+  expression : String
+  /// 声・話し方の特徴: 口調、テンポ、声質のイメージ
+  voice : String
   pattern : String
   favorite_menu : String
   challenge_menu : String
