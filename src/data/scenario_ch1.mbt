@@ -43,7 +43,7 @@ pub fn get_chapter_1() -> Chapter {
           { speaker: "", text: "でも——一人だけ、ほぼ毎日来る人がいる。", is_choice: false, choices: [] },
           { speaker: "", text: "カランカラン。", is_choice: false, choices: [] },
           { speaker: "", text: "午後二時。今日もドアベルが鳴った。", is_choice: false, choices: [] },
-          { speaker: "", text: "あの女性——あの日、内見中に来た人。佐倉さん。", is_choice: false, choices: [] },
+          { speaker: "", text: "あの女性——開店準備中にふらりと来た人。佐倉さん。", is_choice: false, choices: [] },
           { speaker: "", text: "名前は二日目に知った。代金を置く時、小さく名乗ってくれた。", is_choice: false, choices: [] },
           { speaker: "佐倉美月", text: "コーヒーを。", is_choice: false, choices: [] },
           { speaker: "", text: "いつもの窓際。いつもの文庫本。一言だけの注文。", is_choice: false, choices: [] },
