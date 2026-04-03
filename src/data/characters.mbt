@@ -24,16 +24,6 @@ pub fn get_characters() -> Array[Character] {
       intro_chapter: 1,
     },
     {
-      id: "kanzaki",
-      name: "神崎 凛",
-      age: 28,
-      background: "地元紙の記者。元大手出版社。",
-      pattern: "不定期、取材の合間",
-      favorite_menu: "r_seasonal_blend",
-      challenge_menu: "r_apple_cinnamon",
-      intro_chapter: 2,
-    },
-    {
       id: "miyauchi",
       name: "宮内 孝之",
       age: 58,
@@ -41,7 +31,17 @@ pub fn get_characters() -> Array[Character] {
       pattern: "週末の朝",
       favorite_menu: "r_houjicha",
       challenge_menu: "r_houjicha_latte",
-      intro_chapter: 1,
+      intro_chapter: 2,
+    },
+    {
+      id: "kanzaki",
+      name: "神崎 凛",
+      age: 28,
+      background: "地元紙の記者。元大手出版社。",
+      pattern: "不定期、取材の合間",
+      favorite_menu: "r_seasonal_blend",
+      challenge_menu: "r_apple_cinnamon",
+      intro_chapter: 3,
     },
     {
       id: "kiritani",
@@ -51,7 +51,7 @@ pub fn get_characters() -> Array[Character] {
       pattern: "不定期",
       favorite_menu: "r_vanilla_coffee",
       challenge_menu: "r_tsukiakari",
-      intro_chapter: 3,
+      intro_chapter: 4,
     },
   ]
 }
