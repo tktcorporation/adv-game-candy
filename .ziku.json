@@ -1,10 +1,11 @@
 {
   "version": "0.1.0",
-  "installedAt": "2026-04-02T14:24:25.647Z",
+  "installedAt": "2026-04-04T00:48:21.784Z",
   "source": {
     "owner": "tktcorporation",
     "repo": ".github"
   },
+  "baseRef": "08813596fc3945a32acb476259f5c66af1b4b803",
   "baseHashes": {
     ".mcp.json": "bf80bacd0dd7ac8444872085a06e05e99ba3578666f7e457ea97ca6873bdba39",
     ".mise.toml": "fbd353f4b62aa51d3e1c5f53ce9b7682f52dec72cb7db20441eb8f535bc037e0",
@@ -26,8 +27,8 @@
     ".claude/skills/autonomous-dev/SKILL.md": "7b95805981443e9437c8a58209103ebc94121c7d461a9e787a9bcc461c3524fa",
     ".claude/skills/faithful-doc-writing/SKILL.md": "74dc7e95c164bba2c3148aee4fa2313d20310042cd4efe48574d6b5573a8b0ea",
     ".claude/skills/ui-craft/SKILL.md": "d54fd4939e1a7581db67ffddce073fbb654fe48c0c522a045c9edf60be69be13",
-    ".claude/skills/upstream-fix/SKILL.md": "791bdb8a1b183e77093177e37139f2742298843a975c6eed94b8baf164468a6a",
     ".claude/skills/ui-design-research/SKILL.md": "0cc20b5b44338c96294de7e4035e4e08a8989d06806142473e36012ec8bd2d39",
+    ".claude/skills/upstream-fix/SKILL.md": "791bdb8a1b183e77093177e37139f2742298843a975c6eed94b8baf164468a6a",
     ".claude/skills/ui-craft/references/component-libraries.md": "695dd3a627d12b58fd2101db10eb8f059deb82eb6aeafe36b0a12053d1727718",
     ".claude/skills/ui-design-research/references/research-strategies.md": "ffce2e8b5075caa61556b5d6961bd5ea9ca52a7a0db9ad5f9f0ccbfab7d9787e"
   }
