@@ -7,7 +7,8 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint:scenario": "moon build --target js 2>/dev/null && node _build/js/debug/build/lint/lint.js src/data/scenario_ch*.mbt"
   },
   "repository": {
     "type": "git",

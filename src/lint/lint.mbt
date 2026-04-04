@@ -1,0 +1,460 @@
+///|
+/// シナリオリンター — scenario_ch*.mbt の構造的整合性を検証する（MoonBit版）
+///
+/// 使い方:
+///   moon build --target js && node target/js/release/build/lint/lint.js src/data/scenario_ch*.mbt
+
+// ---------------------------------------------------------------------------
+// 型定義
+// ---------------------------------------------------------------------------
+
+///|
+struct Violation {
+  file : String
+  line : Int  // 0 = ファイル全体
+  level : String  // "ERROR" or "WARN"
+  message : String
+}
+
+///|
+struct KnowledgeEntry {
+  info : String
+  chapter : String
+  scene : String
+  keywords : Array[String]
+}
+
+// ---------------------------------------------------------------------------
+// ユーティリティ
+// ---------------------------------------------------------------------------
+
+///|
+fn format_violation(v : Violation) -> String {
+  let loc = if v.line > 0 {
+    v.file + ":" + v.line.to_string()
+  } else {
+    v.file
+  }
+  "[" + v.level + "] " + loc + " — " + v.message
+}
+
+///|
+fn chapter_num_from_name(name : String) -> Int {
+  match name.find("ch") {
+    None => -1
+    Some(start) => {
+      let after_ch = start + 2
+      let mut end = after_ch
+      let chars = name.to_array()
+      while end < chars.length() && chars[end] >= '0' && chars[end] <= '9' {
+        end = end + 1
+      }
+      if end == after_ch {
+        return -1
+      }
+      let num_str = name[after_ch:end]
+      try {
+        @string.parse_int(num_str)
+      } catch {
+        _ => -1
+      }
+    }
+  }
+}
+
+///|
+fn str_find(haystack : String, needle : String) -> Int {
+  match haystack.find(needle) {
+    Some(i) => i
+    None => -1
+  }
+}
+
+///|
+fn str_rfind(haystack : String, needle : String) -> Int {
+  match haystack.rev_find(needle) {
+    Some(i) => i
+    None => -1
+  }
+}
+
+///|
+/// split の結果を Array[String] に変換
+fn split_to_array(s : String, sep : String) -> Array[String] {
+  s.split(sep).map(fn(sv) { sv.to_string() }).collect()
+}
+
+///|
+fn read_file(path : String) -> String {
+  try {
+    @fs.read_file_sync_string(path, "utf-8")
+  } catch {
+    _ => ""
+  }
+}
+
+// ---------------------------------------------------------------------------
+// ルール: シーン状態コメント
+// ---------------------------------------------------------------------------
+
+///|
+/// 全シーンに前提/変化/結果コメントがあること。
+///
+/// 根拠: commit a3c8f50 — ch0にだけ適用してch1-8を忘れた
+fn rule_scene_state_comments(
+  file_path : String,
+  lines : Array[String],
+) -> Array[Violation] {
+  let violations : Array[Violation] = []
+  let name = @path.basename(file_path)
+  let required = ["前提:", "変化:", "結果:"]
+  for i, line in lines {
+    if !line.contains("// --- Scene") {
+      continue
+    }
+    let line_num = i + 1
+    let mut block = ""
+    for j = i; j < lines.length(); j = j + 1 {
+      block = block + lines[j] + "\n"
+      if j > i && lines[j].contains("id:") && lines[j].contains("\"ch") {
+        break
+      }
+    }
+    for _, req in required {
+      if !block.contains(req) {
+        violations.push({
+          file: name,
+          line: line_num,
+          level: "WARN",
+          message: "「// " + req + "」がありません（シーン状態コメント必須）",
+        })
+      }
+    }
+  }
+  violations
+}
+
+// ---------------------------------------------------------------------------
+// ルール: 章ヘッダー状態差分
+// ---------------------------------------------------------------------------
+
+///|
+/// 章ヘッダーに「章の状態差分」セクションがあること。
+///
+/// 根拠: commit a3c8f50 — 章レベルの状態管理がなかった
+fn rule_chapter_state_diff(
+  file_path : String,
+  content : String,
+) -> Array[Violation] {
+  let violations : Array[Violation] = []
+  let name = @path.basename(file_path)
+  if !content.contains("章の状態差分") {
+    violations.push({
+      file: name, line: 0, level: "WARN",
+      message: "章ヘッダーに「章の状態差分」がありません",
+    })
+    return violations
+  }
+  if !content.contains("開始状態:") {
+    violations.push({
+      file: name, line: 0, level: "WARN",
+      message: "章の状態差分に「開始状態:」がありません",
+    })
+  }
+  if !content.contains("終了状態:") {
+    violations.push({
+      file: name, line: 0, level: "WARN",
+      message: "章の状態差分に「終了状態:」がありません",
+    })
+  }
+  violations
+}
+
+// ---------------------------------------------------------------------------
+// ルール: 知識の先取り
+// ---------------------------------------------------------------------------
+
+///|
+/// キャラクターが入手前の知識を使っていないこと。
+///
+/// 根拠: commit a3c8f50 — ch4で主人公が未入手の「15年」を使っていた
+fn rule_knowledge_no_premature_use(
+  file_path : String,
+  lines : Array[String],
+  timeline : Array[KnowledgeEntry],
+) -> Array[Violation] {
+  let violations : Array[Violation] = []
+  let name = @path.basename(file_path)
+  let ch_num = chapter_num_from_name(name)
+  if ch_num < 0 {
+    return violations
+  }
+  // テキスト行を抽出（コメント行を除外）
+  let text_lines : Array[(Int, String)] = []
+  for i, line in lines {
+    let trimmed = line.trim().to_string()
+    if trimmed.has_prefix("//") {
+      continue
+    }
+    let text_start = str_find(line, "text: \"")
+    if text_start >= 0 {
+      let after_quote = text_start + 7
+      let remaining = line[after_quote:].to_string()
+      let end_quote = str_rfind(remaining, "\"")
+      if end_quote > 0 {
+        let text = remaining[:end_quote].to_string()
+        text_lines.push((i + 1, text))
+      }
+    }
+  }
+  for _, entry in timeline {
+    if entry.keywords.is_empty() {
+      continue
+    }
+    let entry_ch = chapter_num_from_name("scenario_" + entry.chapter + ".mbt")
+    if ch_num >= entry_ch {
+      continue
+    }
+    for _, keyword in entry.keywords {
+      for _, item in text_lines {
+        let (line_num, text) = item
+        if text.contains(keyword) {
+          violations.push({
+            file: name,
+            line: line_num,
+            level: "ERROR",
+            message: "知識先取り: 「" + keyword + "」は " + entry.chapter + "_" +
+              entry.scene + " で入手する情報。ch" + ch_num.to_string() +
+              " では使用不可（" + entry.info + "）",
+          })
+        }
+      }
+    }
+  }
+  violations
+}
+
+// ---------------------------------------------------------------------------
+// 知識タイムライン読み込み
+// ---------------------------------------------------------------------------
+
+///|
+fn load_timeline(timeline_path : String) -> Array[KnowledgeEntry] {
+  let entries : Array[KnowledgeEntry] = []
+  if !@fs.existsSync(timeline_path) {
+    return entries
+  }
+  let content = read_file(timeline_path)
+  if content.is_empty() {
+    return entries
+  }
+  let raw_lines = split_to_array(content, "\n")
+  for _, line in raw_lines {
+    let trimmed = line.trim().to_string()
+    if trimmed.is_empty() || trimmed.has_prefix("#") {
+      continue
+    }
+    let info = extract_json_string(trimmed, "info")
+    let chapter = extract_json_string(trimmed, "chapter")
+    let scene = extract_json_string(trimmed, "scene")
+    let keywords = extract_json_string_array(trimmed, "keywords")
+    if !chapter.is_empty() {
+      entries.push({ info, chapter, scene, keywords })
+    }
+  }
+  entries
+}
+
+///|
+fn extract_json_string(json : String, key : String) -> String {
+  let needle = "\"" + key + "\":\""
+  let start = str_find(json, needle)
+  if start < 0 {
+    return ""
+  }
+  let val_start = start + needle.length()
+  let remaining = json[val_start:].to_string()
+  let end = str_find(remaining, "\"")
+  if end < 0 {
+    return ""
+  }
+  remaining[:end].to_string()
+}
+
+///|
+fn extract_json_string_array(json : String, key : String) -> Array[String] {
+  let result : Array[String] = []
+  let needle = "\"" + key + "\":["
+  let start = str_find(json, needle)
+  if start < 0 {
+    return result
+  }
+  let arr_start = start + needle.length()
+  let remaining = json[arr_start:].to_string()
+  let end = str_find(remaining, "]")
+  if end < 0 {
+    return result
+  }
+  let arr_content = remaining[:end].to_string()
+  let parts = split_to_array(arr_content, ",")
+  for _, part in parts {
+    let trimmed = part.trim().to_string().trim(chars="\"").to_string()
+    if !trimmed.is_empty() {
+      result.push(trimmed)
+    }
+  }
+  result
+}
+
+// ---------------------------------------------------------------------------
+// 全章一貫性チェック
+// ---------------------------------------------------------------------------
+
+///|
+fn lint_uniformity(all_paths : Array[String]) -> Array[Violation] {
+  let violations : Array[Violation] = []
+  let without_state : Array[String] = []
+  let mut has_any_state = false
+  let without_diff : Array[String] = []
+  let mut has_any_diff = false
+  for _, p in all_paths {
+    let content = read_file(p)
+    if content.is_empty() {
+      continue
+    }
+    let name = @path.basename(p)
+    let has_scenes = content.contains("// --- Scene")
+    if has_scenes && content.contains("// 前提:") {
+      has_any_state = true
+    } else if has_scenes {
+      without_state.push(name)
+    }
+    if content.contains("章の状態差分") {
+      has_any_diff = true
+    } else {
+      without_diff.push(name)
+    }
+  }
+  if has_any_state && !without_state.is_empty() {
+    violations.push({
+      file: "(全体)",
+      line: 0,
+      level: "WARN",
+      message: "シーン状態コメントが不統一。以下の章に「// 前提:」がない: " +
+        without_state.join(", "),
+    })
+  }
+  if has_any_diff && !without_diff.is_empty() {
+    violations.push({
+      file: "(全体)",
+      line: 0,
+      level: "WARN",
+      message: "章ヘッダーが不統一。以下の章に「章の状態差分」がない: " +
+        without_diff.join(", "),
+    })
+  }
+  violations
+}
+
+// ---------------------------------------------------------------------------
+// メイン
+// ---------------------------------------------------------------------------
+
+///|
+fn lint_file(
+  file_path : String,
+  timeline : Array[KnowledgeEntry],
+) -> Array[Violation] {
+  let content = read_file(file_path)
+  if content.is_empty() {
+    return []
+  }
+  let lines = split_to_array(content, "\n")
+  let violations : Array[Violation] = []
+  violations.append(rule_scene_state_comments(file_path, lines))
+  violations.append(rule_chapter_state_diff(file_path, content))
+  violations.append(rule_knowledge_no_premature_use(file_path, lines, timeline))
+  violations
+}
+
+///|
+fn main {
+  let args = @process.argv()
+  if args.length() < 3 {
+    println("Usage: node lint.js <scenario_ch*.mbt ...>")
+    @process.exit(1)
+  }
+  let script_dir = @path.dirname(args[1])
+  let project_root = @path.resolve([script_dir, "../../.."])
+  let timeline_path = @path.join([project_root, "src/data/knowledge-timeline.jsonl"])
+  let timeline = load_timeline(timeline_path)
+  let paths : Array[String] = []
+  for i = 2; i < args.length(); i = i + 1 {
+    let arg = args[i]
+    if arg.contains("scenario_ch") && arg.contains(".mbt") {
+      paths.push(@path.resolve([arg]))
+    }
+  }
+  if paths.is_empty() {
+    println("No scenario_ch*.mbt files specified.")
+    @process.exit(1)
+  }
+  let scenario_dir = @path.dirname(paths[0])
+  let all_files : Array[String] = try {
+    @fs.readdirSync(scenario_dir)
+  } catch {
+    _ => []
+  }
+  let all_paths : Array[String] = []
+  for _, f in all_files {
+    if f.contains("scenario_ch") && f.contains(".mbt") {
+      all_paths.push(@path.join([scenario_dir, f]))
+    }
+  }
+  all_paths.sort()
+  let all_violations : Array[Violation] = []
+  let ok_files : Array[String] = []
+  for _, file_path in paths {
+    let violations = lint_file(file_path, timeline)
+    if !violations.is_empty() {
+      for _, v in violations {
+        println(format_violation(v))
+      }
+      all_violations.append(violations)
+    } else {
+      ok_files.push(@path.basename(file_path))
+    }
+  }
+  let uniformity_violations = lint_uniformity(all_paths)
+  for _, v in uniformity_violations {
+    println(format_violation(v))
+  }
+  all_violations.append(uniformity_violations)
+  for _, name in ok_files {
+    println("[OK] " + name + " — 全チェック通過")
+  }
+  println("")
+  println("--- リント結果サマリー ---")
+  println("ファイル数: " + paths.length().to_string())
+  println("ルール数: 4")
+  let mut error_count = 0
+  let mut warn_count = 0
+  for _, v in all_violations {
+    if v.level == "ERROR" {
+      error_count = error_count + 1
+    } else {
+      warn_count = warn_count + 1
+    }
+  }
+  if !all_violations.is_empty() {
+    println(
+      "違反: " + error_count.to_string() + " ERROR, " + warn_count.to_string() +
+      " WARN",
+    )
+    println("")
+    println("修正後に再度実行: npm run lint:scenario")
+    @process.exit(1)
+  } else {
+    println("違反: 0件")
+  }
+}
