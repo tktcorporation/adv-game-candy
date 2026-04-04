@@ -357,6 +357,117 @@ fn lint_uniformity(all_paths : Array[String]) -> Array[Violation] {
 }
 
 // ---------------------------------------------------------------------------
+// ルール: 会話密度
+// ---------------------------------------------------------------------------
+
+///|
+/// シーンごとの会話比率が目標値（55%以上）を満たしているか。
+///
+/// 根拠: ADVリサーチ — 現状15-20%で小説寄り。ADV標準65-75%を目指し、
+/// 文学的空気感を保つ下限として55%を設定。
+/// 参考: 葵せきな 85-90%, 丸戸史明 65-70%, ADV標準 65-75%
+fn rule_dialogue_ratio(
+  file_path : String,
+  lines : Array[String],
+) -> Array[Violation] {
+  let violations : Array[Violation] = []
+  let name = @path.basename(file_path)
+  // text行のうち speaker が空でないもの = 会話行
+  let mut total_text = 0
+  let mut dialogue_text = 0
+  for _, line in lines {
+    let trimmed = line.trim().to_string()
+    if trimmed.has_prefix("//") {
+      continue
+    }
+    // text: "..." を含む行 = テキストブロック
+    if !line.contains("text:") {
+      continue
+    }
+    total_text = total_text + 1
+    // speaker: "" 以外（= 空でない speaker）が会話
+    // speaker: "主人公" や speaker: "佐倉美月" 等
+    if line.contains("speaker:") && !line.contains("speaker: \"\"") {
+      dialogue_text = dialogue_text + 1
+    }
+  }
+  if total_text >= 10 {
+    // 10行未満のシーンは比率チェックしない（ch0_s0のようなプロローグ）
+    let ratio = dialogue_text * 100 / total_text
+    if ratio < 55 {
+      violations.push({
+        file: name,
+        line: 0,
+        level: "WARN",
+        message: "会話比率が低い: " + ratio.to_string() + "% （目標55%以上）。" +
+          "会話行" + dialogue_text.to_string() + "/" + total_text.to_string() +
+          "行。キャラの掛け合いを追加して魅力を見せること",
+      })
+    }
+  }
+  violations
+}
+
+// ---------------------------------------------------------------------------
+// ルール: 登場キャラの無言検出
+// ---------------------------------------------------------------------------
+
+///|
+/// 章のコメントに登場キャラとして記載されているのにセリフが0行のキャラを検出。
+///
+/// 根拠: ADVリサーチ — 佐倉がch2/ch3/ch5/ch7で完全に無言。
+/// 登場するならセリフか非言語リアクションを最低1つ入れるべき。
+fn rule_silent_characters(
+  file_path : String,
+  lines : Array[String],
+  content : String,
+) -> Array[Violation] {
+  let violations : Array[Violation] = []
+  let name = @path.basename(file_path)
+  // 既知のキャラクター名リスト
+  let characters = [
+    "佐倉", "天野", "宮内", "神崎", "桐谷",
+  ]
+  for _, chara in characters {
+    // このキャラがテキスト行（ナレーション含む）に名前で言及されているか
+    let mentioned_in_text = content.contains(chara)
+    if !mentioned_in_text {
+      continue
+    }
+    // このキャラがspeakerとしてセリフを持っているか
+    let has_dialogue = content.contains("speaker: \"" + chara)
+    // ？？？としてのセリフもチェック（ch0の佐倉）
+    let has_mystery_dialogue = content.contains("speaker: \"？？？\"")
+    if !has_dialogue && !has_mystery_dialogue {
+      // ナレーション内で名前が出ているが、セリフがない
+      violations.push({
+        file: name,
+        line: 0,
+        level: "WARN",
+        message: "「" + chara + "」が登場しているがセリフが0行。" +
+          "小さな一言（感想、注文、相槌）か非言語リアクション描写を追加すること",
+      })
+    }
+  }
+  // 主人公のセリフが少なすぎる場合もチェック
+  let mut protagonist_lines = 0
+  for _, line in lines {
+    if line.contains("speaker: \"主人公\"") {
+      protagonist_lines = protagonist_lines + 1
+    }
+  }
+  if protagonist_lines == 0 {
+    violations.push({
+      file: name,
+      line: 0,
+      level: "WARN",
+      message: "主人公のセリフが0行。主人公にも会話参加させること",
+    })
+  }
+  violations
+}
+
+// ---------------------------------------------------------------------------
 // メイン
 // ---------------------------------------------------------------------------
 
@@ -374,6 +485,8 @@ fn lint_file(
   violations.append(rule_scene_state_comments(file_path, lines))
   violations.append(rule_chapter_state_diff(file_path, content))
   violations.append(rule_knowledge_no_premature_use(file_path, lines, timeline))
+  violations.append(rule_dialogue_ratio(file_path, lines))
+  violations.append(rule_silent_characters(file_path, lines, content))
   violations
 }
 
@@ -436,7 +549,7 @@ fn main {
   println("")
   println("--- リント結果サマリー ---")
   println("ファイル数: " + paths.length().to_string())
-  println("ルール数: 4")
+  println("ルール数: 6")
   let mut error_count = 0
   let mut warn_count = 0
   for _, v in all_violations {
