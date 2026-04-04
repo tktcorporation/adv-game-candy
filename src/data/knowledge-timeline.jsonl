@@ -1,32 +1,24 @@
-# 知識タイムライン — キャラクターの知識入手時点
+# 知識タイムライン — ラブコメ版
 #
-# リンターはこのファイルを読み、各 keyword が入手章・シーンより
-# 前のシナリオで使われていないかを検証する。
-#
-# フォーマット: JSON Lines（#で始まる行はコメント）
-# 新しい情報が物語に追加されたら、ここにエントリを追加すること。
+# キャラクターの知識入手時点を追跡。
+# リンターがこのファイルを参照して知識の先取りを検出する。
 #
 # subject: 知識を持つキャラ（"protagonist" = 主人公）
 # info: 何の情報か
 # source: 誰/何から入手したか
-# chapter: 入手章（ch0〜ch8）
+# chapter: 入手章（ch0〜ch21）
 # scene: 入手シーン（s0〜）
-# keywords: この情報に紐づくキーワード（シナリオ中でこの表現が使われていたら知識使用とみなす）
+# keywords: シナリオ中でこの表現が使われていたら知識使用とみなす
 # note: 補足
-{"subject":"protagonist","info":"前オーナーの存在","source":"不動産屋","chapter":"ch0","scene":"s0","keywords":["前の人","前のオーナー"],"note":"名前は不明。「いつか誰かが必要とする時に」という言葉のみ"}
-{"subject":"protagonist","info":"佐倉が元常連（推測）","source":"佐倉の行動","chapter":"ch0","scene":"s3","keywords":[],"note":"確証はch1。行動から推測のみ"}
-{"subject":"protagonist","info":"佐倉の名前","source":"佐倉本人","chapter":"ch1","scene":"s1","keywords":["佐倉美月","佐倉さん"],"note":"二日目に名乗る"}
-{"subject":"protagonist","info":"天野の名前","source":"天野本人","chapter":"ch1","scene":"s3","keywords":["天野蓮","天野くん","天野"],"note":"自己紹介"}
-{"subject":"protagonist","info":"宮内の名前","source":"宮内本人","chapter":"ch2","scene":"s2","keywords":["宮内孝之","宮内さん","宮内"],"note":"隣の古書店主"}
-{"subject":"protagonist","info":"前オーナーが実験好きだった","source":"宮内","chapter":"ch3","scene":"s3","keywords":[],"note":"「よく新しいものを試していた」"}
-{"subject":"protagonist","info":"神崎の名前","source":"神崎本人","chapter":"ch3","scene":"s1","keywords":["神崎凛","神崎さん","神崎"],"note":"地元紙の記者"}
-{"subject":"protagonist","info":"桐谷の名前","source":"桐谷本人","chapter":"ch4","scene":"s1","keywords":["桐谷楓","桐谷さん","桐谷"],"note":"Café BLANCエリアマネージャー"}
-{"subject":"protagonist","info":"前オーナーの名前（藤宮時雨）","source":"レシピノート","chapter":"ch5","scene":"s1","keywords":["藤宮時雨","時雨"],"note":"ノート発見で初めて名前を知る"}
-{"subject":"protagonist","info":"前オーナーの記録期間（15年分）","source":"レシピノート","chapter":"ch5","scene":"s1","keywords":["15年"],"note":"ノートに15年分の記録"}
-{"subject":"protagonist","info":"しずくの存在","source":"レシピノート手紙","chapter":"ch5","scene":"s1","keywords":["しずく","藤宮しずく"],"note":"「しずくへ——」という未完の手紙"}
-{"subject":"protagonist","info":"佐倉が元パティシエで自分の店を閉めた","source":"佐倉本人","chapter":"ch6","scene":"s1","keywords":[],"note":"3年前に閉店。自信を失った"}
-{"subject":"protagonist","info":"天野の実家（金物屋）が閉店","source":"天野本人","chapter":"ch6","scene":"s2","keywords":[],"note":"去年閉店。天野は罪悪感を持っている"}
-{"subject":"protagonist","info":"神崎が東京から飛ばされた","source":"神崎本人","chapter":"ch6","scene":"s3","keywords":[],"note":"大手出版社から地方紙へ"}
-{"subject":"protagonist","info":"時雨と宮内の40年来の付き合い","source":"宮内","chapter":"ch7","scene":"s2","keywords":["40年"],"note":"同じ年に隣同士で開業"}
-{"subject":"protagonist","info":"時雨としずくの絶縁","source":"宮内","chapter":"ch7","scene":"s2","keywords":["絶縁"],"note":"10年前にしずくが自分の道を選んだ"}
-{"subject":"protagonist","info":"時雨の閉店理由","source":"宮内","chapter":"ch7","scene":"s2","keywords":[],"note":"しずくが成功したと聞き「しがみつく必要がなくなった」"}
+{"subject":"protagonist","info":"佐倉が常連であること","source":"佐倉の行動（毎日来る）","chapter":"ch1","scene":"s2","keywords":[],"note":"天野に指摘されて気づく"}
+{"subject":"protagonist","info":"佐倉の名前","source":"天野が聞き出す","chapter":"ch3","scene":"s2","keywords":["佐倉美月","佐倉さん"],"note":"天野が直接聞く"}
+{"subject":"protagonist","info":"佐倉がコーヒーに詳しいこと","source":"佐倉のアドバイス","chapter":"ch2","scene":"s1","keywords":[],"note":"スーパーで豆を指差す"}
+{"subject":"protagonist","info":"佐倉の実家がコーヒー好き","source":"佐倉本人","chapter":"ch5","scene":"s2","keywords":["実家がうるさかった"],"note":"メニュー開発中に漏れる"}
+{"subject":"protagonist","info":"天野の名前","source":"天野本人","chapter":"ch1","scene":"s0","keywords":["天野蓮","天野"],"note":"バイト初日に自己紹介"}
+{"subject":"protagonist","info":"神崎の名前","source":"神崎本人","chapter":"ch4","scene":"s0","keywords":["神崎凛","神崎さん","神崎"],"note":"Wi-Fi目当てで来店"}
+{"subject":"protagonist","info":"神崎がフリーライター","source":"神崎本人","chapter":"ch4","scene":"s0","keywords":["フリーライター"],"note":"自己紹介時"}
+{"subject":"protagonist","info":"桐谷の名前","source":"桐谷本人","chapter":"ch9","scene":"s0","keywords":["桐谷楓","桐谷さん","桐谷"],"note":"チェーン店オープン時の挨拶"}
+{"subject":"protagonist","info":"佐倉がおばさん時代の常連だった","source":"佐倉本人","chapter":"ch14","scene":"s1","keywords":["前の人のコーヒー"],"note":"忘れ物を届けた時にぽつりと"}
+{"subject":"protagonist","info":"佐倉の自宅の場所","source":"忘れ物届け","chapter":"ch14","scene":"s0","keywords":[],"note":"本を届けに行った"}
+{"subject":"protagonist","info":"自分が佐倉を好きだという自覚","source":"神崎の指摘","chapter":"ch16","scene":"s0","keywords":[],"note":"「好きでしょ」と直球で言われる"}
+{"subject":"protagonist","info":"佐倉の連絡先を知らない","source":"自覚","chapter":"ch17","scene":"s1","keywords":[],"note":"3日来ない時に気づく"}

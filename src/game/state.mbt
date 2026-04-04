@@ -41,7 +41,6 @@ pub(all) struct GameState {
 
   // Story flags
   story_complete : @signals.Signal[Bool]
-  found_recipe_notebook : @signals.Signal[Bool]
 
   // UI state
   show_menu_screen : @signals.Signal[Bool]
@@ -78,7 +77,6 @@ pub fn create_game_state() -> GameState {
     login_total_days: @signals.signal(1),
     login_claimed_today: @signals.signal(false),
     story_complete: @signals.signal(false),
-    found_recipe_notebook: @signals.signal(false),
     show_menu_screen: @signals.signal(false),
     show_recipe_book: @signals.signal(false),
     message_log: @signals.signal([]),
