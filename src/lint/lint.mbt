@@ -468,6 +468,68 @@ fn rule_silent_characters(
 }
 
 // ---------------------------------------------------------------------------
+// ルール: キャラ好感度キラー検出
+// ---------------------------------------------------------------------------
+
+///|
+/// 同一キャラによるマイナス評価語の集中使用を検出。
+/// 3回以上のマイナス評価語が行動プラスのフォローなしに使われていると警告。
+///
+/// 根拠: character-appealスキル — 読者はキャラのマイナス言動が蓄積すると好感を持てない。
+/// 「まずい」路線をやめて「無反応」に変更した設計判断もこのルールから生まれた。
+fn rule_negative_evaluation_density(
+  file_path : String,
+  lines : Array[String],
+) -> Array[Violation] {
+  let violations : Array[Violation] = []
+  let name = @path.basename(file_path)
+  // マイナス評価語リスト
+  let negative_words = [
+    "まずい", "ダメ", "下手", "つまらない", "ひどい", "最悪", "嫌い", "無理",
+    "才能ない", "向いてない", "やめたら",
+  ]
+  // キャラごとのマイナス評価カウント
+  let characters = ["佐倉", "天野", "神崎", "桐谷"]
+  for _, chara in characters {
+    let mut neg_count = 0
+    for _, line in lines {
+      // このキャラのセリフ行か確認
+      if !line.contains("speaker: \"" + chara) {
+        continue
+      }
+      // テキスト内容を抽出
+      let text_start = str_find(line, "text: \"")
+      if text_start < 0 {
+        continue
+      }
+      let after_quote = text_start + 7
+      let remaining = line[after_quote:].to_string()
+      let end_quote = str_rfind(remaining, "\"")
+      if end_quote <= 0 {
+        continue
+      }
+      let text = remaining[:end_quote].to_string()
+      // マイナス評価語を含むか
+      for _, neg in negative_words {
+        if text.contains(neg) {
+          neg_count = neg_count + 1
+        }
+      }
+    }
+    if neg_count >= 3 {
+      violations.push({
+        file: name,
+        line: 0,
+        level: "WARN",
+        message: "「" + chara + "」のマイナス評価語が" + neg_count.to_string() +
+          "回。読者の好感度が下がるリスク。行動のプラス（助ける、来続ける等）でフォローすること",
+      })
+    }
+  }
+  violations
+}
+
+// ---------------------------------------------------------------------------
 // メイン
 // ---------------------------------------------------------------------------
 
@@ -487,6 +549,7 @@ fn lint_file(
   violations.append(rule_knowledge_no_premature_use(file_path, lines, timeline))
   violations.append(rule_dialogue_ratio(file_path, lines))
   violations.append(rule_silent_characters(file_path, lines, content))
+  violations.append(rule_negative_evaluation_density(file_path, lines))
   violations
 }
 
@@ -549,7 +612,7 @@ fn main {
   println("")
   println("--- リント結果サマリー ---")
   println("ファイル数: " + paths.length().to_string())
-  println("ルール数: 6")
+  println("ルール数: 7")
   let mut error_count = 0
   let mut warn_count = 0
   for _, v in all_violations {
