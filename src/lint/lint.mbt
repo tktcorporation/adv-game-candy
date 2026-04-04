@@ -426,7 +426,7 @@ fn rule_silent_characters(
   let name = @path.basename(file_path)
   // 既知のキャラクター名リスト
   let characters = [
-    "佐倉", "天野", "宮内", "神崎", "桐谷",
+    "佐倉", "天野", "神崎", "桐谷",
   ]
   for _, chara in characters {
     // このキャラがテキスト行（ナレーション含む）に名前で言及されているか

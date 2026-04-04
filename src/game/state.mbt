@@ -53,7 +53,7 @@ pub(all) struct GameState {
 pub fn create_game_state() -> GameState {
   let initial_recipes = ["r_blend", "r_latte", "r_houjicha"]
   let initial_intimacy : Array[(String, Int)] = [
-    ("sakura", 0), ("amano", 0), ("kanzaki", 0), ("miyauchi", 0), ("kiritani", 0),
+    ("sakura", 0), ("amano", 0), ("kanzaki", 0), ("kiritani", 0),
   ]
   {
     phase: @signals.signal(@data.GamePhase::Story),
