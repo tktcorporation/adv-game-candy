@@ -363,8 +363,8 @@ fn lint_uniformity(all_paths : Array[String]) -> Array[Violation] {
 ///|
 /// シーンごとの会話比率が目標値（55%以上）を満たしているか。
 ///
-/// 根拠: ADVリサーチ — 現状15-20%で小説寄り。ADV標準65-75%を目指し、
-/// 文学的空気感を保つ下限として55%を設定。
+/// 根拠: ADVリサーチ — 現状15-20%で小説寄り。ADV標準65-75%に合わせ、
+/// 目標70%。文学的にしすぎず、キャラの会話で魅力を見せる。
 /// 参考: 葵せきな 85-90%, 丸戸史明 65-70%, ADV標準 65-75%
 fn rule_dialogue_ratio(
   file_path : String,
@@ -394,12 +394,12 @@ fn rule_dialogue_ratio(
   if total_text >= 10 {
     // 10行未満のシーンは比率チェックしない（ch0_s0のようなプロローグ）
     let ratio = dialogue_text * 100 / total_text
-    if ratio < 55 {
+    if ratio < 65 {
       violations.push({
         file: name,
         line: 0,
         level: "WARN",
-        message: "会話比率が低い: " + ratio.to_string() + "% （目標55%以上）。" +
+        message: "会話比率が低い: " + ratio.to_string() + "% （目標70%、最低65%）。" +
           "会話行" + dialogue_text.to_string() + "/" + total_text.to_string() +
           "行。キャラの掛け合いを追加して魅力を見せること",
       })
