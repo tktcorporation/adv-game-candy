@@ -1,4 +1,4 @@
-// Main app UI for 廃墟カフェ復興記
+// Main app UI for 灯（ADVゲーム）
 
 /// Main app component
 pub fn app(state : @game.GameState) -> @dom.DomNode {
@@ -39,7 +39,7 @@ fn render_header(state : @game.GameState) -> @dom.DomNode {
       @dom.div(
         class="header-title",
         [
-          @dom.h1(class="title", [@dom.text("月灯り")]),
+          @dom.h1(class="title", [@dom.text("灯")]),
           @dom.span(
             class="subtitle",
             [@dom.text_dyn(fn() {
