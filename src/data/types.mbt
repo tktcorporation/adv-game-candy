@@ -1,18 +1,42 @@
 // ゲームデータ型定義 — 定食屋「灯」に通うADV
 //
-// カフェ経営シミュレーションを撤去し、「定食屋に通う」ことをゲームループにした。
-// 日替わりメニュー → ひとくちシーン → ストーリー解放 のサイクル。
+// AP行動選択制: Title → Story(ch0) → Home → ActionSelect → Scene → Home のサイクル。
+// 毎日5APの中で「食べる/観察する/話す」を選び、親密度を貯めてストーリーを解放する。
 
 /// ゲームフェーズ
 ///
-/// Visit → Scene → (Story or 次の日) → Visit のサイクルで進行する。
-/// Calendar は任意のタイミングで開ける閲覧画面。
+/// Title → Story(ch0) → Home → ActionSelect → Scene → Home のサイクル。
+/// 行動選択で何をするかがゲームのコア。
 pub(all) enum GamePhase {
-  Visit     // 灯を訪問する画面（今日の日替わり表示）
-  Scene     // ひとくちシーン（日替わりに紐づく短いテキスト）
-  Story     // 本編ストーリー
-  Calendar  // 味の記憶（カレンダー）閲覧
+  Title         // 初回起動時のタイトル画面
+  Home          // ホーム画面（日付・AP・ミッション・「灯に行く」）
+  ActionSelect  // 灯の中。食べる/観察する/話す を選ぶ
+  Scene         // 行動結果のテキスト表示
+  Story         // 本編ADVストーリー
+  Album         // アルバム（味の記憶・発見ノート・会話メモ・ストーリー回想）
 } derive(Eq)
+
+/// 行動タイプ — 灯の中で何をするか
+///
+/// 各行動にはAPコストと親密度効果がある。
+/// Special は ★3（親密度300）到達で解放される上位行動。
+pub(all) enum ActionType {
+  Eat       // 食べる (2 AP, +10-15 親密度)
+  Observe   // 観察する (1 AP, +3-5 親密度)
+  Talk      // 丸山と話す (1 AP, +5-8 親密度)
+  Special   // 特別行動 (2 AP, +15-25 親密度, ★3で解放)
+} derive(Eq)
+
+/// デイリーミッション
+///
+/// 毎日リセット。達成でボーナス親密度を獲得。
+/// 「灯で食事をする」「丸山と話す」「3つ行動する」の3種。
+pub(all) struct DailyMission {
+  id : String
+  description : String
+  completed : Bool
+  reward : Int
+}
 
 /// A single line of story dialogue
 pub(all) struct StoryLine {
@@ -62,11 +86,13 @@ pub(all) struct DailyMenu {
 
 /// 訪問記録（味の記憶）
 ///
-/// カレンダー画面で一覧表示する。全メニュー制覇などコレクション要素。
+/// アルバム画面で一覧表示する。全メニュー制覇などコレクション要素。
+/// action_type: どの行動で記録されたか（"eat"/"observe"/"talk"/"special"）
 pub(all) struct VisitRecord {
   day : Int
   menu_id : String
   scene_text : String
+  action_type : String
 }
 
 /// Customer character definition

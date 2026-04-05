@@ -30,7 +30,7 @@ pub fn get_chapter_4() -> Chapter {
     id: 4,
     title: "第四章",
     subtitle: "名前",
-    unlock_intimacy: 250,
+    unlock_intimacy: 300,
     scenes: [
       // --- Scene 0: 高瀬です ---
       // 前提: 雨の日の会話以来、少しだけ空気がやわらかくなった
