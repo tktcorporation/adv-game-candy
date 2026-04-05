@@ -30,9 +30,6 @@ pub fn get_chapter_0() -> Chapter {
     id: 0,
     title: "第零章",
     subtitle: "いつもの席",
-    unlock_revenue: 0,
-    unlock_recipes: 0,
-    unlock_customers: 0,
     unlock_intimacy: 0,
     scenes: [
       // --- Scene 0: 灯 ---

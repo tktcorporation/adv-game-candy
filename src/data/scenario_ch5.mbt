@@ -29,10 +29,7 @@ pub fn get_chapter_5() -> Chapter {
     id: 5,
     title: "第五章",
     subtitle: "文庫本",
-    unlock_revenue: 0,
-    unlock_recipes: 0,
-    unlock_customers: 0,
-    unlock_intimacy: 0,
+    unlock_intimacy: 380,
     scenes: [
       // --- Scene 0: 一つ空けの日常 ---
       // 前提: 一つ空けが定着。「お先に」「お疲れさまです」が日課になった

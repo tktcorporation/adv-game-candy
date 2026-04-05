@@ -35,10 +35,7 @@ pub fn get_chapter_9() -> Chapter {
     id: 9,
     title: "第九章",
     subtitle: "ただいま",
-    unlock_revenue: 0,
-    unlock_recipes: 0,
-    unlock_customers: 0,
-    unlock_intimacy: 0,
+    unlock_intimacy: 1000,
     scenes: [
       // --- Scene 0: 5日目 ---
       // 前提: 5日目。期待を持たないようにして灯に来る

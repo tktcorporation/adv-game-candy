@@ -161,14 +161,3 @@ pub fn get_intimacy_ranks() -> Array[IntimacyRank] {
   ]
 }
 
-/// Get login bonus tiers
-pub fn get_login_bonus_tiers() -> Array[LoginBonusTier] {
-  [
-    { day: 1, reward: 200 },
-    { day: 3, reward: 300 },
-    { day: 7, reward: 500 },
-    { day: 14, reward: 800 },
-    { day: 21, reward: 1000 },
-    { day: 28, reward: 2000 },
-  ]
-}

@@ -32,9 +32,6 @@ pub fn get_chapter_1() -> Chapter {
     id: 1,
     title: "第一章",
     subtitle: "日替わり",
-    unlock_revenue: 0,
-    unlock_recipes: 0,
-    unlock_customers: 1,
     unlock_intimacy: 0,
     scenes: [
       // --- Scene 0: ラスト一つ ---

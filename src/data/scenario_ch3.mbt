@@ -29,10 +29,7 @@ pub fn get_chapter_3() -> Chapter {
     id: 3,
     title: "第三章",
     subtitle: "雨の日",
-    unlock_revenue: 0,
-    unlock_recipes: 0,
-    unlock_customers: 0,
-    unlock_intimacy: 0,
+    unlock_intimacy: 150,
     scenes: [
       // --- Scene 0: 雨 ---
       // 前提: 雨の日。客が少ない。静かな店内

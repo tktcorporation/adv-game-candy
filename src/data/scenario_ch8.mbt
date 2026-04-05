@@ -30,10 +30,7 @@ pub fn get_chapter_8() -> Chapter {
     id: 8,
     title: "第八章",
     subtitle: "休み",
-    unlock_revenue: 0,
-    unlock_recipes: 0,
-    unlock_customers: 0,
-    unlock_intimacy: 0,
+    unlock_intimacy: 850,
     scenes: [
       // --- Scene 0: 1日目 ---
       // 前提: いつもの昼。ひよりが来ない
