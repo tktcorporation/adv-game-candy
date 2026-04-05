@@ -425,8 +425,9 @@ fn rule_silent_characters(
   let violations : Array[Violation] = []
   let name = @path.basename(file_path)
   // 既知のキャラクター名リスト（定食屋「灯」版）
+  // speaker名と姓の両方を含める（speaker: "ひより" / テキスト中の「椎名」）
   let characters = [
-    "椎名", "ひより",
+    "ひより",
   ]
   for _, chara in characters {
     // このキャラがテキスト行（ナレーション含む）に名前で言及されているか
@@ -490,7 +491,7 @@ fn rule_negative_evaluation_density(
     "才能ない", "向いてない", "やめたら",
   ]
   // キャラごとのマイナス評価カウント
-  let characters = ["椎名", "ひより"]
+  let characters = ["ひより"]
   for _, chara in characters {
     let mut neg_count = 0
     for _, line in lines {
