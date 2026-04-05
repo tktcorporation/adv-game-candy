@@ -450,9 +450,10 @@ fn rule_silent_characters(
     }
   }
   // 主人公のセリフが少なすぎる場合もチェック
+  // 主人公の speaker 名は「主人公」ま��は「悠」（デフォルト名）
   let mut protagonist_lines = 0
   for _, line in lines {
-    if line.contains("speaker: \"主人公\"") {
+    if line.contains("speaker: \"主人公\"") || line.contains("speaker: \"悠\"") {
       protagonist_lines = protagonist_lines + 1
     }
   }
@@ -530,6 +531,124 @@ fn rule_negative_evaluation_density(
 }
 
 // ---------------------------------------------------------------------------
+// ルール: ナレーション連続検出
+// ---------------------------------------------------------------------------
+
+///|
+/// speaker:"" のナレーション行が N行以上連続していたら警告。
+/// ADVは会話中心。長いナレーション連続は読者のテンポを落とす。
+///
+/// 根拠: scenario-writingスキル — 会話比率70%目標。
+/// ナレーション連続は「小説寄り」の兆候。5行以上で読者が飽きるリスク。
+fn rule_narration_streak(
+  file_path : String,
+  lines : Array[String],
+) -> Array[Violation] {
+  let violations : Array[Violation] = []
+  let name = @path.basename(file_path)
+  let threshold = 5
+  let mut streak = 0
+  let mut streak_start = 0
+  for i, line in lines {
+    let trimmed = line.trim().to_string()
+    if trimmed.has_prefix("//") || !line.contains("text:") {
+      continue
+    }
+    // speaker: "" = ナレーション行
+    if line.contains("speaker: \"\"") {
+      if streak == 0 {
+        streak_start = i + 1
+      }
+      streak = streak + 1
+    } else {
+      if streak >= threshold {
+        violations.push({
+          file: name,
+          line: streak_start,
+          level: "WARN",
+          message: "ナレーションが" + streak.to_string() + "行連続（L" +
+            streak_start.to_string() + "〜）。会話や仕草の挿入でテンポを改善すること",
+        })
+      }
+      streak = 0
+    }
+  }
+  // ファイル末尾での連続もチェック
+  if streak >= threshold {
+    violations.push({
+      file: name,
+      line: streak_start,
+      level: "WARN",
+      message: "ナレーションが" + streak.to_string() + "行連続（L" +
+        streak_start.to_string() + "〜）。会話や仕草の挿入でテンポを改善すること",
+    })
+  }
+  violations
+}
+
+// ---------------------------------------------------------------------------
+// ルール: モノローグ連続検出
+// ---------------------------------------------------------------------------
+
+///|
+/// 主人公の内心モノローグ（（）で囲まれたテキスト）が3行以上連続していたら警告。
+/// CLAUDE.md方針:「重い内省を減らし、掛け合い中心で」に基づく。
+///
+/// 根拠: 主人公は明るいツッコミ型。長い内省はキャラ性に合わない。
+/// 3行以上の連続モノローグは掛け合いに置き換えるべき。
+fn rule_monologue_streak(
+  file_path : String,
+  lines : Array[String],
+) -> Array[Violation] {
+  let violations : Array[Violation] = []
+  let name = @path.basename(file_path)
+  let threshold = 3
+  let mut streak = 0
+  let mut streak_start = 0
+  for i, line in lines {
+    let trimmed = line.trim().to_string()
+    if trimmed.has_prefix("//") || !line.contains("text:") {
+      continue
+    }
+    // 主人公のセリフかつ（）で囲まれたモノローグ
+    // 主人公の speaker 名は「主人公」または「悠」（デフォルト名）
+    let is_protagonist = line.contains("speaker: \"主人公\"") || line.contains(
+        "speaker: \"悠\"",
+      )
+    let is_monologue = line.contains("text: \"（") || line.contains("text: \"(")
+    if is_protagonist && is_monologue {
+      if streak == 0 {
+        streak_start = i + 1
+      }
+      streak = streak + 1
+    } else {
+      if streak >= threshold {
+        violations.push({
+          file: name,
+          line: streak_start,
+          level: "WARN",
+          message: "主人公モノローグが" + streak.to_string() + "行連続（L" +
+            streak_start.to_string() + "〜）。掛け合い中心の方針に合わせ、" +
+            "会話や行動に置き換えること",
+        })
+      }
+      streak = 0
+    }
+  }
+  if streak >= threshold {
+    violations.push({
+      file: name,
+      line: streak_start,
+      level: "WARN",
+      message: "主人公モノローグが" + streak.to_string() + "行連続（L" +
+        streak_start.to_string() + "〜）。掛け合い中心の方針に合わせ、" +
+        "会話や行動に置き換えること",
+    })
+  }
+  violations
+}
+
+// ---------------------------------------------------------------------------
 // メイン
 // ---------------------------------------------------------------------------
 
@@ -550,6 +669,8 @@ fn lint_file(
   violations.append(rule_dialogue_ratio(file_path, lines))
   violations.append(rule_silent_characters(file_path, lines, content))
   violations.append(rule_negative_evaluation_density(file_path, lines))
+  violations.append(rule_narration_streak(file_path, lines))
+  violations.append(rule_monologue_streak(file_path, lines))
   violations
 }
 
@@ -612,7 +733,7 @@ fn main {
   println("")
   println("--- リント結果サマリー ---")
   println("ファイル数: " + paths.length().to_string())
-  println("ルール数: 7")
+  println("ルール数: 9")
   let mut error_count = 0
   let mut warn_count = 0
   for _, v in all_violations {
