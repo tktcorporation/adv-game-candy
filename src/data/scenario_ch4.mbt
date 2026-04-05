@@ -1,209 +1,135 @@
 // ============================================================
-// 第四章: Wi-Fiありますか
+// 第四章: 名前
 // ============================================================
 //
 // あらすじ:
-//   フリーライターの神崎凛がWi-Fiとコンセントを求めてカフェに現れる。
-//   ノートPCを広げ、ずっと居座る。鋭い観察眼で店の空気を読み取り、
-//   佐倉と主人公の微妙な距離感に即座に気づく。「面白い店ね」。
-//   3人目の常連が加わり、カフェに「場」の空気が生まれ始める。
-//   佐倉の席が窓際からわずかにカウンター寄りに移動している。
+//   店主が「お兄さん名前なんだっけ」と聞く。「高瀬です」。
+//   店主が「ひよりちゃんはもう3年くらい来てくれてるもんねえ」と
+//   無意識に情報漏洩。晴は彼女の名前を知る。
+//   帰り際、晴が「お先に」とひよりに初めて直接話す。
+//   翌日、ひよりの席が一つ近くなる。
 //
-// 登場キャラ: 神崎凛（新規）、佐倉美月、天野蓮
+// 登場キャラ: 椎名ひより
 // キーイベント:
-//   - 神崎凛の登場（Wi-Fi目当て。観察力が鋭い）
-//   - 佐倉と主人公のやりとりを神崎が面白がる
-//   - 3人の常連が揃い、カフェが「場」になる
-//   - 佐倉の席がわずかにカウンター寄りに（本人は理由をつける）
+//   - 店主の情報漏洩で互いの名前を知る
+//   - 晴の「お先に」= ひよりへの最初の直接発話
+//   - ひよりの「ごちそうさまでした」が晴に聞かせることを意識した発話に変わる
+//   - 翌日、一つ空けの席に
+//   - 天丼: 「ごちそうさまでした」の意識的な発話
 //
 // --- 章の状態差分 ---
-// 開始状態: 佐倉は帰り際にわずかに立ち止まるようになった（ch3）。
-//   天野がバイトとして定着。佐倉の豆で淹れたコーヒーが好評。
-// 終了状態: 神崎凛が常連に加わり、3人の常連が揃った。カフェに「場」の空気。
-//   主人公の変化: 常連が増えて嬉しい反面、佐倉の無反応は変わらず気になる
-//   店の変化: Wi-Fi環境を整備。常連3人が定着し活気が出てきた
-//   関係性: 神崎（観察者ポジション確立）、佐倉（席が少し近づいた）
+// 開始状態: 二つ空け。雨の日に短い会話をした
+// 終了状態: 一つ空け。名前を知った。「お先に」「ごちそうさまでした」が直接の言葉に
+//   晴の変化: ひよりの名前を知った。「お先に」を自分から言った
+//   関係性: 「名前を知っている人」へ。席が一つ近づいた
 // ============================================================
 
-/// Chapter 4: Wi-Fiありますか
-///
-/// 背景: 承前半の入口。3人目の常連・神崎凛の登場で「観察する第三者」が加わり、
-/// 佐倉と主人公の関係を客観視する視点が生まれる。
-/// 佐倉の席移動（窓際→カウンター寄り）が始まるタイミング。
+/// Chapter 4: 名前
 pub fn get_chapter_4() -> Chapter {
   {
     id: 4,
     title: "第四章",
-    subtitle: "Wi-Fiありますか",
-    unlock_revenue: 5000,
-    unlock_recipes: 12,
-    unlock_customers: 4,
-    unlock_intimacy: 300,
+    subtitle: "名前",
+    unlock_intimacy: 250,
     scenes: [
-      // --- Scene 0: 新しい客 ---
-      // 前提: 午後。佐倉がいつもの席（窓際だが、以前より1席カウンター寄り）で読書中。
-      //   天野がカウンター内で作業。平和な午後。
-      // 変化: 神崎凛が入店。第一声が「Wi-Fiありますか」。
-      //   PCを広げて仕事を始める。コンセントの位置を確認する手際の良さ。
-      // 結果: 新しいタイプの客が来た。佐倉とは違う「居座り方」
+      // --- Scene 0: 高瀬です ---
+      // 前提: 雨の日の会話以来、少しだけ空気がやわらかくなった
+      // 変化: 店主が晴に名前を聞く。晴が名乗る
+      // 結果: 店主の無意識な情報漏洩で、ひよりの名前が晴に伝わる
       {
         id: "ch4_s0",
         lines: [
-          { speaker: "", text: "午後。いつもの静かな時間。", is_choice: false, choices: [] },
-          { speaker: "", text: "佐倉さんが文庫本を開いている。今日は窓際の端ではなく、ひとつカウンター寄りの席。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "(……あれ、いつもの席じゃないな)", is_choice: false, choices: [] },
-          { speaker: "", text: "天野がカウンターの中でグラスを磨いている。鼻歌混じり。", is_choice: false, choices: [] },
-          { speaker: "", text: "カランカラン。", is_choice: false, choices: [] },
-          { speaker: "", text: "ドアが開いた。ショートカットの女性。革ジャンにデニム。小柄だが姿勢がいい。", is_choice: false, choices: [] },
-          { speaker: "", text: "肩にメッセンジャーバッグ。リップだけが鮮やかな赤。", is_choice: false, choices: [] },
-          { speaker: "", text: "店内をぐるっと見回して——コンセントの位置を確認している。一瞬で。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "Wi-Fiありますか。", is_choice: false, choices: [] },
-          { speaker: "", text: "挨拶より先にそれだった。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "えっと……あります、一応。パスワードはカウンターに——", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "速度は？", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……普通、だと思います。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "普通ね。まあいいわ。エスプレッソちょうだい。", is_choice: false, choices: [] },
-          { speaker: "", text: "言うが早いか、壁際の席に座ってバッグからノートPCを取り出した。", is_choice: false, choices: [] },
-          { speaker: "", text: "電源アダプタ。マウス。スマホスタンド。手慣れた動きで展開していく。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "……なんか、仕事場みたいになってきたっすね。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "まあ、使ってくれるのはありがたいよ。", is_choice: false, choices: [] },
-          { speaker: "", text: "エスプレッソを淹れて持っていく。", is_choice: false, choices: [] },
-          { speaker: "", text: "神崎さんは受け取ると、片手でカップを持ち、もう片方はキーボードに置いたまま一口。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "……悪くないね。", is_choice: false, choices: [] },
-          { speaker: "", text: "それだけ言って、もう画面に集中している。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "佐倉さんといい勝負の無愛想さっすね。", is_choice: false, choices: [] },
-          { speaker: "", text: "佐倉さんが本越しにちらりとこちらを見た。視線が合いそうになって、すぐ戻す。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……聞こえてるよ、天野。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "聞こえるように言ってるんすけど。", is_choice: false, choices: [] },
+          { speaker: "", text: "雨の日から数日。天気は回復して、いつもの昼。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "今日はアジフライ。カラッと揚がったよ。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "おお、いいですね。揚げ物の日はテンション上がる。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "でしょ。ソースとタルタル、両方あるからね。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "両方つけていいんですか。贅沢だ。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "そういえばさ。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "はい？", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "お兄さん、名前なんだっけ。もうずいぶん来てくれてるのに、聞いてなかったなって。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "あ、高瀬です。高瀬晴。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "高瀬くんね。晴って、いい名前だねえ。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "ありがとうございます。親がつけたんで、俺は何もしてないですけど。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "あはは。まあそりゃそうだ。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "丸山さんは、常連さんの名前けっこう覚えてるんですか。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "まあねえ。二十年やってるとね、自然に覚えちゃうんだよ。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "ひよりちゃんなんか、もう三年くらい来てくれてるもんねえ。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "ひより……。", is_choice: false, choices: [] },
+          { speaker: "", text: "二つ向こうで、箸が止まった気がした。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "ほら、いつも本読んでる子。静かだけど、ちゃんと全部食べてくれるんだよ。いい子だよねえ。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "はあ、三年。俺より全然長いじゃないですか。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "先輩だよ、高瀬くんから見たら。ねえ、ひよりちゃん。", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……そんな、先輩とかじゃ。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "三年通えば先輩だよ。灯の大先輩。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "じゃあ俺、まだ新入りですね。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "あはは。でも毎日来てくれるから、もう十分常連だよ。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "（ひより。あの人、ひよりっていうんだ）", is_choice: false, choices: [] },
         ],
         next_scene: "ch4_s1",
       },
-      // --- Scene 1: 観察者の目 ---
-      // 前提: 神崎が2時間ほど居座っている。佐倉も同じ時間帯にいる。
-      //   主人公が佐倉にコーヒーのおかわりを持っていく場面を神崎が見ている。
-      // 変化: 神崎が佐倉と主人公のやりとりを観察し、面白がり始める。
-      //   「あの子、あんたのこと見てるじゃない」と主人公に言う。
-      // 結果: 第三者の目を通して、佐倉と主人公の関係が読者に客観視される
+      // --- Scene 1: お先に ---
+      // 前提: 名前を知った直後の帰り際
+      // 変化: 晴がひよりに直接「お先に」と言う。初めての直接発話
+      // 結果: ひよりの「ごちそうさまでした」が変わる
       {
         id: "ch4_s1",
         lines: [
-          { speaker: "", text: "2時間が経った。神崎さんはまだいる。エスプレッソは2杯目。", is_choice: false, choices: [] },
-          { speaker: "", text: "佐倉さんもまだいる。文庫本は40ページほど進んでいる。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "佐倉さん、おかわりどうですか。", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……同じので。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "ブレンドですね。今日はちょっと豆の挽き方変えてみたんですけど——", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "——わかりますか、違い。", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……普通。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "普通か……。", is_choice: false, choices: [] },
-          { speaker: "", text: "カップを持って戻る。毎日このやりとりをしている気がする。", is_choice: false, choices: [] },
-          { speaker: "", text: "カウンターに戻ると、神崎さんがPCから顔を上げてにやにやしていた。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "ねえ。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "はい？", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "あの子、さっきからずっとあんたの方見てるの、気づいてる？", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "え？ 佐倉さんが？ いや、本読んでますけど——", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "本のページ、全然進んでないわよ。あんたがカウンターに戻ってから特にね。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……そんなことは——", is_choice: false, choices: [] },
-          { speaker: "", text: "思わず佐倉さんの方を見る。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "ほら、今ページめくるの速くなったでしょ。見られてるの気づいたのよ。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "いや、それはたまたま——", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "鈍いわね。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "マジっすか。あたしも思ってたんすよそれ！", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "天野まで——", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "いやだって、佐倉さん店長のこと——", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……聞こえてる。", is_choice: false, choices: [] },
-          { speaker: "", text: "低い声が店内に響いた。", is_choice: false, choices: [] },
-          { speaker: "", text: "佐倉さんは文庫本で顔の下半分を隠している。耳が赤い。", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……本が面白いだけ。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "その本、30分前から同じページじゃない？", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "…………。", is_choice: false, choices: [] },
-          { speaker: "", text: "佐倉さんはコーヒーを一口飲んで読書に戻った。ただし、本を持つ手に力が入っている。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "面白い店ね。", is_choice: false, choices: [] },
-          { speaker: "", text: "神崎さんはにやりと笑って、PCに視線を戻した。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "ごちそうさまです。アジフライ、最高でした。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "まいど、高瀬くん。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "（高瀬くん。なんか照れるな）", is_choice: false, choices: [] },
+          { speaker: "", text: "席を立つ。彼女はまだ食べている。味噌汁を最後に飲むタイプらしい。", is_choice: false, choices: [] },
+          { speaker: "", text: "いつもならそのまま出る。でも今日は——名前を知ってしまったからか。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "お先に。", is_choice: false, choices: [] },
+          { speaker: "", text: "彼女のほうを見て言った。初めて、直接。", is_choice: false, choices: [] },
+          { speaker: "", text: "彼女が顔を上げた。少しだけ目を見開いた。", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……お疲れさまです。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "（……あ。目が合った）", is_choice: false, choices: [] },
+          { speaker: "", text: "引き戸を開けて出た。路地。午後の日差し。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "（言えた。なんかちょっとだけ、よかった）", is_choice: false, choices: [] },
+          { speaker: "", text: "——店の中では。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "高瀬くん、いい子だよねえ。", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……高瀬、さん。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "そうそう、高瀬晴くん。晴って、いい名前だよねえ。", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……はい。", is_choice: false, choices: [] },
+          { speaker: "", text: "彼女は味噌汁を飲み干して、静かに箸を置いた。", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……ごちそうさまでした。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "まいど。", is_choice: false, choices: [] },
+          { speaker: "", text: "いつもより少しだけ、声が大きかった。", is_choice: false, choices: [] },
+          { speaker: "", text: "まるで——もう出ていった誰かにも、聞こえるように。", is_choice: false, choices: [] },
         ],
         next_scene: "ch4_s2",
       },
-      // --- Scene 2: 三人の常連 ---
-      // 前提: 神崎が通い始めて数日後。佐倉、天野、神崎が同時にいる夕方。
-      //   店に「場」の空気が生まれつつある。
-      // 変化: 天野が神崎に絡む。神崎が切り返す。佐倉が小さく笑う。
-      //   主人公は「店が生きている」と感じる。
-      // 結果: 3人の常連が揃い、カフェが「居場所」としての色を持ち始める
+      // --- Scene 2: 一つ空け ---
+      // 前提: 翌日。「お先に」の翌日
+      // 変化: ひよりの席が一つ近くなる
+      // 結果: 二つ空け→一つ空け。距離が縮まった
       {
         id: "ch4_s2",
         lines: [
-          { speaker: "", text: "神崎さんが通い始めて、数日が経った。", is_choice: false, choices: [] },
-          { speaker: "", text: "火曜と金曜は確実に来る。「締め切り前は毎日来るから覚悟しなさい」と宣言された。", is_choice: false, choices: [] },
-          { speaker: "", text: "夕方。佐倉さんがいつもの席——窓際寄りだが、以前より確実にカウンターに近い——で読書。", is_choice: false, choices: [] },
-          { speaker: "", text: "神崎さんが壁際でPCを叩いている。天野がカウンター内で洗い物。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "神崎さんって何書いてるんすか？", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "商店街の特集記事。「消えゆく個人商店の灯火」。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "うわ、暗っ。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "暗いんじゃなくて、リアルなの。この商店街、10年で3割閉店してるのよ。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "……マジっすか。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "マジよ。でもね、面白い店が新しく出てきてるの。こことかね。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "面白いって、うちですか？", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "コーヒーの腕はまだまだだけど、人が集まる空気があるじゃない？", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "まだまだって言われた……。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "あはは、バッサリっすね！", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "褒めてるのよ、半分は。空気を作れる店は珍しいの。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "残り半分は？", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "Wi-Fiが遅い。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "それはすみません……。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "店長、回線アップグレードしましょうよ！ あたしスマホで調べますよ！", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "ついでにコンセント増やして。あと、このテーブル低いのよね。PC置くと肩こるの。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "要望多いな……。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "でもこの人いるとなんか店が賑やかになるっすよね！", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "賑やかって。私、基本黙ってPC叩いてるだけよ？", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "それがいいんすよ。佐倉さんは静かだし、神崎さんはキーボードがカタカタ言うし。BGMっすよBGM。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "BGM扱いは初めてだわ。", is_choice: false, choices: [] },
-          { speaker: "", text: "佐倉さんが本の向こうで、小さく口元を緩めた。", is_choice: false, choices: [] },
-          { speaker: "", text: "声を出して笑うことはない。でも、確かに笑っていた。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "あ、佐倉ちゃん笑った。", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……笑ってない。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "いや今ぜったい笑ったっすよ！ あたし見た！", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "…………。", is_choice: false, choices: [] },
-          { speaker: "", text: "佐倉さんは文庫本を少し高く持ち上げて、顔を隠した。", is_choice: false, choices: [] },
-          { speaker: "", text: "でも本の上から見える耳が、また赤くなっている。", is_choice: false, choices: [] },
-        ],
-        next_scene: "ch4_s3",
-      },
-      // --- Scene 3: 面白い店 ---
-      // 前提: 同日の閉店間際。佐倉は帰った。神崎がまだ残っている。
-      // 変化: 神崎が主人公に「あの子のこと気になってるでしょ」と直球。
-      //   主人公は否定するが、神崎は見透かしている。
-      //   「無反応に見えて、ちゃんと来てるのが答えじゃない？」
-      // 結果: 神崎という「鏡」を通して、主人公が佐倉の行動の意味を考え始める
-      {
-        id: "ch4_s3",
-        lines: [
-          { speaker: "", text: "閉店間際。佐倉さんは「ごちそうさま」と言って帰った。いつも通り。", is_choice: false, choices: [] },
-          { speaker: "", text: "天野はシフト上がりで先に帰った。", is_choice: false, choices: [] },
-          { speaker: "", text: "神崎さんだけが残っている。PCを閉じて、3杯目のエスプレッソを飲んでいる。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "ねえ、ひとつ聞いていい？", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "なんですか。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "あの子——佐倉ちゃん。毎日来てるんでしょ？", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "ええ、まあ。ほぼ毎日。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "何を出しても「普通」。でも毎日来る。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……はい。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "気にならない？", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……まあ、正直、気にはなります。一度くらい何か感想くれてもいいのにって。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "そこじゃないのよ。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "え？", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "「普通」って言いながら毎日通う人間がいたら、それ自体が答えでしょ。", is_choice: false, choices: [] },
-          { speaker: "", text: "……。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "本当にどうでもいい店には、そもそも来ないわよ。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "それは……そうかもしれないですけど。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "まあ、あんたが鈍いのは見てて分かったからいいけど。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "鈍くないですよ。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "鈍い人間は自覚がないものよ。", is_choice: false, choices: [] },
-          { speaker: "神崎凛", text: "面白い店。また来るわ。", is_choice: false, choices: [] },
-          { speaker: "", text: "神崎さんはバッグを肩にかけて、さっさと出ていった。", is_choice: false, choices: [] },
-          { speaker: "", text: "一人になった店内。カウンターを拭く。", is_choice: false, choices: [] },
-          { speaker: "", text: "佐倉さんが今日座っていた席を見る。窓際の端から、ひとつ分こちら寄り。", is_choice: false, choices: [] },
-          { speaker: "", text: "いつから移動したんだろう。聞いたら「日当たり」とか言うんだろうな。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……答え、か。", is_choice: false, choices: [] },
-          { speaker: "", text: "神崎さんの言葉が、妙に引っかかって離れなかった。", is_choice: false, choices: [] },
+          { speaker: "", text: "翌日。昼。灯。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "はいよ、高瀬くん。今日は豚の生姜焼き。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "いただきます。生姜焼き、好きなんですよね。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "知ってるよ。いつも嬉しそうに食べるもん。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "そんな顔してます？", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "してるしてる。目がね、違うんだよ。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "うわ、恥ずかしい。", is_choice: false, choices: [] },
+          { speaker: "", text: "食べ始めたところで、引き戸が開いた。", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "こんにちは。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "いらっしゃい、ひよりちゃん。", is_choice: false, choices: [] },
+          { speaker: "", text: "彼女が入ってきた。二つ空けた席の方に向かう——と思った。", is_choice: false, choices: [] },
+          { speaker: "", text: "一つ、通り過ぎた。一つ空けた席に、座った。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "（……近い）", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "日替わりで。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "はいよ。今日は生姜焼き。高瀬くんの好物だよ。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "いや、言わなくていいですそれ。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "あはは。", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……生姜焼き、いい匂いですね。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "あ、美味いですよ。今日の。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "お、高瀬くんが太鼓判。期待していいよ、ひよりちゃん。", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……はい。楽しみです。", is_choice: false, choices: [] },
+          { speaker: "", text: "一つ空けた距離。前よりまた一つ近い。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "（たまたま……とは、もう思わないけど）", is_choice: false, choices: [] },
+          { speaker: "", text: "小鉢はほうれん草のおひたしだった。二人とも、きれいに食べた。", is_choice: false, choices: [] },
         ],
         next_scene: "",
       },

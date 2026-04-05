@@ -1,212 +1,134 @@
 // ============================================================
-// 第三章: ツンデレ先輩
+// 第三章: 雨の日
 // ============================================================
 //
 // あらすじ:
-//   新しい豆でコーヒーが改善され、主人公も淹れ方を研究し始めた。
-//   佐倉がいつも通り来店。飲んで「ごちそうさま」——だが帰り際に
-//   わずかに立ち止まった。天野だけが気づく。
-//   「佐倉さん今日ちょっと止まらなかった？」——天野は佐倉を
-//   「ツンデレ先輩」と名付ける。佐倉は不快そうにするが、翌日も来る。
-//   天野と佐倉の掛け合いが始まり、店の空気が変わっていく。
+//   雨の日。客が少ない。ひよりの鞄が濡れて文庫本が出せない。
+//   手持ち無沙汰のひよりに店主が話しかけ、巻き込まれる形で
+//   晴とひよりが初めて「会話」をする。天気の話。短いが初めて。
+//   帰り際、雨の中で一瞬同じ方向に歩く。
 //
-// 登場キャラ: 佐倉美月、天野蓮
+// 登場キャラ: 椎名ひより
 // キーイベント:
-//   - 佐倉が帰り際にわずかに立ち止まる（最初のヒビ。無意識の変化）
-//   - 天野が佐倉を「ツンデレ先輩」と呼ぶ（キャラ間の関係線の確立）
-//   - 佐倉が天野に対して初めて感情を見せる（不快→でも来る）
-//   - 佐倉の名前が判明する（天野が直接聞く）
+//   - 本が読めない = ひよりの「盾」が外れる
+//   - 店主の饒舌が触媒になり初会話
+//   - 天気という当たり障りのない話題
+//   - 帰り際に一瞬だけ並んで歩く
+//   - 天丼: 本が濡れて読めない（「ページがめくれない」の変奏）
 //
 // --- 章の状態差分 ---
-// 開始状態: 豆が変わりコーヒーは前より良くなった。佐倉は無反応の常連。
-// 終了状態: 佐倉に最初の変化（帰り際の一瞬の立ち止まり）。
-//   天野が佐倉を「ツンデレ先輩」と呼び始め、佐倉の名前も判明。
-//   佐倉は天野を迷惑そうにしつつも、翌日も来る。
-//   主人公の変化: 佐倉の微細な変化に天野経由で気づき始める
-//   店の変化: 天野と佐倉の掛け合いが生まれ、店が「場所」になりつつある
-//   関係性: 佐倉（名前判明。わずかに壁にヒビ）、天野（佐倉をいじる担当として確立）
+// 開始状態: 二つ空け。会話はまだない（醤油差しの一言を除く）
+// 終了状態: 二つ空け（維持）。初めての「会話」が成立した
+//   晴の変化: ひよりと話した。声を聞いた。短いが確かな会話
+//   関係性: 「同じ店の客」から「天気の話をしたことがある人」へ
 // ============================================================
 
-/// Chapter 3: ツンデレ先輩
+/// Chapter 3: 雨の日
 pub fn get_chapter_3() -> Chapter {
   {
     id: 3,
     title: "第三章",
-    subtitle: "ツンデレ先輩",
-    unlock_revenue: 0,
-    unlock_recipes: 1,
-    unlock_customers: 2,
-    unlock_intimacy: 0,
+    subtitle: "雨の日",
+    unlock_intimacy: 150,
     scenes: [
-      // --- Scene 0: 研究の日々 ---
-      // 前提: 豆を変えてから数日。主人公は淹れ方も研究し始めている
-      // 変化: 少しずつコーヒーが上達している。天野は相変わらず元気
-      // 結果: 「今日こそ何か反応あるかも」と期待する日常が描かれる
+      // --- Scene 0: 雨 ---
+      // 前提: 雨の日。客が少ない。静かな店内
+      // 変化: ひよりの鞄が濡れている。文庫本を出せない
+      // 結果: いつもの「盾」がない状態で、定食を待つひより
       {
         id: "ch3_s0",
         lines: [
-          { speaker: "", text: "豆を変えてから、毎朝の開店準備が変わった。", is_choice: false, choices: [] },
-          { speaker: "", text: "スマホで淹れ方の動画を見る。湯温は何度がいいか。注ぎ方はどうか。", is_choice: false, choices: [] },
-          { speaker: "", text: "蒸らし時間を5秒変えるだけで味が変わるらしい。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "おっす店長！ 今日もやってんすねコーヒー研究。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "ああ。湯温を85度にしてみたんだけど。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "あたしに言われてもさっぱりっすよ。飲んでみていいすか？", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "どうぞ。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "……ん。おっ、なんか前より……ええと、まろい？", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "「まろい」って日本語ないけど。まあ言いたいことは分かる。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "あはは。でもマジで美味しくなってるっすよ。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……そうだといいんだけどな。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "今日こそ窓際の人から何か反応もらえるかもっすよ！", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……期待しないでおく。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "えー、夢がないっすね〜。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "現実を見てるだけだ。あの人の「ごちそうさま」は鉄壁だぞ。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "鉄壁のごちそうさま。なんかカッコいいっすね。必殺技みたい。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "全然カッコよくない。こっちはダメージ受けてる側だから。", is_choice: false, choices: [] },
+          { speaker: "", text: "雨だった。朝から止まない、梅雨の走りみたいな雨。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "こんにちはー。降ってますね。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "いらっしゃい。今日は暇だよ、この雨じゃねえ。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "他にお客さんいないんですか。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "さっき一人帰ったきり。雨の日ってみんな近場で済ませちゃうんだよねえ。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "まあ、ここ路地の奥ですもんね。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "今日は肉じゃがね。こういう日は温かいもんだよ。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "いいですね。", is_choice: false, choices: [] },
+          { speaker: "", text: "しばらくして、引き戸が開いた。", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……こんにちは。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "いらっしゃい。おお、濡れちゃったねえ。タオル使う？", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……大丈夫です。ありがとうございます。", is_choice: false, choices: [] },
+          { speaker: "", text: "彼女はいつもの席——二つ空けたところに座った。", is_choice: false, choices: [] },
+          { speaker: "", text: "鞄をカウンターの下に置く。いつもならここで文庫本を出す。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "（あ。鞄、けっこう濡れてるな……本、出せないのか）", is_choice: false, choices: [] },
+          { speaker: "", text: "彼女は手持ち無沙汰に、箸置きを指先でなぞっていた。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "ひよりちゃん、鞄大丈夫？ 新聞紙あるよ、中に詰めとく？", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……いえ、帰ったら乾かします。", is_choice: false, choices: [] },
         ],
         next_scene: "ch3_s1",
       },
-      // --- Scene 1: 一瞬の立ち止まり ---
-      // 前提: 午後。佐倉が来店。新しい豆+改善した淹れ方のコーヒーを出す
-      // 知識: 佐倉は前回の豆を自分で指差した。その豆で淹れている
-      // 変化: 佐倉が帰り際にわずかに立ち止まる。天野だけが気づく
-      // 結果: 言葉は変わらない。でも「立ち止まった」——最初のヒビ
+      // --- Scene 1: 初会話 ---
+      // 前提: 本が読めないひより。饒舌な店主。空いた店内
+      // 変化: 店主が天気の話を振り、晴とひよりが巻き込まれて会話する
+      // 結果: 短いが、初めて「会話」と呼べるやりとりが生まれた
       {
         id: "ch3_s1",
         lines: [
-          { speaker: "", text: "午後。カランカラン。佐倉さんが入ってくる。窓際の奥の席。", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……コーヒーを。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "はい。", is_choice: false, choices: [] },
-          { speaker: "", text: "今日の一杯。豆はあの人が指差したグアテマラ。湯温85度。蒸らし30秒。", is_choice: false, choices: [] },
-          { speaker: "", text: "自分なりに、ベストを尽くした。", is_choice: false, choices: [] },
-          { speaker: "", text: "カップを運ぶ。佐倉さんは本を読んでいる。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "どうぞ。", is_choice: false, choices: [] },
-          { speaker: "", text: "佐倉さんはカップに手を伸ばし、一口飲んだ。", is_choice: false, choices: [] },
-          { speaker: "", text: "……本に視線を戻す。", is_choice: false, choices: [] },
-          { speaker: "", text: "いつも通りだ。何も変わらない。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "(……だよな)", is_choice: false, choices: [] },
-          { speaker: "", text: "カウンターに戻る。天野がこっちを見て、肩をすくめた。", is_choice: false, choices: [] },
-          { speaker: "", text: "35分後。", is_choice: false, choices: [] },
-          { speaker: "", text: "佐倉さんが本を閉じた。カップは空。立ち上がる。", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……ごちそうさま。", is_choice: false, choices: [] },
-          { speaker: "", text: "ドアに向かう。——ドアノブに手をかけた瞬間、佐倉さんの足が止まった。", is_choice: false, choices: [] },
-          { speaker: "", text: "ほんの一瞬。振り返りかけて——やめた。カランカラン。", is_choice: false, choices: [] },
-          { speaker: "", text: "主人公はカップを下げに行っていて、気づかなかった。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "……店長。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "ん？", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "あの人今、ちょっと止まらなかった？", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……止まった？ どこで？", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "ドアのとこ。出る直前に一瞬。振り返りかけて、やめたっす。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……見間違いじゃない？", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "見間違いじゃないっすよ。あたしずっと見てたもん。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "ずっと見てたのか……。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "だって面白いんすもん、あの人。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……でも、一瞬止まっただけだろ。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "その「一瞬」がすごいんじゃないすか。今まで完全にノーリアクションだったのに。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "豆変えたの、効いてるんじゃないすかね。", is_choice: false, choices: [] },
-          { speaker: "", text: "天野の言葉に、少しだけ胸が軽くなった。", is_choice: false, choices: [] },
-          { speaker: "", text: "……気のせいかもしれない。でも、ゼロじゃなかった。たぶん。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "しっかし降るねえ。天気予報、午後から止むって言ってたけど。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "ほんとですか。帰りまでに止むといいな。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "傘持ってきた？", is_choice: false, choices: [] },
+          { speaker: "晴", text: "折り畳みだけ。あんまり役に立たないやつ。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "あはは。そっちのお嬢さんは？ 傘あった？", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……傘は、持ってきたんですけど。風が強くて。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "だよねえ。横殴りだもん。傘の意味ないよね。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "わかります。折り畳みなんて骨が折れそうでした。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "壊れなかった？", is_choice: false, choices: [] },
+          { speaker: "晴", text: "ギリギリ。もう一回あの風来たら終わりです。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "あはは。まあ食べて元気出して。はい、肉じゃが。二人分ね。", is_choice: false, choices: [] },
+          { speaker: "", text: "定食が来た。肉じゃがの湯気が、雨の冷えた空気に映える。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "肉じゃが、雨の日にちょうどいいですね。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "でしょ？ ねえ、そう思わない？", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……はい。あったかいです。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "今日の肉じゃが、じゃがいもがね、いいのが入ったんだよ。ほくほくでさ。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "あ、たしかに。崩れてないのにちゃんと味が入ってて。すごいですね。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "弱火でじっくりがコツなんだよねえ。", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……お出汁の味が、しっかりしてます。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "お、わかる？ 昆布を長めに引いたんだよ。嬉しいこと言ってくれるねえ。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "（すごいな。出汁の違いがわかるのか）", is_choice: false, choices: [] },
+          { speaker: "晴", text: "俺、出汁の違いとか全然わかんないんですよね。美味いか美味くないかだけで。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "それでいいんだよ。美味いって言ってもらえりゃ。", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……味がわかるのと、美味しいと思うのは、別ですから。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "あ……それ、いいこと言いますね。", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……。", is_choice: false, choices: [] },
+          { speaker: "", text: "彼女が少しうつむいた。箸を動かし続けている。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "ほんとだよねえ。名言だよ、今の。", is_choice: false, choices: [] },
         ],
         next_scene: "ch3_s2",
       },
-      // --- Scene 2: 命名「ツンデレ先輩」 ---
-      // 前提: 翌日。天野が佐倉に興味津々。今日も佐倉は来るはず
-      // 変化: 天野が佐倉に直接話しかけ、名前を聞き出す。「ツンデレ先輩」と命名
-      // 結果: 佐倉は不快そうだが、天野のペースに巻き込まれつつある
+      // --- Scene 2: 帰り道 ---
+      // 前提: 食べ終わって帰る。雨はまだ降っている
+      // 変化: 一瞬だけ同じ方向に歩く。傘の距離
+      // 結果: 短い並歩き。言葉は少ないが、確かに並んだ
       {
         id: "ch3_s2",
         lines: [
-          { speaker: "天野蓮", text: "ね〜店長、今日も来るかなあ、佐倉さん。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "来るだろ。毎日来るから。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "よし。今日はあたし、あの人に話しかけるっす。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "やめとけ。迷惑になる。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "大丈夫っすよ。接客の一環ってことで。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……不安しかない。", is_choice: false, choices: [] },
-          { speaker: "", text: "カランカラン。佐倉さんが入ってきた。", is_choice: false, choices: [] },
-          { speaker: "", text: "窓際の席に座る。", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……コーヒーを。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "はいっす！ ただいま！", is_choice: false, choices: [] },
-          { speaker: "", text: "佐倉さんが一瞬だけ顔を上げた。天野を見て——何も言わず、本を開いた。", is_choice: false, choices: [] },
-          { speaker: "", text: "コーヒーを淹れて、天野がカップを運ぶ。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "どうぞっす！ ……あの、毎日来てくださってありがとうございますっす！", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "あたし新しく入ったバイトの天野っす。よろしくっす！", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……どうも。", is_choice: false, choices: [] },
-          { speaker: "", text: "最小限の返事。でも返事があった。天野は引かない。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "あの、お名前聞いてもいいすか？ 常連さんなのにお名前知らなくて。", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……佐倉。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "佐倉さん！ よろしくっす佐倉さん！", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……元気ね。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "よく言われるっす！ えへへ。", is_choice: false, choices: [] },
-          { speaker: "", text: "天野がカウンターに戻ってくる。小さくガッツポーズ。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "……（小声）名前ゲットっす。佐倉さんっていうんすね。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……（小声）よく聞けたな。俺、何日通われても聞けなかったのに。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "……（小声）聞けばいいだけじゃないすか。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……（小声）それはそうなんだけど。", is_choice: false, choices: [] },
-        ],
-        next_scene: "ch3_s3",
-      },
-      // --- Scene 3: それでも来る ---
-      // 前提: 佐倉が帰った後。天野が「ツンデレ先輩」と名付ける
-      // 変化: 翌日、佐倉が「ツンデレ先輩」呼びに不快を見せるが、また来る
-      // 結果: 天野×佐倉のラインが確立。佐倉は迷惑そうだが壁が少しずつ崩れている
-      {
-        id: "ch3_s3",
-        lines: [
-          { speaker: "", text: "佐倉さんが帰った後。天野が腕を組んで唸っている。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "うーん。あの佐倉さんって人、なんかこう……。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "なんかこう、なに。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "クールっていうか、壁があるっていうか。でも毎日来るし、昨日はちょっと止まったし。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "あれっすよ。ツンデレっすよ。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……ツンデレ。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "間違いないっす。毎日来てんのに無反応って、もうツンデレの教科書っしょ。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "いやいや、ツンデレって好意が前提だろ。あの人は別に——", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "毎日来てる時点で好意っしょ。コーヒー一杯のために毎日通う？ 普通しないっすよ。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "決めた。あたしの中で佐倉さんは今日から「ツンデレ先輩」っす。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "本人に言うなよ絶対。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "えへへ〜。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "その笑い方が一番不安なんだけど。", is_choice: false, choices: [] },
-          { speaker: "", text: "——翌日。", is_choice: false, choices: [] },
-          { speaker: "", text: "カランカラン。佐倉さんが入ってくる。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "あっ、佐倉先輩こんにちわっす！", is_choice: false, choices: [] },
-          { speaker: "", text: "佐倉さんの眉がぴくりと動いた。", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……先輩？", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "だって佐倉さん常連の先輩じゃないすか。あたしより先にこの店来てたんだし。", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……別にそういうのじゃない。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "え〜、いいじゃないすか。佐倉先輩！ 今日もいつもの席っすか？", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……。", is_choice: false, choices: [] },
-          { speaker: "", text: "佐倉さんは何か言いたそうにしたが、結局何も言わず窓際の席に座った。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……（小声）おい天野。先輩呼びは——", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "……（小声）大丈夫大丈夫。嫌がってるようで嫌がってないっすよ。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……（小声）どこを見てそう判断してるんだ。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "……（小声）だって、本当に嫌なら明日から来ないっしょ。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……。", is_choice: false, choices: [] },
-          { speaker: "", text: "コーヒーを淹れて運ぶ。いつも通り佐倉さんは本を読んでいる。", is_choice: false, choices: [] },
-          { speaker: "", text: "——が、ページをめくるスピードが普段より少し速い気がする。", is_choice: false, choices: [] },
-          { speaker: "", text: "35分後。佐倉さんが立ち上がる。", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……ごちそうさま。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "ありがとうございます佐倉先輩！ また明日っすね！", is_choice: false, choices: [] },
-          { speaker: "", text: "佐倉さんは天野をちらりと見た。少し目が細くなった。", is_choice: false, choices: [] },
-          { speaker: "", text: "怒っているのか、呆れているのか——どちらとも取れる表情。", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……好きに呼べば。", is_choice: false, choices: [] },
-          { speaker: "", text: "カランカラン。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "やった！ 公認っす！", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "あれ公認なのか……？", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "「好きに呼べば」っすよ？ これ許可っしょ！", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "「諦め」とも言うけどな……。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "ねえ店長。佐倉先輩、絶対明日も来るっすよ。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……まあ、たぶんな。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "でしょ！ あの人、口では迷惑そうにしてるけど、嫌じゃないっすよあれ。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "ほら、やっぱツンデレっす。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……そうなのかな。", is_choice: false, choices: [] },
-          { speaker: "", text: "佐倉さんの席を片付ける。カップは空。「好きに呼べば」——今までで一番長い台詞だった。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……ま、天野のおかげかもな。", is_choice: false, choices: [] },
-          { speaker: "天野蓮", text: "おっ、素直っすね店長。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "たまにはな。", is_choice: false, choices: [] },
-          { speaker: "", text: "窓の外は夕焼けだった。佐倉さんがいつも通る道が、オレンジ色に染まっている。", is_choice: false, choices: [] },
-          { speaker: "", text: "明日もきっと、同じ時間に、同じ席に、あの人は座る。", is_choice: false, choices: [] },
-          { speaker: "", text: "そう思うと——悪くない気分だった。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "ごちそうさまです。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "まいど。気をつけてね、足元。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "はい。折り畳み、がんばります。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "あはは、がんばれ。", is_choice: false, choices: [] },
+          { speaker: "", text: "折り畳み傘を開いて、路地に出た。雨はまだ降っている。", is_choice: false, choices: [] },
+          { speaker: "", text: "——後ろで、引き戸が開いた。", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……ごちそうさまでした。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "まいど。ひよりちゃんも気をつけてね。", is_choice: false, choices: [] },
+          { speaker: "", text: "彼女も出てきた。傘を開く。白い傘。", is_choice: false, choices: [] },
+          { speaker: "", text: "路地は一本道。出口は同じ方向。自然と、並んで歩く形になった。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "……雨、止みそうにないですね。", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……そうですね。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "本、大丈夫でした？ 鞄、けっこう濡れてたから。", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……少しだけ。表紙が。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "あー……それは、つらいですね。", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……乾けば、読めますから。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "それならよかった。", is_choice: false, choices: [] },
+          { speaker: "", text: "路地の出口。ここで道が左右に分かれる。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "じゃ、俺こっちなんで。", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "……はい。お疲れさまです。", is_choice: false, choices: [] },
+          { speaker: "", text: "軽く頭を下げて、別れた。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "（話した。……初めてちゃんと話したな、あの人と）", is_choice: false, choices: [] },
+          { speaker: "晴", text: "（天気の話と、本の話。それだけなんだけど）", is_choice: false, choices: [] },
+          { speaker: "", text: "折り畳み傘が風に煽られた。やっぱり役に立たない。", is_choice: false, choices: [] },
+          { speaker: "", text: "でも、雨の日も悪くないな、と思った。", is_choice: false, choices: [] },
         ],
         next_scene: "",
       },

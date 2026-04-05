@@ -1,37 +1,38 @@
-// Main app UI for 廃墟カフェ復興記
+// メインUI — 定食屋「灯」に通うADV
 
-/// Main app component
+/// メインアプリコンポーネント
 pub fn app(state : @game.GameState) -> @dom.DomNode {
   @dom.div(
     class="app",
     [
-      // Header
       render_header(state),
-      // Main content area - switches based on game phase
       @dom.div(
         class="main-content",
         [
+          @dom.show(
+            fn() { state.phase.get() == @data.GamePhase::Visit },
+            fn() { render_visit_view(state) },
+          ),
+          @dom.show(
+            fn() { state.phase.get() == @data.GamePhase::Scene },
+            fn() { render_scene_view(state) },
+          ),
           @dom.show(
             fn() { state.phase.get() == @data.GamePhase::Story },
             fn() { render_story_view(state) },
           ),
           @dom.show(
-            fn() { state.phase.get() == @data.GamePhase::Business },
-            fn() { render_business_view(state) },
-          ),
-          @dom.show(
-            fn() { state.phase.get() == @data.GamePhase::DayResult },
-            fn() { render_day_result_view(state) },
+            fn() { state.phase.get() == @data.GamePhase::Calendar },
+            fn() { render_calendar_view(state) },
           ),
         ],
       ),
-      // Message log
       render_message_log(state),
     ],
   )
 }
 
-/// Header with game status
+/// ヘッダー — タイトルと基本ステータス
 fn render_header(state : @game.GameState) -> @dom.DomNode {
   @dom.header_(
     class="game-header",
@@ -39,7 +40,7 @@ fn render_header(state : @game.GameState) -> @dom.DomNode {
       @dom.div(
         class="header-title",
         [
-          @dom.h1(class="title", [@dom.text("月灯り")]),
+          @dom.h1(class="title", [@dom.text("灯")]),
           @dom.span(
             class="subtitle",
             [@dom.text_dyn(fn() {
@@ -59,16 +60,14 @@ fn render_header(state : @game.GameState) -> @dom.DomNode {
         [
           @dom.span(
             class="stat",
-            [@dom.text_dyn(fn() { "Day " + state.day.get().to_string() })],
+            [@dom.text_dyn(fn() { state.day.get().to_string() + "日目" })],
           ),
           @dom.span(
-            class="stat money",
-            [@dom.text_dyn(fn() { "¥" + state.money.get().to_string() })],
-          ),
-          @dom.span(
-            class="stat stamina",
+            class="stat",
             [@dom.text_dyn(fn() {
-              "SP " + state.stamina.get().to_string() + "/" + state.max_stamina.to_string()
+              let pts = state.intimacy.get()
+              let stars = @game.get_intimacy_stars(pts)
+              "親密度 " + pts.to_string() + " (★" + stars.to_string() + ")"
             })],
           ),
         ],
@@ -77,12 +76,151 @@ fn render_header(state : @game.GameState) -> @dom.DomNode {
   )
 }
 
-/// Story view - ADV-style text display
+/// Visit ビュー — 灯を訪問する画面
+///
+/// 今日の日替わりメニューを表示し、「灯に入る」ボタンで訪問する。
+/// 訪問済みなら「次の日へ」ボタンを表示。
+fn render_visit_view(state : @game.GameState) -> @dom.DomNode {
+  @dom.div(
+    class="visit-view",
+    [
+      @dom.h2(class="section-title", [@dom.text("灯")]),
+      // 今日の日替わり表示
+      @dom.div(
+        class="daily-menu-card",
+        [
+          @dom.div(
+            class="menu-label",
+            [@dom.text("今日の日替わり")],
+          ),
+          @dom.div(
+            class="menu-name",
+            [@dom.text_dyn(fn() {
+              let menu = @data.get_today_menu(state.day.get())
+              menu.name
+            })],
+          ),
+          @dom.div(
+            class="menu-desc",
+            [@dom.text_dyn(fn() {
+              let menu = @data.get_today_menu(state.day.get())
+              menu.description
+            })],
+          ),
+        ],
+      ),
+      // アクションボタン
+      @dom.div(
+        class="visit-actions",
+        [
+          // 未訪問なら「灯に入る」
+          @dom.show(
+            fn() { !state.visited_today.get() },
+            fn() {
+              @dom.button(
+                class="btn btn-primary btn-large",
+                on=@dom.events().click(fn(_e) { @game.visit_akari(state) }),
+                [@dom.text("灯に入る")],
+              )
+            },
+          ),
+          // 訪問済みなら「次の日へ」
+          @dom.show(
+            fn() { state.visited_today.get() },
+            fn() {
+              @dom.button(
+                class="btn btn-primary btn-large",
+                on=@dom.events().click(fn(_e) { @game.next_day(state) }),
+                [@dom.text("次の日へ")],
+              )
+            },
+          ),
+        ],
+      ),
+      // 親密度バー
+      @dom.div(
+        class="intimacy-bar",
+        [@dom.text_dyn(fn() {
+          let pts = state.intimacy.get()
+          let current_ch = state.current_chapter.get()
+          let chapters = @data.get_chapters()
+          let next_threshold = if current_ch + 1 < chapters.length() {
+            chapters[current_ch + 1].unlock_intimacy
+          } else {
+            1000
+          }
+          "親密度 " + pts.to_string() + " / " + next_threshold.to_string()
+        })],
+      ),
+      // 味の記憶ボタン
+      @dom.div(
+        class="calendar-link",
+        [
+          @dom.button(
+            class="btn btn-secondary",
+            on=@dom.events().click(fn(_e) {
+              state.phase.set(@data.GamePhase::Calendar)
+            }),
+            [@dom.text("味の記憶")],
+          ),
+        ],
+      ),
+    ],
+  )
+}
+
+/// Scene ビュー — ひとくちシーン表示
+///
+/// 短いテキスト（1-3行）を表示し、ストーリー解放 or 次の日へ。
+fn render_scene_view(state : @game.GameState) -> @dom.DomNode {
+  @dom.div(
+    class="scene-view",
+    [
+      // メニュー名
+      @dom.div(
+        class="scene-menu",
+        [@dom.text_dyn(fn() { state.today_menu.get() })],
+      ),
+      // ひとくちシーンテキスト
+      @dom.div(
+        class="scene-text",
+        [@dom.text_dyn(fn() { state.today_scene_text.get() })],
+      ),
+      // ボタン
+      @dom.div(
+        class="scene-actions",
+        [
+          @dom.button(
+            class="btn btn-primary",
+            on=@dom.events().click(fn(_e) { @game.finish_scene(state) }),
+            [@dom.text_dyn(fn() {
+              // 次の章が解放可能かチェック
+              let current = state.current_chapter.get()
+              let chapters = @data.get_chapters()
+              if current + 1 < chapters.length() {
+                let next = chapters[current + 1]
+                if state.intimacy.get() >= next.unlock_intimacy {
+                  "ストーリーが解放されました"
+                } else {
+                  "ごちそうさまでした"
+                }
+              } else {
+                "ごちそうさまでした"
+              }
+            })],
+          ),
+        ],
+      ),
+    ],
+  )
+}
+
+/// Story ビュー — ADV形式のテキスト表示
 fn render_story_view(state : @game.GameState) -> @dom.DomNode {
   @dom.div(
     class="story-view",
     [
-      // Chapter title
+      // 章タイトル
       @dom.div(
         class="chapter-header",
         [@dom.text_dyn(fn() {
@@ -92,11 +230,11 @@ fn render_story_view(state : @game.GameState) -> @dom.DomNode {
           }
         })],
       ),
-      // Text display area
+      // テキスト表示エリア
       @dom.div(
         class="story-text-area",
         [
-          // Speaker name
+          // 話者名
           @dom.div(
             class="speaker-name",
             [@dom.text_dyn(fn() {
@@ -106,7 +244,7 @@ fn render_story_view(state : @game.GameState) -> @dom.DomNode {
               }
             })],
           ),
-          // Story text
+          // テキスト本文
           @dom.div(
             class="story-text",
             [@dom.text_dyn(fn() {
@@ -118,7 +256,7 @@ fn render_story_view(state : @game.GameState) -> @dom.DomNode {
           ),
         ],
       ),
-      // Advance button
+      // 進行ボタン
       @dom.div(
         class="story-controls",
         [
@@ -126,7 +264,6 @@ fn render_story_view(state : @game.GameState) -> @dom.DomNode {
             class="btn btn-primary",
             on=@dom.events().click(fn(_e) { @game.advance_story(state) }),
             [@dom.text_dyn(fn() {
-              // Check if this is the last line
               match @game.get_current_line(state) {
                 Some(_) => "▼"
                 None => "次へ"
@@ -139,286 +276,86 @@ fn render_story_view(state : @game.GameState) -> @dom.DomNode {
   )
 }
 
-/// Business view - menu selection and operation
-fn render_business_view(state : @game.GameState) -> @dom.DomNode {
+/// Calendar ビュー — 味の記憶（訪問記録の一覧）
+///
+/// コレクション要素。訪問した日のメニューとひとくちシーンを振り返る。
+fn render_calendar_view(state : @game.GameState) -> @dom.DomNode {
   @dom.div(
-    class="business-view",
+    class="calendar-view",
     [
-      @dom.h2(class="section-title", [@dom.text("営業準備")]),
-      // Stamina display
       @dom.div(
-        class="stamina-bar",
+        class="calendar-header",
         [
-          @dom.text_dyn(fn() {
-            "仕入れ予算 (SP): " + state.stamina.get().to_string() + " / " + state.max_stamina.to_string() + "  (営業コスト: 20)"
-          }),
+          @dom.h2(class="section-title", [@dom.text("味の記憶")]),
+          @dom.button(
+            class="btn btn-close",
+            on=@dom.events().click(fn(_e) {
+              state.phase.set(@data.GamePhase::Visit)
+            }),
+            [@dom.text("×")],
+          ),
         ],
       ),
-      // Menu selection
-      @dom.h3(class="subsection-title", [@dom.text("提供メニュー")]),
+      // メニュー制覇状況
       @dom.div(
-        class="menu-grid",
-        [
-          @dom.for_each(
-            fn() { state.unlocked_recipes.get() },
-            fn(recipe_id, _i) {
-              let recipes = @data.get_all_recipes()
-              let mut name = ""
-              let mut price = 0
-              let mut desc = ""
-              for r in recipes {
-                if r.id == recipe_id {
-                  name = r.name
-                  price = r.price
-                  desc = r.description
-                  break
-                }
+        class="menu-collection",
+        [@dom.text_dyn(fn() {
+          let all_menus = @data.get_daily_menus()
+          let log = state.visit_log.get()
+          let mut unique_count = 0
+          for menu in all_menus {
+            let mut found = false
+            for record in log {
+              if record.menu_id == menu.id {
+                found = true
+                break
               }
-              let rid = recipe_id
-              @dom.div(
-                class="menu-item",
-                on=@dom.events().click(fn(_e) { @game.toggle_menu_item(state, rid) }),
-                [
-                  @dom.div(
-                    class="menu-item-header",
-                    [
-                      @dom.span(
-                        class="menu-check",
-                        [@dom.text_dyn(fn() {
-                          let selected = state.selected_menu.get()
-                          let mut found = false
-                          for s in selected {
-                            if s == rid {
-                              found = true
-                              break
-                            }
-                          }
-                          if found { "[x]" } else { "[ ]" }
-                        })],
-                      ),
-                      @dom.span(class="menu-name", [@dom.text(name)]),
-                      @dom.span(class="menu-price", [@dom.text("¥" + price.to_string())]),
-                    ],
-                  ),
-                  @dom.div(class="menu-desc", [@dom.text(desc)]),
-                ],
-              )
-            },
-          ),
-        ],
+            }
+            if found {
+              unique_count = unique_count + 1
+            }
+          }
+          "制覇: " +
+          unique_count.to_string() +
+          " / " +
+          all_menus.length().to_string() +
+          " メニュー"
+        })],
       ),
-      // Action buttons
-      @dom.div(
-        class="business-actions",
-        [
-          @dom.button(
-            class="btn btn-primary btn-large",
-            on=@dom.events().click(fn(_e) { @game.start_business(state) }),
-            [@dom.text("営業開始")],
-          ),
-          @dom.button(
-            class="btn btn-secondary",
-            on=@dom.events().click(fn(_e) { state.show_recipe_book.set(true) }),
-            [@dom.text("レシピ帳")],
-          ),
-        ],
-      ),
-      // Daily missions
-      render_daily_missions(state),
-      // Recipe book overlay
-      @dom.show(
-        fn() { state.show_recipe_book.get() },
-        fn() { render_recipe_book(state) },
-      ),
-    ],
-  )
-}
-
-/// Day result view
-fn render_day_result_view(state : @game.GameState) -> @dom.DomNode {
-  @dom.div(
-    class="day-result-view",
-    [
-      @dom.h2(class="section-title", [@dom.text_dyn(fn() { "Day " + state.day.get().to_string() + " 営業結果" })]),
-      // Customer visit log
+      // 訪問記録リスト
       @dom.div(
         class="visit-log",
         [
           @dom.for_each(
-            fn() { state.day_visitors.get() },
-            fn(visit, _i) {
-              let char_name = if visit.character_id != "" {
-                @game.get_character_name(visit.character_id)
-              } else {
-                "一般のお客さん"
+            fn() { state.visit_log.get() },
+            fn(record, _i) {
+              // menu_id から名前を引く
+              let menus = @data.get_daily_menus()
+              let mut menu_name = record.menu_id
+              for m in menus {
+                if m.id == record.menu_id {
+                  menu_name = m.name
+                  break
+                }
               }
-              let menu_name = @game.get_recipe_name(visit.menu_ordered)
               @dom.div(
                 class="visit-entry",
                 [
                   @dom.div(
-                    class="visit-info",
-                    [
-                      @dom.span(class="visitor-name", [@dom.text(char_name)]),
-                      @dom.span(class="visitor-order", [@dom.text(" → " + menu_name)]),
-                      @dom.span(class="visitor-revenue", [@dom.text(" ¥" + visit.revenue.to_string())]),
-                    ],
+                    class="visit-day",
+                    [@dom.text(record.day.to_string() + "日目")],
                   ),
-                  @dom.div(class="visit-dialogue", [@dom.text(visit.dialogue)]),
-                ],
-              )
-            },
-          ),
-        ],
-      ),
-      // Summary
-      @dom.div(
-        class="day-summary",
-        [
-          @dom.div(
-            class="summary-row",
-            [
-              @dom.text_dyn(fn() { "売上: ¥" + state.day_revenue.get().to_string() }),
-            ],
-          ),
-          @dom.div(
-            class="summary-row",
-            [
-              @dom.text_dyn(fn() { "仕入れ: ¥" + state.day_cost.get().to_string() }),
-            ],
-          ),
-          @dom.div(
-            class="summary-row profit",
-            [
-              @dom.text_dyn(fn() {
-                let profit = state.day_revenue.get() - state.day_cost.get()
-                "利益: ¥" + profit.to_string()
-              }),
-            ],
-          ),
-        ],
-      ),
-      // Next day button
-      @dom.div(
-        class="day-result-actions",
-        [
-          @dom.button(
-            class="btn btn-primary btn-large",
-            on=@dom.events().click(fn(_e) { @game.end_day(state) }),
-            [@dom.text("次の日へ")],
-          ),
-        ],
-      ),
-    ],
-  )
-}
-
-/// Daily missions panel
-fn render_daily_missions(state : @game.GameState) -> @dom.DomNode {
-  @dom.div(
-    class="missions-panel",
-    [
-      @dom.h3(class="subsection-title", [@dom.text("デイリーミッション")]),
-      @dom.div(
-        class="missions-list",
-        [
-          @dom.for_each(
-            fn() { @game.get_daily_missions(state) },
-            fn(mission, _i) {
-              let mid = mission.id
-              @dom.div(
-                class="mission-item",
-                [
-                  @dom.span(
-                    class="mission-status",
-                    [@dom.text(if mission.completed { "✓" } else { "○" })],
-                  ),
-                  @dom.span(class="mission-desc", [@dom.text(mission.description)]),
-                  @dom.span(class="mission-progress", [@dom.text(
-                    mission.current.to_string() + "/" + mission.target.to_string(),
-                  )]),
-                  @dom.span(class="mission-reward", [@dom.text("¥" + mission.reward.to_string())]),
-                  @dom.show(
-                    fn() {
-                      let missions = @game.get_daily_missions(state)
-                      for m in missions {
-                        if m.id == mid {
-                          return m.completed
-                        }
-                      }
-                      false
-                    },
-                    fn() {
-                      @dom.button(
-                        class="btn btn-small",
-                        on=@dom.events().click(fn(_e) { @game.claim_mission_reward(state, mid) }),
-                        [@dom.text("受取")],
-                      )
-                    },
-                  ),
-                ],
-              )
-            },
-          ),
-        ],
-      ),
-    ],
-  )
-}
-
-/// Recipe book overlay
-fn render_recipe_book(state : @game.GameState) -> @dom.DomNode {
-  @dom.div(
-    class="overlay",
-    [
-      @dom.div(
-        class="recipe-book",
-        [
-          @dom.div(
-            class="recipe-book-header",
-            [
-              @dom.h2(class="section-title", [@dom.text("レシピ帳")]),
-              @dom.button(
-                class="btn btn-close",
-                on=@dom.events().click(fn(_e) { state.show_recipe_book.set(false) }),
-                [@dom.text("×")],
-              ),
-            ],
-          ),
-          @dom.div(
-            class="recipe-list",
-            [
-              @dom.for_each(
-                fn() { state.discovered_recipes.get() },
-                fn(recipe_id, _i) {
-                  let recipes = @data.get_all_recipes()
-                  let mut name = "???"
-                  let mut desc = ""
-                  let mut cost = 0
-                  let mut price = 0
-                  for r in recipes {
-                    if r.id == recipe_id {
-                      name = r.name
-                      desc = r.description
-                      cost = r.cost
-                      price = r.price
-                      break
-                    }
-                  }
                   @dom.div(
-                    class="recipe-entry",
-                    [
-                      @dom.div(class="recipe-name", [@dom.text(name)]),
-                      @dom.div(class="recipe-desc", [@dom.text(desc)]),
-                      @dom.div(
-                        class="recipe-costs",
-                        [@dom.text("原価 ¥" + cost.to_string() + " → 売値 ¥" + price.to_string())],
-                      ),
-                    ],
-                  )
-                },
-              ),
-            ],
+                    class="visit-menu",
+                    [@dom.text(menu_name)],
+                  ),
+                  @dom.div(
+                    class="visit-scene",
+                    [@dom.text(record.scene_text)],
+                  ),
+                ],
+              )
+            },
           ),
         ],
       ),
@@ -426,7 +363,7 @@ fn render_recipe_book(state : @game.GameState) -> @dom.DomNode {
   )
 }
 
-/// Message log at the bottom
+/// メッセージログ
 fn render_message_log(state : @game.GameState) -> @dom.DomNode {
   @dom.div(
     class="message-log",

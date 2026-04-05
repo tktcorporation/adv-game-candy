@@ -1,134 +1,113 @@
 // ============================================================
-// 第0章: 店長、はじめました
+// 第零章: いつもの席
 // ============================================================
 //
 // あらすじ:
-//   親戚のおばさんに「ちょっと店見てて〜」と丸投げされた主人公。
-//   カフェの営業なんてしたことない。コーヒーの淹れ方もよく分からない。
-//   そこに最初の客——佐倉美月が来る。コーヒーを全部飲んで
-//   「ごちそうさま」とだけ言って帰る。感想なし。主人公は拍子抜け。
+//   晴が昼に通う飯屋「灯」。カウンター8席の小さな店。
+//   いつも同じ時間帯に来る女の人がいる。前から気づいてた。
+//   でも目が合っても会釈すらしない距離感。お互い、ただの客。
+//   ある日、店が混んでいて相席状態に。隣になった。
+//   晴は相手のことが気になるが、何も起きない。
+//   ——帰り際、晴のある行動をひよりが見ていた。
 //
-// 登場キャラ: 佐倉美月
+// 登場キャラ: 椎名ひより
 // キーイベント:
-//   - 主人公がカフェを任される経緯
-//   - 佐倉との出会い（無反応）
-//   - 「ごちそうさま」——これが物語の始まり
+//   - 日常描写。晴とひよりは同じ店の常連
+//   - 距離は遠い。言葉は交わさない
+//   - 帰り際、晴が店主のために椅子を直すのをひよりが見る
+//     ——晴は気づいていない
 //
 // --- 章の状態差分 ---
-// 開始状態: 主人公はカフェ経営ゼロ経験。店は一応営業できる状態。
-// 終了状態: 最初の客（佐倉）が来た。無反応だった。明日も来るのか分からない。
-//   主人公の変化: 「なんだったんだあの人」→気になる
-//   店の変化: なし（まだ何も始まっていない）
-//   関係性: 佐倉（名前も知らない。無反応の客）
+// 開始状態: 2人とも常連。互いの顔は知ってるが話したことはない。
+// 終了状態: まだ話していない。でもひよりの中で何かが引っかかった（読者だけが知る）。
+//   晴の変化: なし。いつも通り。
+//   関係性: ひより（同じ店の客。それだけ）
 // ============================================================
 
-/// Chapter 0: 店長、はじめました
+/// Chapter 0: いつもの席
 pub fn get_chapter_0() -> Chapter {
   {
     id: 0,
     title: "第零章",
-    subtitle: "店長、はじめました",
-    unlock_revenue: 0,
-    unlock_recipes: 0,
-    unlock_customers: 0,
+    subtitle: "いつもの席",
     unlock_intimacy: 0,
     scenes: [
-      // --- Scene 0: おばさんの置き手紙 ---
-      // 前提: 朝。主人公がカフェ「月灯り」に来ると、おばさんがいない
-      // 変化: 置き手紙で「しばらく旅行行ってくるね〜」→店を任される
-      // 結果: 困惑しつつも店を開けることに
+      // --- Scene 0: 灯 ---
+      // 前提: 平日の昼。晴がいつもの店に来る
+      // 変化: 日常を描く。店と晴の関係
+      // 結果: いつもの昼飯
       {
         id: "ch0_s0",
         lines: [
-          { speaker: "", text: "朝。カフェ「月灯り」の前に立っている。", is_choice: false, choices: [] },
-          { speaker: "", text: "おばさんから呼び出されたはずなのに、店のドアに張り紙がしてある。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……なにこれ。", is_choice: false, choices: [] },
-          { speaker: "", text: "『しばらく旅行行ってきます！ 店のことよろしくね〜☆ 冷蔵庫のプリン食べていいよ！ ——おばちゃんより』", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "は？", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "いやいやいや。「よろしくね」じゃないんだけど。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "カフェの経営なんてしたことないんだけど。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "てかコーヒーの淹れ方知らないんだけど。", is_choice: false, choices: [] },
-          { speaker: "", text: "スマホを取り出す。おばさんに電話。", is_choice: false, choices: [] },
-          { speaker: "", text: "『おかけになった番号は、現在電波の届かない——』", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "どこ行ったんだよ……。", is_choice: false, choices: [] },
-          { speaker: "", text: "もう一度張り紙を見る。端っこに小さく追伸。", is_choice: false, choices: [] },
-          { speaker: "", text: "『P.S. コーヒーは棚の上のやつ使って。お湯入れるだけだから大丈夫！』", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "インスタントかよ。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……まあ、とりあえず中入るか。", is_choice: false, choices: [] },
-          { speaker: "", text: "鍵を開けて店内に入る。小さなカフェ。カウンターが6席、テーブルが3つ。", is_choice: false, choices: [] },
-          { speaker: "", text: "窓から朝の光が差し込んでいる。埃っぽくはない。おばさんが掃除だけはしていたらしい。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……悪くない場所だけど。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "俺に何しろってんだ。", is_choice: false, choices: [] },
+          { speaker: "", text: "平日の昼。十二時半。", is_choice: false, choices: [] },
+          { speaker: "", text: "駅から少し離れた路地を入ったところに、その店はある。", is_choice: false, choices: [] },
+          { speaker: "", text: "「灯」。看板が小さくて、知らないと通り過ぎる。", is_choice: false, choices: [] },
+          { speaker: "", text: "カウンター8席。テーブルは2つ。ランチは日替わり定食が一種類だけ。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "こんにちはー。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "いらっしゃい。", is_choice: false, choices: [] },
+          { speaker: "", text: "カウンターの端に座る。いつもの席。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "日替わりで。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "はいよ。今日は鯖の味噌煮ね。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "あ、いいですね。", is_choice: false, choices: [] },
+          { speaker: "", text: "この店を見つけたのは、引っ越してきて二週間目くらいだった。", is_choice: false, choices: [] },
+          { speaker: "", text: "路地の奥で「定食」ののぼりが出てるのが見えて、ふらっと入った。", is_choice: false, choices: [] },
+          { speaker: "", text: "それから、ほぼ毎日。味がいいし、量もちょうどいいし、静か。", is_choice: false, choices: [] },
+          { speaker: "", text: "鯖が来た。味噌汁と小鉢がついて850円。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "いただきます。", is_choice: false, choices: [] },
         ],
         next_scene: "ch0_s1",
       },
-      // --- Scene 1: 最初の一杯（ひどい） ---
-      // 前提: 仕方なく店を開けることにした主人公。コーヒーを淹れてみる
-      // 変化: 自分で飲んで絶望する
-      // 結果: とりあえず看板を出す
+      // --- Scene 1: いつもの人 ---
+      // 前提: 食べている途中。いつもの時間帯
+      // 変化: いつも見かける女の人が来る。反対側に座る。遠い
+      // 結果: 目が合うわけでもない。ただ、同じ空間にいるだけ
       {
         id: "ch0_s1",
         lines: [
-          { speaker: "", text: "棚の上にインスタントコーヒーの瓶。その隣に、豆の袋がいくつか。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……豆、あるじゃん。ミルも。ドリッパーも。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "せめてインスタントじゃなくてちゃんと淹れるか。", is_choice: false, choices: [] },
-          { speaker: "", text: "スマホで「コーヒー 淹れ方」を検索。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "豆を挽いて……お湯を注いで……蒸らす？", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "蒸らすってなに。", is_choice: false, choices: [] },
-          { speaker: "", text: "見よう見まねで淹れてみる。", is_choice: false, choices: [] },
-          { speaker: "", text: "……できた。たぶん。色はコーヒーっぽい。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "にが。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "いや、苦いとかじゃなくて。なんか、薄いのに苦い。最悪のバランス。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……これ出す？ 人に？", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……出すしかないか。", is_choice: false, choices: [] },
-          { speaker: "", text: "意を決して、表の看板を「OPEN」にひっくり返した。", is_choice: false, choices: [] },
+          { speaker: "", text: "引き戸が開いた。", is_choice: false, choices: [] },
+          { speaker: "ひより", text: "こんにちは。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "いらっしゃい。好きなとこ座って。", is_choice: false, choices: [] },
+          { speaker: "", text: "女の人が一人。", is_choice: false, choices: [] },
+          { speaker: "", text: "カウンターの反対側に座った。いつもあっち側。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "（あ、今日も来てるな、あの人）", is_choice: false, choices: [] },
+          { speaker: "", text: "前から知っている。知っている、というか——見かけている。", is_choice: false, choices: [] },
+          { speaker: "", text: "だいたい同じ時間帯に来る人。", is_choice: false, choices: [] },
+          { speaker: "", text: "話したことは一度もない。", is_choice: false, choices: [] },
+          { speaker: "", text: "髪が長い。鞄から文庫本を出して、定食が来るまで読んでいる。", is_choice: false, choices: [] },
+          { speaker: "", text: "注文は同じ。「日替わりで」。声は小さいけど、はっきりしてる。", is_choice: false, choices: [] },
+          { speaker: "", text: "それだけ。", is_choice: false, choices: [] },
+          { speaker: "", text: "同じ店に通う人。互いの名前も知らない。目も合わない。", is_choice: false, choices: [] },
+          { speaker: "", text: "カウンターの端と端。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "（……まあ、そんなもんだよな。飯屋の他の客なんて）", is_choice: false, choices: [] },
+          { speaker: "", text: "鯖を食べる。向こう側でも、静かに箸が動いている。", is_choice: false, choices: [] },
         ],
         next_scene: "ch0_s2",
       },
-      // --- Scene 2: 最初の客 ---
-      // 前提: 開店したが誰も来ない。午後になった
-      // 知識: 主人公はこの客について何も知らない
-      // 変化: 佐倉が来る。コーヒーを飲んで「ごちそうさま」。感想なし
-      // 結果: 「なんだったんだあの人」→翌日も来るか気になる
+      // --- Scene 2: 帰り際 ---
+      // 前提: 食べ終わった。会計
+      // 変化: 晴が立ち上がる時、隣の椅子が少しずれてるのを直す
+      //   ——誰にも言わず、自然に。癖みたいな動作
+      //   ひよりが本越しにそれを見ている（晴は気づいていない）
+      // 結果: 晴にとっては何でもない日。でも何かが動いた
       {
         id: "ch0_s2",
         lines: [
-          { speaker: "", text: "午前中、客はゼロ。", is_choice: false, choices: [] },
-          { speaker: "", text: "午後になった。まだゼロ。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "まあ、そうだよな。いきなり来ないよな。", is_choice: false, choices: [] },
-          { speaker: "", text: "カウンターの中でスマホをいじっていたら——", is_choice: false, choices: [] },
-          { speaker: "", text: "カランカラン。", is_choice: false, choices: [] },
-          { speaker: "", text: "ドアが開いた。", is_choice: false, choices: [] },
-          { speaker: "", text: "女の子が一人、入ってきた。", is_choice: false, choices: [] },
-          { speaker: "", text: "栗色の髪をゆるくひとつに結んでいる。白いニット。手に文庫本。", is_choice: false, choices: [] },
-          { speaker: "", text: "店内をゆっくり見回して——窓際の一番奥の席に座った。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "あ、いらっしゃいませ。", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……コーヒーを。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "はい。コーヒー。えっと……少々お待ちください。", is_choice: false, choices: [] },
-          { speaker: "", text: "さっき自分で飲んであの味だったコーヒーを、人に出すのか。", is_choice: false, choices: [] },
-          { speaker: "", text: "……出すしかない。", is_choice: false, choices: [] },
-          { speaker: "", text: "カップを窓際の席に運ぶ。彼女はもう本を開いていた。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……どうぞ。", is_choice: false, choices: [] },
-          { speaker: "", text: "彼女はちらりとカップを見て、本に視線を戻した。", is_choice: false, choices: [] },
-          { speaker: "", text: "一口。", is_choice: false, choices: [] },
-          { speaker: "", text: "……。", is_choice: false, choices: [] },
-          { speaker: "", text: "反応、なし。", is_choice: false, choices: [] },
-          { speaker: "", text: "美味しいとも、まずいとも言わない。ただ、ページをめくっている。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "(……感想、ないのか。)", is_choice: false, choices: [] },
-          { speaker: "", text: "30分くらいだろうか。彼女は本を閉じて、立ち上がった。", is_choice: false, choices: [] },
-          { speaker: "", text: "カップは空だった。全部飲んでいた。", is_choice: false, choices: [] },
-          { speaker: "佐倉美月", text: "……ごちそうさま。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "あ、ありがとうございます。あの——", is_choice: false, choices: [] },
-          { speaker: "", text: "言いかけた時には、もうドアが閉まっていた。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "なんだったんだ、あの人。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "美味しかったのか？ まずかったのか？", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……でも、全部飲んでたな。", is_choice: false, choices: [] },
-          { speaker: "", text: "空のカップを洗いながら、なんとなく窓の外を見た。", is_choice: false, choices: [] },
-          { speaker: "", text: "彼女の姿は、もうなかった。", is_choice: false, choices: [] },
-          { speaker: "主人公", text: "……明日も来るのかな。", is_choice: false, choices: [] },
-          { speaker: "", text: "なんでそんなことが気になるのか、自分でもよく分からなかった。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "ごちそうさまです。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "まいど。", is_choice: false, choices: [] },
+          { speaker: "", text: "会計を済ませて、席を立つ。", is_choice: false, choices: [] },
+          { speaker: "", text: "——ふと、隣の椅子が斜めにずれているのが目に入った。", is_choice: false, choices: [] },
+          { speaker: "", text: "さっきまで座っていたお客さんが動かしたまま帰ったらしい。", is_choice: false, choices: [] },
+          { speaker: "", text: "直した。カウンターに沿うように。", is_choice: false, choices: [] },
+          { speaker: "", text: "別に誰に頼まれたわけでもない。なんとなく。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "あ、ありがとね。", is_choice: false, choices: [] },
+          { speaker: "晴", text: "いえ。じゃ、また。", is_choice: false, choices: [] },
+          { speaker: "丸山", text: "はいよ。", is_choice: false, choices: [] },
+          { speaker: "", text: "引き戸を開けて出る。昼の日差し。いつもの路地。", is_choice: false, choices: [] },
+          { speaker: "", text: "何でもない昼飯だった。", is_choice: false, choices: [] },
+          { speaker: "", text: "——店の中では。", is_choice: false, choices: [] },
+          { speaker: "", text: "カウンターの反対側で、彼女が本から目を上げていた。", is_choice: false, choices: [] },
+          { speaker: "", text: "晴が椅子を直した手元を、見ていた。", is_choice: false, choices: [] },
+          { speaker: "", text: "……文庫本のページが、しばらくめくれなかった。", is_choice: false, choices: [] },
         ],
         next_scene: "",
       },

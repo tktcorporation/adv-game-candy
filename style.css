@@ -1,18 +1,26 @@
-/* 月灯り - 廃墟カフェ復興記 */
+/* 灯 — ADVゲーム UI
+ *
+ * 設計方針: Arc Browser ライクなミニマルデザイン。
+ * ボーダー/枠を排し、余白・タイポグラフィ・微細なシャドウで情報階層を表現。
+ * 定食屋の温かみを白ベース＋和の明朝体＋オレンジアクセントで表す。
+ */
 
 :root {
-  --bg-primary: #1a1a2e;
-  --bg-secondary: #16213e;
-  --bg-card: #0f3460;
-  --bg-card-hover: #1a4a7a;
-  --text-primary: #e8d5b7;
-  --text-secondary: #b8a080;
-  --text-accent: #f5c87a;
-  --accent-warm: #e07a3a;
-  --accent-green: #5cb85c;
-  --accent-blue: #5b9bd5;
-  --border-color: #2a3a5e;
-  --shadow: rgba(0, 0, 0, 0.3);
+  --bg: #faf8f5;
+  --bg-elevated: #ffffff;
+  --bg-subtle: #f3f0eb;
+  --text: #2c2c2c;
+  --text-secondary: #888888;
+  --text-tertiary: #b0a89e;
+  --accent: #e8734a;
+  --accent-hover: #d4623b;
+  --accent-soft: rgba(232, 115, 74, 0.08);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --radius: 16px;
+  --font-serif: "Noto Serif JP", serif;
+  --font-sans: "Noto Sans JP", "Hiragino Kaku Gothic ProN", sans-serif;
 }
 
 * {
@@ -24,160 +32,178 @@
 }
 
 body {
-  font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  font-family: var(--font-sans);
+  background-color: var(--bg);
+  color: var(--text);
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   justify-content: center;
+  -webkit-font-smoothing: antialiased;
 }
 
 #app {
   width: 100%;
-  max-width: 640px;
+  max-width: 480px;
   min-height: 100vh;
-  background-color: var(--bg-secondary);
-  box-shadow: 0 0 40px var(--shadow);
+  min-height: 100dvh;
+  background-color: var(--bg);
 }
 
 .app {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
-/* Header */
+/* ─── Header ─── */
+
 .game-header {
-  background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
   z-index: 10;
+  padding: 16px 24px 12px;
+  background: var(--bg);
+  /* ボーダーなし。下部に微かなフェードだけ */
+  mask-image: linear-gradient(to bottom, #000 85%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, #000 85%, transparent);
 }
 
 .header-title {
-  margin-bottom: 8px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
 }
 
 .header-title .title {
-  font-size: 1.4em;
-  color: var(--text-accent);
+  font-family: var(--font-serif);
+  font-size: 1.25em;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  color: var(--text);
+  letter-spacing: 0.15em;
 }
 
 .header-title .subtitle {
-  font-size: 0.85em;
+  font-size: 0.8em;
   color: var(--text-secondary);
-  margin-left: 12px;
+  font-weight: 400;
 }
 
+/* ステータス — 控えめに表示 */
 .header-stats {
   display: flex;
-  gap: 16px;
+  gap: 12px;
+  margin-top: 6px;
 }
 
 .stat {
-  font-size: 0.85em;
-  padding: 4px 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  color: var(--text-secondary);
+  font-size: 0.75em;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
 .stat.money {
-  color: var(--text-accent);
-  font-weight: 600;
+  color: var(--accent);
 }
 
 .stat.stamina {
-  color: var(--accent-green);
+  color: var(--text-secondary);
 }
 
-/* Main content */
+/* ─── Main Content ─── */
+
 .main-content {
   flex: 1;
-  padding: 20px;
+  padding: 0 24px 24px;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Story View */
+/* ─── Story View ─── */
+
 .story-view {
   display: flex;
   flex-direction: column;
-  min-height: 60vh;
+  flex: 1;
+  min-height: 75vh;
+  min-height: 75dvh;
 }
 
 .chapter-header {
   text-align: center;
-  color: var(--text-accent);
-  font-size: 0.9em;
-  padding: 12px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid var(--border-color);
-  letter-spacing: 0.05em;
+  font-family: var(--font-serif);
+  font-size: 0.8em;
+  color: var(--text-tertiary);
+  padding: 8px 0 0;
+  letter-spacing: 0.08em;
+  font-weight: 400;
 }
 
+/* テキスト表示エリア — 画面下部に配置 */
 .story-text-area {
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 12px;
+  padding: 40px 0 16px;
   min-height: 200px;
-  margin-bottom: 20px;
 }
 
 .speaker-name {
-  color: var(--accent-warm);
+  font-family: var(--font-sans);
+  color: var(--accent);
   font-weight: 600;
-  font-size: 0.9em;
+  font-size: 0.82em;
   margin-bottom: 8px;
   min-height: 1.2em;
+  letter-spacing: 0.04em;
 }
 
 .story-text {
+  font-family: var(--font-serif);
   font-size: 1.05em;
-  line-height: 1.8;
-  color: var(--text-primary);
+  line-height: 2.0;
+  color: var(--text);
   min-height: 3em;
 }
 
+/* 「▼」ボタン — 右下に控えめに */
 .story-controls {
   display: flex;
-  justify-content: center;
-  padding: 16px;
+  justify-content: flex-end;
+  padding: 12px 0;
 }
 
-/* Business View */
+/* ─── Business View ─── */
+
 .business-view {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .section-title {
+  font-family: var(--font-serif);
   font-size: 1.1em;
-  color: var(--text-accent);
-  border-bottom: 2px solid var(--accent-warm);
-  padding-bottom: 8px;
-  margin-bottom: 8px;
+  color: var(--text);
+  font-weight: 600;
+  letter-spacing: 0.05em;
 }
 
 .subsection-title {
-  font-size: 0.95em;
+  font-size: 0.85em;
   color: var(--text-secondary);
-  margin-bottom: 8px;
+  font-weight: 500;
 }
 
 .stamina-bar {
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--accent-soft);
   padding: 12px 16px;
-  border-radius: 8px;
-  font-size: 0.9em;
-  color: var(--accent-green);
+  border-radius: var(--radius);
+  font-size: 0.85em;
+  color: var(--text-secondary);
 }
 
 .menu-grid {
@@ -187,17 +213,22 @@ body {
 }
 
 .menu-item {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 12px 16px;
+  background: var(--bg-elevated);
+  border: none;
+  border-radius: var(--radius);
+  padding: 14px 18px;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  transition: box-shadow 0.2s, transform 0.15s;
+  box-shadow: var(--shadow-sm);
 }
 
 .menu-item:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--accent-warm);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.menu-item:active {
+  transform: translateY(0);
 }
 
 .menu-item-header {
@@ -208,39 +239,41 @@ body {
 
 .menu-check {
   font-family: monospace;
-  color: var(--accent-green);
-  font-size: 0.9em;
+  color: var(--accent);
+  font-size: 0.85em;
 }
 
 .menu-name {
   flex: 1;
   font-weight: 600;
+  font-size: 0.95em;
 }
 
 .menu-price {
-  color: var(--text-accent);
-  font-size: 0.9em;
+  color: var(--text-secondary);
+  font-size: 0.85em;
 }
 
 .menu-desc {
-  font-size: 0.8em;
-  color: var(--text-secondary);
+  font-size: 0.78em;
+  color: var(--text-tertiary);
   margin-top: 4px;
-  padding-left: 32px;
+  padding-left: 28px;
 }
 
 .business-actions {
   display: flex;
   gap: 12px;
   justify-content: center;
-  padding: 16px 0;
+  padding: 8px 0;
 }
 
-/* Day Result View */
+/* ─── Day Result View ─── */
+
 .day-result-view {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .visit-log {
@@ -250,10 +283,10 @@ body {
 }
 
 .visit-entry {
-  background: var(--bg-card);
-  border-radius: 8px;
-  padding: 12px 16px;
-  border-left: 3px solid var(--accent-blue);
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  box-shadow: var(--shadow-sm);
 }
 
 .visit-info {
@@ -265,106 +298,121 @@ body {
 
 .visitor-name {
   font-weight: 600;
-  color: var(--text-accent);
+  color: var(--text);
+  font-size: 0.95em;
 }
 
 .visitor-order {
   color: var(--text-secondary);
-  font-size: 0.9em;
+  font-size: 0.85em;
 }
 
 .visitor-revenue {
   margin-left: auto;
-  color: var(--accent-green);
+  color: var(--accent);
   font-weight: 600;
+  font-size: 0.95em;
 }
 
 .visit-dialogue {
-  font-size: 0.85em;
+  font-family: var(--font-serif);
+  font-size: 0.82em;
   color: var(--text-secondary);
   font-style: italic;
-  padding-left: 8px;
+  padding-left: 4px;
+  line-height: 1.6;
 }
 
 .day-summary {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 8px;
-  padding: 16px;
-  margin-top: 8px;
+  background: var(--bg-subtle);
+  border-radius: var(--radius);
+  padding: 18px 20px;
 }
 
 .summary-row {
   display: flex;
   justify-content: space-between;
   padding: 4px 0;
-  font-size: 0.95em;
+  font-size: 0.9em;
+  color: var(--text-secondary);
 }
 
 .summary-row.profit {
-  border-top: 1px solid var(--border-color);
-  padding-top: 8px;
-  margin-top: 8px;
+  padding-top: 10px;
+  margin-top: 10px;
   font-weight: 700;
-  color: var(--text-accent);
-  font-size: 1.05em;
+  color: var(--text);
+  font-size: 1.0em;
+  /* ボーダーの代わりにドット区切り */
+  background-image: linear-gradient(to right, var(--text-tertiary) 20%, transparent 20%);
+  background-size: 5px 1px;
+  background-repeat: repeat-x;
+  background-position: top;
 }
 
 .day-result-actions {
   display: flex;
   justify-content: center;
-  padding: 16px 0;
+  padding: 8px 0;
 }
 
-/* Missions */
+/* ─── Missions ─── */
+
 .missions-panel {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 8px;
-  padding: 16px;
+  background: var(--bg-subtle);
+  border-radius: var(--radius);
+  padding: 18px 20px;
 }
 
 .missions-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  margin-top: 10px;
 }
 
 .mission-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  background: var(--bg-card);
-  border-radius: 6px;
+  padding: 10px 14px;
+  background: var(--bg-elevated);
+  border-radius: 12px;
   font-size: 0.85em;
+  box-shadow: var(--shadow-sm);
 }
 
 .mission-status {
-  color: var(--accent-green);
+  color: var(--accent);
   font-size: 1.1em;
 }
 
 .mission-desc {
   flex: 1;
+  color: var(--text);
 }
 
 .mission-progress {
-  color: var(--text-secondary);
-  font-size: 0.85em;
+  color: var(--text-tertiary);
+  font-size: 0.82em;
 }
 
 .mission-reward {
-  color: var(--text-accent);
+  color: var(--accent);
   font-weight: 600;
 }
 
-/* Recipe Book Overlay */
+/* ─── Overlay / Recipe Book ─── */
+
 .overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -372,14 +420,14 @@ body {
 }
 
 .recipe-book {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  background: var(--bg);
+  border-radius: 20px;
   width: 90%;
-  max-width: 560px;
+  max-width: 440px;
   max-height: 80vh;
   overflow-y: auto;
-  padding: 20px;
+  padding: 24px;
+  box-shadow: var(--shadow-lg);
 }
 
 .recipe-book-header {
@@ -396,53 +444,56 @@ body {
 }
 
 .recipe-entry {
-  background: var(--bg-card);
-  border-radius: 8px;
-  padding: 12px 16px;
+  background: var(--bg-elevated);
+  border-radius: 12px;
+  padding: 14px 18px;
+  box-shadow: var(--shadow-sm);
 }
 
 .recipe-name {
+  font-family: var(--font-serif);
   font-weight: 600;
-  color: var(--text-accent);
+  color: var(--text);
   margin-bottom: 4px;
 }
 
 .recipe-desc {
-  font-size: 0.85em;
+  font-size: 0.82em;
   color: var(--text-secondary);
   margin-bottom: 4px;
+  line-height: 1.5;
 }
 
 .recipe-costs {
-  font-size: 0.8em;
-  color: var(--accent-green);
+  font-size: 0.78em;
+  color: var(--accent);
 }
 
-/* Message Log */
+/* ─── Message Log ─── */
+
 .message-log {
-  padding: 12px 20px;
-  background: rgba(0, 0, 0, 0.3);
-  border-top: 1px solid var(--border-color);
-  max-height: 120px;
+  padding: 10px 24px;
+  max-height: 100px;
   overflow-y: auto;
 }
 
 .message-entry {
-  font-size: 0.8em;
-  color: var(--text-secondary);
+  font-size: 0.75em;
+  color: var(--text-tertiary);
   padding: 2px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
 }
 
-/* Buttons */
+/* ─── Buttons ─── */
+
 .btn {
   padding: 10px 24px;
   border: none;
-  border-radius: 8px;
-  font-size: 0.95em;
-  font-family: inherit;
+  border-radius: var(--radius);
+  font-size: 0.9em;
+  font-family: var(--font-sans);
+  font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  transition: all 0.2s ease;
 }
 
 .btn:active {
@@ -450,36 +501,37 @@ body {
 }
 
 .btn-primary {
-  background: var(--accent-warm);
+  background: var(--accent);
   color: #fff;
+  box-shadow: 0 2px 8px rgba(232, 115, 74, 0.25);
 }
 
 .btn-primary:hover {
-  background: #c96a2e;
+  background: var(--accent-hover);
+  box-shadow: 0 4px 12px rgba(232, 115, 74, 0.3);
 }
 
 .btn-secondary {
-  background: var(--bg-card);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  background: var(--bg-subtle);
+  color: var(--text);
 }
 
 .btn-secondary:hover {
-  background: var(--bg-card-hover);
+  background: #ece8e2;
 }
 
 .btn-large {
   padding: 14px 40px;
-  font-size: 1.05em;
+  font-size: 0.95em;
   font-weight: 600;
 }
 
 .btn-small {
-  padding: 4px 12px;
-  font-size: 0.8em;
-  background: var(--accent-green);
+  padding: 5px 14px;
+  font-size: 0.78em;
+  background: var(--accent);
   color: #fff;
-  border-radius: 4px;
+  border-radius: 10px;
 }
 
 .btn-close {
@@ -490,12 +542,13 @@ body {
 }
 
 .btn-close:hover {
-  color: var(--text-primary);
+  color: var(--text);
 }
 
-/* Scrollbar */
+/* ─── Scrollbar ─── */
+
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 3px;
 }
 
 ::-webkit-scrollbar-track {
@@ -503,26 +556,26 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: var(--text-tertiary);
   border-radius: 2px;
 }
 
-/* Responsive */
-@media (max-width: 640px) {
+/* ─── Responsive ─── */
+
+@media (max-width: 480px) {
   #app {
     max-width: 100%;
   }
 
   .main-content {
-    padding: 16px;
+    padding: 0 20px 20px;
   }
 
   .game-header {
-    padding: 12px 16px;
+    padding: 14px 20px 10px;
   }
 
-  .header-stats {
-    gap: 8px;
-    flex-wrap: wrap;
+  .message-log {
+    padding: 10px 20px;
   }
 }

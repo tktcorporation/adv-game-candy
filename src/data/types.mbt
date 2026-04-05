@@ -1,13 +1,17 @@
-// Game data types for 廃墟カフェ復興記
+// ゲームデータ型定義 — 定食屋「灯」に通うADV
+//
+// カフェ経営シミュレーションを撤去し、「定食屋に通う」ことをゲームループにした。
+// 日替わりメニュー → ひとくちシーン → ストーリー解放 のサイクル。
 
-/// Game phase enum
+/// ゲームフェーズ
+///
+/// Visit → Scene → (Story or 次の日) → Visit のサイクルで進行する。
+/// Calendar は任意のタイミングで開ける閲覧画面。
 pub(all) enum GamePhase {
-  Story
-  Business
-  DayResult
-  Menu
-  SpecialService
-  CharacterEvent
+  Visit     // 灯を訪問する画面（今日の日替わり表示）
+  Scene     // ひとくちシーン（日替わりに紐づく短いテキスト）
+  Story     // 本編ストーリー
+  Calendar  // 味の記憶（カレンダー）閲覧
 } derive(Eq)
 
 /// A single line of story dialogue
@@ -34,46 +38,35 @@ pub(all) struct Scene {
 }
 
 /// Chapter definition
+///
+/// unlock_intimacy で解放条件を管理する。
+/// 旧システムの unlock_revenue / unlock_recipes / unlock_customers は撤去済み。
 pub(all) struct Chapter {
   id : Int
   title : String
   subtitle : String
-  unlock_revenue : Int
-  unlock_recipes : Int
-  unlock_customers : Int
   unlock_intimacy : Int
   scenes : Array[Scene]
 }
 
-/// Menu item definition
-pub(all) struct MenuItem {
+/// 日替わりメニュー
+///
+/// 定食屋「灯」の日替わり定食。日数のハッシュで決定的に選ばれる。
+/// intimacy_bonus: その日に訪問したとき加算される親密度ポイント（8-15）。
+pub(all) struct DailyMenu {
   id : String
   name : String
   description : String
-  cost : Int
-  price : Int
-  unlock_chapter : Int
+  intimacy_bonus : Int
 }
 
-/// Ingredient definition
-pub(all) struct Ingredient {
-  id : String
-  name : String
-  category : String
-  unlock_chapter : Int
-}
-
-/// Recipe definition
-pub(all) struct Recipe {
-  id : String
-  name : String
-  base : String
-  sub1 : String  // empty if none
-  sub2 : String  // empty if none
-  description : String
-  cost : Int
-  price : Int
-  unlock_chapter : Int
+/// 訪問記録（味の記憶）
+///
+/// カレンダー画面で一覧表示する。全メニュー制覇などコレクション要素。
+pub(all) struct VisitRecord {
+  day : Int
+  menu_id : String
+  scene_text : String
 }
 
 /// Customer character definition
@@ -104,29 +97,4 @@ pub(all) struct IntimacyRank {
   stars : Int
   min_points : Int
   description : String
-}
-
-/// Day result - a customer visit during business
-pub(all) struct CustomerVisit {
-  character_id : String
-  menu_ordered : String
-  revenue : Int
-  intimacy_gained : Int
-  dialogue : String
-}
-
-/// Daily mission definition
-pub(all) struct DailyMission {
-  id : String
-  description : String
-  reward : Int
-  target : Int
-  current : Int
-  completed : Bool
-}
-
-/// Login bonus tier
-pub(all) struct LoginBonusTier {
-  day : Int
-  reward : Int
 }
