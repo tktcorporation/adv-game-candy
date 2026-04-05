@@ -65,7 +65,6 @@ body {
   z-index: 10;
   padding: 16px 24px 12px;
   background: var(--bg);
-  /* ボーダーなし。下部に微かなフェードだけ */
   mask-image: linear-gradient(to bottom, #000 85%, transparent);
   -webkit-mask-image: linear-gradient(to bottom, #000 85%, transparent);
 }
@@ -90,7 +89,6 @@ body {
   font-weight: 400;
 }
 
-/* ステータス — 控えめに表示 */
 .header-stats {
   display: flex;
   gap: 12px;
@@ -104,11 +102,12 @@ body {
   letter-spacing: 0.02em;
 }
 
-.stat.money {
+.stat-stars {
   color: var(--accent);
+  letter-spacing: 0.1em;
 }
 
-.stat.stamina {
+.stat-ap {
   color: var(--text-secondary);
 }
 
@@ -119,6 +118,283 @@ body {
   padding: 0 24px 24px;
   display: flex;
   flex-direction: column;
+}
+
+/* ─── Title View ─── */
+
+.title-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 70vh;
+  min-height: 70dvh;
+  gap: 24px;
+}
+
+.title-logo {
+  font-family: var(--font-serif);
+  font-size: 4em;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.3em;
+}
+
+.title-tagline {
+  font-size: 0.85em;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ─── Home View ─── */
+
+.home-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.home-date {
+  font-family: var(--font-serif);
+  font-size: 0.9em;
+  color: var(--text-secondary);
+  text-align: center;
+  letter-spacing: 0.1em;
+}
+
+.daily-menu-card {
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+
+.menu-label {
+  font-size: 0.75em;
+  color: var(--text-tertiary);
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.menu-name {
+  font-family: var(--font-serif);
+  font-size: 1.15em;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.menu-desc {
+  font-size: 0.82em;
+  color: var(--text-secondary);
+}
+
+.intimacy-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.star-display {
+  font-size: 1.1em;
+  color: var(--accent);
+  letter-spacing: 0.15em;
+}
+
+.intimacy-bar {
+  font-size: 0.82em;
+  color: var(--text-tertiary);
+}
+
+.ap-gauge {
+  text-align: center;
+  font-size: 0.9em;
+  color: var(--text-secondary);
+  letter-spacing: 0.15em;
+  padding: 8px 0;
+}
+
+.home-actions {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0;
+}
+
+.home-secondary-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.home-footer {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+/* ─── Daily Missions ─── */
+
+.daily-missions {
+  background: var(--bg-subtle);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+
+.missions-header {
+  font-size: 0.8em;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-bottom: 10px;
+  letter-spacing: 0.04em;
+}
+
+.mission-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-elevated);
+  border-radius: 12px;
+  font-size: 0.85em;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 6px;
+}
+
+.mission-item:last-child {
+  margin-bottom: 0;
+}
+
+.mission-status {
+  color: var(--accent);
+  font-size: 1em;
+  width: 20px;
+  text-align: center;
+}
+
+.mission-desc {
+  flex: 1;
+  color: var(--text);
+}
+
+.mission-reward {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.85em;
+}
+
+/* ─── Action Select View ─── */
+
+.action-select-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.action-header {
+  font-family: var(--font-serif);
+  font-size: 0.9em;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 4px 0;
+}
+
+.action-card-wrapper {
+  /* コンテナ。show の切替に必要 */
+}
+
+.action-card {
+  display: block;
+  width: 100%;
+  background: var(--bg-elevated);
+  border: none;
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.15s;
+  box-shadow: var(--shadow-sm);
+  text-align: left;
+  font-family: var(--font-sans);
+}
+
+.action-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.action-card:active {
+  transform: translateY(0);
+}
+
+.action-card.disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.action-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.action-name {
+  font-weight: 600;
+  font-size: 0.95em;
+  color: var(--text);
+}
+
+.action-cost {
+  font-size: 0.82em;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.action-desc {
+  font-size: 0.78em;
+  color: var(--text-tertiary);
+}
+
+.action-footer {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+/* ─── Scene View ─── */
+
+.scene-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 50vh;
+  min-height: 50dvh;
+  justify-content: center;
+  gap: 16px;
+}
+
+.scene-menu {
+  font-family: var(--font-serif);
+  font-size: 0.85em;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+.scene-text {
+  font-family: var(--font-serif);
+  font-size: 1.05em;
+  line-height: 2.0;
+  color: var(--text);
+  text-align: center;
+  padding: 0 8px;
+}
+
+.scene-actions {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
 }
 
 /* ─── Story View ─── */
@@ -141,7 +417,6 @@ body {
   font-weight: 400;
 }
 
-/* テキスト表示エリア — 画面下部に配置 */
 .story-text-area {
   flex: 1;
   display: flex;
@@ -169,19 +444,24 @@ body {
   min-height: 3em;
 }
 
-/* 「▼」ボタン — 右下に控えめに */
 .story-controls {
   display: flex;
   justify-content: flex-end;
   padding: 12px 0;
 }
 
-/* ─── Business View ─── */
+/* ─── Album View ─── */
 
-.business-view {
+.album-view {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
+}
+
+.album-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .section-title {
@@ -192,88 +472,67 @@ body {
   letter-spacing: 0.05em;
 }
 
-.subsection-title {
-  font-size: 0.85em;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.stamina-bar {
-  background: var(--accent-soft);
-  padding: 12px 16px;
-  border-radius: var(--radius);
-  font-size: 0.85em;
-  color: var(--text-secondary);
-}
-
-.menu-grid {
+.album-tabs {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  gap: 4px;
+  background: var(--bg-subtle);
+  border-radius: 12px;
+  padding: 3px;
 }
 
-.menu-item {
-  background: var(--bg-elevated);
-  border: none;
-  border-radius: var(--radius);
-  padding: 14px 18px;
-  cursor: pointer;
-  transition: box-shadow 0.2s, transform 0.15s;
-  box-shadow: var(--shadow-sm);
-}
-
-.menu-item:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
-}
-
-.menu-item:active {
-  transform: translateY(0);
-}
-
-.menu-item-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.menu-check {
-  font-family: monospace;
-  color: var(--accent);
-  font-size: 0.85em;
-}
-
-.menu-name {
+.album-tab {
   flex: 1;
-  font-weight: 600;
-  font-size: 0.95em;
-}
-
-.menu-price {
+  padding: 8px 4px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 0.75em;
   color: var(--text-secondary);
-  font-size: 0.85em;
+  cursor: pointer;
+  transition: all 0.15s;
 }
 
-.menu-desc {
-  font-size: 0.78em;
-  color: var(--text-tertiary);
-  margin-top: 4px;
-  padding-left: 28px;
+.album-tab:hover {
+  background: var(--bg-elevated);
+  color: var(--text);
 }
 
-.business-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  padding: 8px 0;
-}
-
-/* ─── Day Result View ─── */
-
-.day-result-view {
+.album-content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 8px;
+}
+
+.album-entry {
+  background: var(--bg-elevated);
+  border-radius: 12px;
+  padding: 14px 18px;
+  box-shadow: var(--shadow-sm);
+  font-size: 0.85em;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.album-empty {
+  text-align: center;
+  font-size: 0.85em;
+  color: var(--text-tertiary);
+  padding: 40px 0;
+}
+
+.album-story-list {
+  font-size: 0.85em;
+  color: var(--text);
+  line-height: 2.0;
+  white-space: pre-line;
+}
+
+.menu-collection {
+  text-align: center;
+  font-size: 0.82em;
+  color: var(--text-secondary);
+  padding: 8px 0;
 }
 
 .visit-log {
@@ -289,184 +548,24 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-.visit-info {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 4px;
-}
-
-.visitor-name {
-  font-weight: 600;
-  color: var(--text);
-  font-size: 0.95em;
-}
-
-.visitor-order {
-  color: var(--text-secondary);
-  font-size: 0.85em;
-}
-
-.visitor-revenue {
-  margin-left: auto;
-  color: var(--accent);
-  font-weight: 600;
-  font-size: 0.95em;
-}
-
-.visit-dialogue {
-  font-family: var(--font-serif);
-  font-size: 0.82em;
-  color: var(--text-secondary);
-  font-style: italic;
-  padding-left: 4px;
-  line-height: 1.6;
-}
-
-.day-summary {
-  background: var(--bg-subtle);
-  border-radius: var(--radius);
-  padding: 18px 20px;
-}
-
-.summary-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 0;
-  font-size: 0.9em;
-  color: var(--text-secondary);
-}
-
-.summary-row.profit {
-  padding-top: 10px;
-  margin-top: 10px;
-  font-weight: 700;
-  color: var(--text);
-  font-size: 1.0em;
-  /* ボーダーの代わりにドット区切り */
-  background-image: linear-gradient(to right, var(--text-tertiary) 20%, transparent 20%);
-  background-size: 5px 1px;
-  background-repeat: repeat-x;
-  background-position: top;
-}
-
-.day-result-actions {
-  display: flex;
-  justify-content: center;
-  padding: 8px 0;
-}
-
-/* ─── Missions ─── */
-
-.missions-panel {
-  background: var(--bg-subtle);
-  border-radius: var(--radius);
-  padding: 18px 20px;
-}
-
-.missions-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 10px;
-}
-
-.mission-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  background: var(--bg-elevated);
-  border-radius: 12px;
-  font-size: 0.85em;
-  box-shadow: var(--shadow-sm);
-}
-
-.mission-status {
-  color: var(--accent);
-  font-size: 1.1em;
-}
-
-.mission-desc {
-  flex: 1;
-  color: var(--text);
-}
-
-.mission-progress {
-  color: var(--text-tertiary);
-  font-size: 0.82em;
-}
-
-.mission-reward {
-  color: var(--accent);
-  font-weight: 600;
-}
-
-/* ─── Overlay / Recipe Book ─── */
-
-.overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 100;
-}
-
-.recipe-book {
-  background: var(--bg);
-  border-radius: 20px;
-  width: 90%;
-  max-width: 440px;
-  max-height: 80vh;
-  overflow-y: auto;
-  padding: 24px;
-  box-shadow: var(--shadow-lg);
-}
-
-.recipe-book-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.recipe-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.recipe-entry {
-  background: var(--bg-elevated);
-  border-radius: 12px;
-  padding: 14px 18px;
-  box-shadow: var(--shadow-sm);
-}
-
-.recipe-name {
-  font-family: var(--font-serif);
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 4px;
-}
-
-.recipe-desc {
-  font-size: 0.82em;
-  color: var(--text-secondary);
-  margin-bottom: 4px;
-  line-height: 1.5;
-}
-
-.recipe-costs {
+.visit-day {
   font-size: 0.78em;
-  color: var(--accent);
+  color: var(--text-tertiary);
+  margin-bottom: 2px;
+}
+
+.visit-menu {
+  font-weight: 600;
+  font-size: 0.9em;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.visit-scene {
+  font-family: var(--font-serif);
+  font-size: 0.82em;
+  color: var(--text-secondary);
+  line-height: 1.6;
 }
 
 /* ─── Message Log ─── */
@@ -529,9 +628,6 @@ body {
 .btn-small {
   padding: 5px 14px;
   font-size: 0.78em;
-  background: var(--accent);
-  color: #fff;
-  border-radius: 10px;
 }
 
 .btn-close {

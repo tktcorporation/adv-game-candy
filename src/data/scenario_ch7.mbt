@@ -30,7 +30,7 @@ pub fn get_chapter_7() -> Chapter {
     id: 7,
     title: "第七章",
     subtitle: "隣",
-    unlock_intimacy: 650,
+    unlock_intimacy: 750,
     scenes: [
       // --- Scene 0: 遅刻 ---
       // 前提: 晴がいつもより少し遅れて灯に来る

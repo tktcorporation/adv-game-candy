@@ -32,7 +32,7 @@ pub fn get_chapter_1() -> Chapter {
     id: 1,
     title: "第一章",
     subtitle: "日替わり",
-    unlock_intimacy: 0,
+    unlock_intimacy: 30,
     scenes: [
       // --- Scene 0: ラスト一つ ---
       // 前提: 数日後。いつもの灯。今日は限定メニュー
