@@ -424,9 +424,9 @@ fn rule_silent_characters(
 ) -> Array[Violation] {
   let violations : Array[Violation] = []
   let name = @path.basename(file_path)
-  // 既知のキャラクター名リスト
+  // 既知のキャラクター名リスト（定食屋「灯」版）
   let characters = [
-    "佐倉", "天野", "神崎", "桐谷",
+    "椎名", "ひより",
   ]
   for _, chara in characters {
     // このキャラがテキスト行（ナレーション含む）に名前で言及されているか
@@ -453,7 +453,7 @@ fn rule_silent_characters(
   // 主人公の speaker 名は「主人公」ま��は「悠」（デフォルト名）
   let mut protagonist_lines = 0
   for _, line in lines {
-    if line.contains("speaker: \"主人公\"") || line.contains("speaker: \"悠\"") {
+    if line.contains("speaker: \"主人公\"") || line.contains("speaker: \"晴\"") {
       protagonist_lines = protagonist_lines + 1
     }
   }
@@ -490,7 +490,7 @@ fn rule_negative_evaluation_density(
     "才能ない", "向いてない", "やめたら",
   ]
   // キャラごとのマイナス評価カウント
-  let characters = ["佐倉", "天野", "神崎", "桐谷"]
+  let characters = ["椎名", "ひより"]
   for _, chara in characters {
     let mut neg_count = 0
     for _, line in lines {
@@ -611,9 +611,9 @@ fn rule_monologue_streak(
       continue
     }
     // 主人公のセリフかつ（）で囲まれたモノローグ
-    // 主人公の speaker 名は「主人公」または「悠」（デフォルト名）
+    // 主人公の speaker 名は「主人公」または「晴」（デフォルト名: 高瀬晴）
     let is_protagonist = line.contains("speaker: \"主人公\"") || line.contains(
-        "speaker: \"悠\"",
+        "speaker: \"晴\"",
       )
     let is_monologue = line.contains("text: \"（") || line.contains("text: \"(")
     if is_protagonist && is_monologue {
