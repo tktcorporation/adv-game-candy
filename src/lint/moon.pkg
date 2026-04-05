@@ -1,0 +1,13 @@
+import {
+  "mizchi/js/node/fs" @fs,
+  "mizchi/js/node/process" @process,
+  "mizchi/js/node/path" @path,
+  "moonbitlang/core/string" @string,
+}
+
+supported_targets = "js"
+
+options(
+  "is-main": true,
+  link: { "js": { "exports": [ "main" ], "format": "cjs" } },
+)

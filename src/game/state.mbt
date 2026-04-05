@@ -41,7 +41,6 @@ pub(all) struct GameState {
 
   // Story flags
   story_complete : @signals.Signal[Bool]
-  found_recipe_notebook : @signals.Signal[Bool]
 
   // UI state
   show_menu_screen : @signals.Signal[Bool]
@@ -53,7 +52,7 @@ pub(all) struct GameState {
 pub fn create_game_state() -> GameState {
   let initial_recipes = ["r_blend", "r_latte", "r_houjicha"]
   let initial_intimacy : Array[(String, Int)] = [
-    ("sakura", 0), ("amano", 0), ("kanzaki", 0), ("miyauchi", 0), ("kiritani", 0),
+    ("sakura", 0), ("amano", 0), ("kanzaki", 0), ("kiritani", 0),
   ]
   {
     phase: @signals.signal(@data.GamePhase::Story),
@@ -78,7 +77,6 @@ pub fn create_game_state() -> GameState {
     login_total_days: @signals.signal(1),
     login_claimed_today: @signals.signal(false),
     story_complete: @signals.signal(false),
-    found_recipe_notebook: @signals.signal(false),
     show_menu_screen: @signals.signal(false),
     show_recipe_book: @signals.signal(false),
     message_log: @signals.signal([]),
