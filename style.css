@@ -1525,6 +1525,240 @@ body::before {
   mix-blend-mode: normal;
 }
 
+/* ─── Home: 親密度表示 ─── */
+
+.affection-display {
+  text-align: center;
+  padding: 12px 0;
+}
+
+.affection-level {
+  font-size: 1.2em;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+
+.affection-desc {
+  font-family: var(--font-serif);
+  font-size: 0.88em;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  line-height: 1.6;
+}
+
+/* ─── Home: 次の目標 ─── */
+
+.next-goal {
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.next-goal-header {
+  font-size: 0.75em;
+  color: var(--text-tertiary);
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.next-goal-content {
+  font-size: 0.88em;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.plv-progress {
+  font-size: 0.82em;
+  color: var(--text-secondary);
+  text-align: center;
+  font-family: monospace, var(--font-sans);
+  letter-spacing: 0.05em;
+}
+
+/* ─── Home: ステータス（下部） ─── */
+
+.home-status {
+  text-align: center;
+  padding: 8px 0;
+}
+
+.param-summary {
+  font-size: 0.78em;
+  color: var(--text-tertiary);
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.currency-display {
+  font-size: 0.78em;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* ─── カード: ♡合計寄与 ─── */
+
+.card-affection-total {
+  font-size: 0.78em;
+  font-weight: 700;
+  color: var(--accent);
+  margin-top: 4px;
+  letter-spacing: 0.02em;
+}
+
+/* ─── Scene: 結果セクション ─── */
+
+.scene-result {
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+  animation: fadeSlideUp 0.4s ease both;
+  animation-delay: 0.3s;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.scene-result-header {
+  font-size: 0.72em;
+  color: var(--text-tertiary);
+  letter-spacing: 0.1em;
+  margin-bottom: 10px;
+}
+
+.scene-gains {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
+}
+
+.scene-rewards {
+  font-size: 0.78em;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.scene-reaction {
+  font-family: var(--font-serif);
+  font-size: 0.88em;
+  color: var(--accent);
+  font-style: italic;
+  padding-top: 8px;
+  border-top: 1px solid var(--bg-subtle);
+}
+
+/* ─── DayResult ビュー ─── */
+
+.day-result-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.day-result-title {
+  font-family: var(--font-serif);
+  font-size: 1.1em;
+  color: var(--text);
+  text-align: center;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.day-result-actions {
+  text-align: center;
+  font-size: 0.88em;
+  color: var(--text-secondary);
+}
+
+.day-result-gains {
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  text-align: center;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+.day-result-levelup {
+  text-align: center;
+  font-size: 1.05em;
+  font-weight: 700;
+  color: var(--accent);
+  padding: 8px 0;
+  animation: levelUpPulse 0.6s ease both;
+}
+
+@keyframes levelUpPulse {
+  0% { opacity: 0; transform: scale(0.8); }
+  50% { transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.day-result-plv {
+  text-align: center;
+  font-size: 0.92em;
+  font-weight: 600;
+  color: var(--trust-color);
+  padding: 4px 0;
+}
+
+.day-result-currency {
+  text-align: center;
+  font-size: 0.82em;
+  color: var(--text-secondary);
+}
+
+.day-result-next {
+  background: var(--bg-subtle);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+}
+
+.day-result-next-header {
+  font-size: 0.75em;
+  color: var(--text-tertiary);
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.day-result-next-story {
+  font-size: 0.85em;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.day-result-next-affection {
+  font-size: 0.82em;
+  color: var(--accent);
+  text-align: center;
+}
+
+.day-result-btn {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
 /* ─── Responsive ─── */
 
 @media (max-width: 480px) {
@@ -1544,12 +1778,16 @@ body::before {
     padding: 10px 20px;
   }
 
-  .header-params {
-    gap: 4px;
+  .affection-level {
+    font-size: 1.05em;
   }
 
-  .param {
-    font-size: 0.65em;
-    padding: 2px 6px;
+  .next-goal,
+  .daily-missions {
+    padding: 12px 14px;
+  }
+
+  .day-result-gains {
+    padding: 12px 14px;
   }
 }
