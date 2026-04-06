@@ -338,12 +338,8 @@ pub fn play_card(state : GameState, card_id : String) -> Unit {
   })
 
   // パラメータ上昇メッセージ
-  add_message(
-    state,
-    card.name + " — 信頼+" + trust_gain.to_string()
-      + " 理解+" + understanding_gain.to_string()
-      + " 共感+" + empathy_gain.to_string(),
-  )
+  let msg = card.name + " — 信頼+" + trust_gain.to_string() + " 理解+" + understanding_gain.to_string() + " 共感+" + empathy_gain.to_string()
+  add_message(state, msg)
 
   // Scene フェーズへ
   state.phase.set(@data.GamePhase::Scene)
@@ -377,17 +373,17 @@ fn check_and_acquire_memories(
   }
 
   let newly = check_memory_conditions(
-    eat_count=state.total_eat_count.get(),
-    talk_count=state.total_talk_count.get(),
-    observe_count=state.total_observe_count.get(),
-    intimacy_stars=get_intimacy_stars(state.intimacy.get()),
-    discovery_count=state.discoveries.get().length(),
-    visited_menu_ids=visited_menu_ids,
-    current_weather=@data.get_weather(day),
-    acquired_ids=acquired_ids,
-    played_card_id=played_card_id,
-    season_rank=season_rank,
-    current_season=@data.get_season(day),
+    state.total_eat_count.get(),
+    state.total_talk_count.get(),
+    state.total_observe_count.get(),
+    get_intimacy_stars(state.intimacy.get()),
+    state.discoveries.get().length(),
+    visited_menu_ids,
+    @data.get_weather(day),
+    acquired_ids,
+    played_card_id,
+    season_rank,
+    @data.get_season(day),
   )
 
   if newly.length() > 0 {
@@ -518,11 +514,8 @@ pub fn next_day(state : GameState) -> Unit {
   let new_season = @data.get_season(new_day)
   let new_weather = @data.get_weather(new_day)
   let day_in_season = @data.get_day_in_season(new_day)
-  add_message(
-    state,
-    @data.season_to_string(new_season) + " " + day_in_season.to_string() + "日目 "
-      + @data.weather_to_icon(new_weather) + @data.weather_to_string(new_weather),
-  )
+  let day_msg = @data.season_to_string(new_season) + " " + day_in_season.to_string() + "日目 " + @data.weather_to_icon(new_weather) + @data.weather_to_string(new_weather)
+  add_message(state, day_msg)
 
   state.phase.set(@data.GamePhase::Home)
 }
@@ -584,9 +577,7 @@ pub fn get_param_display(state : GameState) -> String {
   let trust = state.trust.get()
   let understanding = state.understanding.get()
   let empathy = state.empathy.get()
-  "信頼:" + trust.to_string()
-    + " 理解:" + understanding.to_string()
-    + " 共感:" + empathy.to_string()
+  "信頼:" + trust.to_string() + " 理解:" + understanding.to_string() + " 共感:" + empathy.to_string()
 }
 
 // =========================================================================

@@ -129,7 +129,7 @@ pub fn draw_hand(
     }
 
     // 重み付き選択
-    seed = (seed * 1103515245 + 12345) % 2147483648
+    seed = (seed * 1103515245 + 12345) % 2_147_483_647
     let mut pick = (seed % total_weight + total_weight) % total_weight
     let mut chosen_idx = 0
     for i, item in weighted {

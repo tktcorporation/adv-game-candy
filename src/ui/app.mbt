@@ -90,9 +90,8 @@ fn render_header(state : @game.GameState) -> @dom.DomNode {
               let season = @data.get_season(day)
               let weather = @data.get_weather(day)
               let day_in_season = @data.get_day_in_season(day)
-              @data.season_to_string(season)
-                + " " + day_in_season.to_string() + "日目 "
-                + @data.weather_to_icon(weather)
+              let s = @data.season_to_string(season) + " " + day_in_season.to_string() + "日目 " + @data.weather_to_icon(weather)
+              s
             })],
           ),
         ],
@@ -907,9 +906,8 @@ fn render_album_memories(state : @game.GameState) -> @dom.DomNode {
             if is_acquired {
               result = result + "✦ " + memory.title + "\n"
               result = result + "  " + memory.description + "\n"
-              result = result + "  [+" + memory.trust_bonus.to_string() + "信 "
-                + "+" + memory.understanding_bonus.to_string() + "理 "
-                + "+" + memory.empathy_bonus.to_string() + "共]\n\n"
+              let bonus_text = "  [+" + memory.trust_bonus.to_string() + "信 +" + memory.understanding_bonus.to_string() + "理 +" + memory.empathy_bonus.to_string() + "共]\n\n"
+              result = result + bonus_text
             } else {
               result = result + "？ ???\n"
               result = result + "  ヒント: " + memory.hint + "\n\n"

@@ -21,5 +21,8 @@
     "@playwright/test": "^1.56.1",
     "rolldown": "^1.0.0-rc.13",
     "serve": "^14.2.6"
+  },
+  "dependencies": {
+    "animejs": "^4.3.6"
   }
 }

@@ -1167,6 +1167,364 @@ body::before {
   }
 }
 
+/* ─── Uiverse風 グロー・ネオングラス演出 ─── */
+
+/* タイトルロゴのグローエフェクト */
+.title-logo {
+  text-shadow:
+    0 0 10px rgba(232, 115, 74, 0.3),
+    0 0 40px rgba(232, 115, 74, 0.1);
+}
+
+/* ガラスモーフィズム風のメニューカード */
+.daily-menu-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  animation: menuCardIn 0.5s ease-out both;
+}
+
+@keyframes menuCardIn {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ボタンのグロー効果（ホバー時） */
+.btn-primary {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn-primary:hover {
+  box-shadow:
+    0 4px 12px rgba(232, 115, 74, 0.3),
+    0 0 20px rgba(232, 115, 74, 0.15);
+  transform: translateY(-2px);
+}
+
+/* AP ゲージのアニメーション */
+.ap-gauge {
+  transition: all 0.4s ease;
+}
+
+/* ─── カード3Dチルトエフェクト ─── */
+
+.hand-card {
+  transform-style: preserve-3d;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hand-card:hover:not(.disabled) {
+  transform: translateY(-4px) rotateX(2deg);
+  box-shadow:
+    var(--shadow-md),
+    0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.hand-card:active:not(.disabled) {
+  transform: translateY(0) scale(0.97) rotateX(0deg);
+  transition-duration: 0.1s;
+}
+
+/* アンコモンカードの発光ボーダー */
+.hand-card.rarity-uncommon {
+  border-image: linear-gradient(135deg, #5b8def, #8bb4ff, #5b8def) 1;
+  border-width: 2px;
+  border-style: solid;
+}
+
+/* レアカードのオーロラ効果 */
+.hand-card.rarity-rare {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(245, 158, 11, 0.03),
+    rgba(255, 255, 255, 0.95)
+  );
+  border: 2px solid var(--rarity-rare);
+}
+
+.hand-card.rarity-rare::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(245, 158, 11, 0.08) 50%,
+    transparent 70%
+  );
+  animation: cardAurora 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes cardAurora {
+  0%, 100% { opacity: 0; transform: translateX(-100%); }
+  50% { opacity: 1; transform: translateX(100%); }
+}
+
+/* ─── パラメータ上昇のパルスエフェクト ─── */
+
+.param-bar {
+  position: relative;
+  overflow: hidden;
+}
+
+.param-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.param-bar.param-trust::after {
+  background: radial-gradient(circle, var(--trust-bg), transparent);
+}
+
+.param-bar.param-understanding::after {
+  background: radial-gradient(circle, var(--understanding-bg), transparent);
+}
+
+.param-bar.param-empathy::after {
+  background: radial-gradient(circle, var(--empathy-bg), transparent);
+}
+
+/* ─── ミッション達成のフラッシュ ─── */
+
+.mission-item {
+  transition: all 0.3s ease;
+}
+
+.mission-status {
+  transition: all 0.3s ease;
+}
+
+/* ─── ストーリービューの演出強化 ��── */
+
+.story-view {
+  animation: storyViewIn 0.6s ease-out both;
+}
+
+@keyframes storyViewIn {
+  0% {
+    opacity: 0;
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+/* 話者名のスライドイン */
+.speaker-name {
+  animation: speakerSlideIn 0.3s ease-out both;
+}
+
+@keyframes speakerSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ─── シーンビューの強化 ─── */
+
+.scene-view {
+  animation: sceneReveal 0.5s ease-out both;
+}
+
+@keyframes sceneReveal {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.scene-menu {
+  animation: sceneMenuIn 0.4s ease-out 0.1s both;
+}
+
+@keyframes sceneMenuIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── ホームビューの順次登場 ─── */
+
+.home-view > * {
+  animation: homeItemIn 0.4s ease-out both;
+}
+
+.home-view > *:nth-child(1) { animation-delay: 0s; }
+.home-view > *:nth-child(2) { animation-delay: 0.06s; }
+.home-view > *:nth-child(3) { animation-delay: 0.12s; }
+.home-view > *:nth-child(4) { animation-delay: 0.18s; }
+.home-view > *:nth-child(5) { animation-delay: 0.24s; }
+.home-view > *:nth-child(6) { animation-delay: 0.3s; }
+.home-view > *:nth-child(7) { animation-delay: 0.36s; }
+
+@keyframes homeItemIn {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── アルバムビューのスライドアップ ─── */
+
+.album-view {
+  animation: albumSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes albumSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.album-content {
+  animation: albumContentIn 0.3s ease-out 0.15s both;
+}
+
+@keyframes albumContentIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* ─── タイトル画面の入場演出 ─── */
+
+.title-view {
+  animation: titleViewIn 0.8s ease-out both;
+}
+
+@keyframes titleViewIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.title-tagline {
+  animation: taglineIn 0.8s ease-out 0.4s both;
+}
+
+@keyframes taglineIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.title-view .btn {
+  animation: titleBtnIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s both;
+}
+
+@keyframes titleBtnIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ─── 行動選択ヘッダーの雰囲気演出 ─── */
+
+.action-header {
+  position: relative;
+  padding: 8px 0 4px;
+}
+
+.action-header::after {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 2px;
+  background: var(--season-primary);
+  margin: 8px auto 0;
+  border-radius: 1px;
+  opacity: 0.5;
+}
+
+/* ─── メッセージログのスライドイン ─── */
+
+.message-log {
+  mask-image: linear-gradient(to top, #000 60%, transparent);
+  -webkit-mask-image: linear-gradient(to top, #000 60%, transparent);
+}
+
+.message-entry {
+  animation: msgSlideIn 0.25s ease-out both;
+}
+
+@keyframes msgSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ─── デイリーミッションの装飾 ─── */
+
+.daily-missions {
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* ─── 季節パーティクルのレイヤー ─── */
+
+#seasonal-deco {
+  mix-blend-mode: multiply;
+}
+
+.season-winter #seasonal-deco {
+  mix-blend-mode: normal;
+}
+
 /* ─── Responsive ─── */
 
 @media (max-width: 480px) {
