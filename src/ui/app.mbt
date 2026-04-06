@@ -145,6 +145,10 @@ fn render_title_view(state : @game.GameState) -> @dom.DomNode {
         on=@dom.events().click(fn(_e) { @game.start_game(state) }),
         [@dom.text("はじめる")],
       ),
+      @dom.div(
+        class="title-hint",
+        [@dom.text("タップして物語を始める")],
+      ),
     ],
   )
 }
@@ -189,7 +193,7 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
         [
           @dom.div(
             class="next-goal-header",
-            [@dom.text("── 次の目標 ──")],
+            [@dom.text("次の目標")],
           ),
           @dom.div(
             class="next-goal-content",
@@ -213,26 +217,35 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
               }
             })],
           ),
-          // PLv進捗バー
+          // PLv進捗 — CSSプログレスバー + テキストラベル
           @dom.div(
             class="plv-progress",
-            [@dom.text_dyn(fn() {
-              let player_lv = state.player_level.get()
-              let exp = state.player_exp.get()
-              let needed = @game.exp_for_next_level(player_lv)
-              // テキストベースの進捗バー
-              let filled = if needed > 0 { exp * 10 / needed } else { 10 }
-              let mut bar = "PLv" + player_lv.to_string() + " "
-              for i in 0..<10 {
-                if i < filled {
-                  bar = bar + "█"
-                } else {
-                  bar = bar + "░"
-                }
-              }
-              bar = bar + " " + exp.to_string() + "/" + needed.to_string()
-              bar
-            })],
+            [
+              @dom.span(
+                class="plv-label",
+                [@dom.text_dyn(fn() {
+                  let player_lv = state.player_level.get()
+                  let exp = state.player_exp.get()
+                  let needed = @game.exp_for_next_level(player_lv)
+                  "PLv" + player_lv.to_string() + "  " + exp.to_string() + "/" + needed.to_string()
+                })],
+              ),
+              @dom.div(
+                class="progress-track",
+                [
+                  @dom.div(
+                    class="progress-fill",
+                    dyn_style=fn() {
+                      let exp = state.player_exp.get()
+                      let needed = @game.exp_for_next_level(state.player_level.get())
+                      let pct = if needed > 0 { exp * 100 / needed } else { 100 }
+                      "width:" + pct.to_string() + "%"
+                    },
+                    [],
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),
@@ -364,11 +377,21 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
             })],
           ),
           @dom.div(
-            class="currency-display",
-            [@dom.text_dyn(fn() {
-              "コイン " + state.coins.get().to_string() +
-              "  星石 " + state.gems.get().to_string()
-            })],
+            class="currency-badges",
+            [
+              @dom.span(
+                class="currency-badge",
+                [@dom.text_dyn(fn() {
+                  "🪙 " + state.coins.get().to_string()
+                })],
+              ),
+              @dom.span(
+                class="currency-badge",
+                [@dom.text_dyn(fn() {
+                  "💎 " + state.gems.get().to_string()
+                })],
+              ),
+            ],
           ),
         ],
       ),
@@ -606,7 +629,7 @@ fn render_scene_view(state : @game.GameState) -> @dom.DomNode {
         [
           @dom.div(
             class="scene-result-header",
-            [@dom.text("─── 結果 ───")],
+            [@dom.text("結 果")],
           ),
           // パラメータ獲得値 + ♡合計
           @dom.div(
@@ -810,14 +833,20 @@ fn render_album_view(state : @game.GameState) -> @dom.DomNode {
   )
 }
 
-/// アルバムタブボタン
+/// アルバムタブボタン — アクティブ状態をCSSクラスで表現
 fn render_album_tab(
   state : @game.GameState,
   tab_index : Int,
   label : String
 ) -> @dom.DomNode {
   @dom.button(
-    class="album-tab",
+    dyn_class=fn() {
+      if state.album_tab.get() == tab_index {
+        "album-tab active"
+      } else {
+        "album-tab"
+      }
+    },
     on=@dom.events().click(fn(_e) { state.album_tab.set(tab_index) }),
     [@dom.text(label)],
   )
@@ -1126,7 +1155,7 @@ fn render_day_result_view(state : @game.GameState) -> @dom.DomNode {
         [
           @dom.div(
             class="day-result-next-header",
-            [@dom.text("── 明日の目標 ──")],
+            [@dom.text("明日の目標")],
           ),
           @dom.div(
             class="day-result-next-story",

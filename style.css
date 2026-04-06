@@ -11,25 +11,39 @@
   --bg-elevated: #ffffff;
   --bg-subtle: #f3f0eb;
   --text: #2c2c2c;
-  --text-secondary: #888888;
-  --text-tertiary: #b0a89e;
+  --text-secondary: #7a7a7a;
+  --text-tertiary: #a8a098;
   --accent: #e8734a;
   --accent-hover: #d4623b;
   --accent-soft: rgba(232, 115, 74, 0.08);
+
+  /* Notion風マルチレイヤーシャドウ — 深度を感じさせつつ軽い */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.03);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
   --radius: 16px;
   --font-serif: "Noto Serif JP", serif;
   --font-sans: "Noto Sans JP", "Hiragino Kaku Gothic ProN", sans-serif;
 
+  /* スペーシングスケール (8px base) */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
   /* 3軸パラメータカラー */
   --trust-color: #5b8def;
-  --trust-bg: rgba(91, 141, 239, 0.1);
+  --trust-bg: rgba(91, 141, 239, 0.10);
   --understanding-color: #8b5cf6;
-  --understanding-bg: rgba(139, 92, 246, 0.1);
+  --understanding-bg: rgba(139, 92, 246, 0.10);
   --empathy-color: #f59e0b;
-  --empathy-bg: rgba(245, 158, 11, 0.1);
+  --empathy-bg: rgba(245, 158, 11, 0.10);
+
+  /* 達成・成功 */
+  --success: #34d399;
+  --success-bg: rgba(52, 211, 153, 0.10);
 
   /* カードレアリティカラー */
   --rarity-normal: #c8c0b8;
@@ -245,7 +259,7 @@ body::before {
 .home-view {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .home-date {
@@ -259,8 +273,8 @@ body::before {
 .daily-menu-card {
   background: var(--bg-elevated);
   border-radius: var(--radius);
-  padding: 20px;
-  box-shadow: var(--shadow-sm);
+  padding: 22px;
+  box-shadow: var(--shadow-md);
   text-align: center;
 }
 
@@ -582,12 +596,20 @@ body::before {
   font-size: 0.75em;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .album-tab:hover {
   background: var(--bg-elevated);
   color: var(--text);
+}
+
+/* アクティブタブ — JS側でactiveクラスを付与 */
+.album-tab.active {
+  background: var(--bg-elevated);
+  color: var(--text);
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .album-content {
@@ -677,34 +699,36 @@ body::before {
 /* ─── Buttons ─── */
 
 .btn {
-  padding: 10px 24px;
+  padding: 12px 28px;
   border: none;
-  border-radius: var(--radius);
+  border-radius: 14px;
   font-size: 0.9em;
   font-family: var(--font-sans);
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .btn:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
 }
 
 .btn-primary {
   background: var(--accent);
   color: #fff;
-  box-shadow: 0 2px 8px rgba(232, 115, 74, 0.25);
+  box-shadow: 0 2px 8px rgba(232, 115, 74, 0.20);
 }
 
 .btn-primary:hover {
   background: var(--accent-hover);
-  box-shadow: 0 4px 12px rgba(232, 115, 74, 0.3);
+  box-shadow: 0 4px 12px rgba(232, 115, 74, 0.30), 0 0 20px rgba(232, 115, 74, 0.10);
+  transform: translateY(-2px);
 }
 
 .btn-secondary {
   background: var(--bg-subtle);
   color: var(--text);
+  font-weight: 500;
 }
 
 .btn-secondary:hover {
@@ -718,7 +742,7 @@ body::before {
 }
 
 .btn-small {
-  padding: 5px 14px;
+  padding: 6px 16px;
   font-size: 0.78em;
 }
 
@@ -1024,16 +1048,16 @@ body::before {
 
 .title-logo {
   font-family: var(--font-serif);
-  font-size: 4em;
+  font-size: 3.5em;
   font-weight: 700;
   color: var(--text);
-  letter-spacing: 0.3em;
+  letter-spacing: 0.25em;
   animation: titlePulse 3s ease-in-out infinite;
 }
 
 @keyframes titlePulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  50% { opacity: 0.85; }
 }
 
 /* ─── ボタンのリップル ─── */
@@ -1176,12 +1200,12 @@ body::before {
     0 0 40px rgba(232, 115, 74, 0.1);
 }
 
-/* ガラスモーフィズム風のメニューカード */
+/* ガラスモーフィズム風のメニューカード — ぼかしを強めて浮遊感を出す */
 .daily-menu-card {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   animation: menuCardIn 0.5s ease-out both;
 }
 
@@ -1529,7 +1553,9 @@ body::before {
 
 .affection-display {
   text-align: center;
-  padding: 12px 0;
+  padding: 18px 16px;
+  background: var(--accent-soft);
+  border-radius: var(--radius);
 }
 
 .affection-level {
@@ -1552,8 +1578,8 @@ body::before {
 .next-goal {
   background: var(--bg-elevated);
   border-radius: var(--radius);
-  padding: 16px 20px;
-  box-shadow: var(--shadow-sm);
+  padding: 18px 22px;
+  box-shadow: var(--shadow-md);
 }
 
 .next-goal-header {
@@ -1572,11 +1598,17 @@ body::before {
 }
 
 .plv-progress {
-  font-size: 0.82em;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.plv-label {
+  font-size: 0.78em;
   color: var(--text-secondary);
   text-align: center;
-  font-family: monospace, var(--font-sans);
-  letter-spacing: 0.05em;
+  font-weight: 500;
+  letter-spacing: 0.04em;
 }
 
 /* ─── Home: ステータス（下部） ─── */
@@ -1757,6 +1789,88 @@ body::before {
   display: flex;
   justify-content: center;
   padding: 8px 0;
+}
+
+/* ─── プログレスバー ─── */
+
+.progress-track {
+  background: var(--bg-subtle);
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ─── セクションラベル ─── */
+
+.section-label {
+  font-size: 0.72em;
+  color: var(--text-tertiary);
+  letter-spacing: 0.1em;
+  text-align: center;
+}
+
+/* ─── 区切り線 ─── */
+
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.06), transparent);
+  margin: 8px 0;
+}
+
+/* ─── ミッション完了状態 ─── */
+
+.mission-item.completed .mission-status {
+  color: var(--success);
+}
+
+.mission-item.completed .mission-desc {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+  text-decoration-color: var(--text-tertiary);
+}
+
+/* ─── 通貨バッジ ─── */
+
+.currency-badges {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.currency-badge {
+  font-size: 0.78em;
+  padding: 4px 12px;
+  border-radius: 8px;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* ─── タイトルヒント ─── */
+
+.title-hint {
+  font-size: 0.75em;
+  color: var(--text-tertiary);
+  animation: titleHintPulse 2s ease-in-out infinite;
+}
+
+@keyframes titleHintPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ─── シーン結果のアクセント ─── */
+
+.scene-result {
+  border-left: 3px solid var(--accent);
 }
 
 /* ─── Responsive ─── */

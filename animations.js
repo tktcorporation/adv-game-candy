@@ -163,6 +163,65 @@ window.animateMenuReveal = function(selector) {
   });
 };
 
+/**
+ * プログレスバーの充填アニメーション
+ * ページ遷移時にバーが0から現在値までスムーズに伸びる
+ */
+window.animateProgressFill = function(selector) {
+  if (typeof anime === 'undefined') return;
+  anime({
+    targets: selector,
+    width: [0, anime.get(document.querySelector(selector), 'width')],
+    duration: 800,
+    easing: 'easeOutQuad',
+  });
+};
+
+/**
+ * シーン結果カードのスライドイン + 微細な光彩
+ */
+window.animateSceneResult = function(selector) {
+  if (typeof anime === 'undefined') return;
+  anime({
+    targets: selector,
+    translateY: [20, 0],
+    opacity: [0, 1],
+    scale: [0.97, 1],
+    duration: 500,
+    easing: 'easeOutQuad',
+  });
+};
+
+/**
+ * レベルアップ時の祝福アニメーション
+ * テキストが弾んで登場 + 背景にゴールドパルス
+ */
+window.animateLevelUp = function(selector) {
+  if (typeof anime === 'undefined') return;
+  anime({
+    targets: selector,
+    scale: [0.5, 1.15, 1],
+    opacity: [0, 1],
+    rotate: [-5, 0],
+    duration: 700,
+    easing: 'easeOutElastic(1, .5)',
+  });
+};
+
+/**
+ * 日送り時のワイプトランジション
+ */
+window.animateDayTransition = function(selector) {
+  if (typeof anime === 'undefined') return;
+  anime({
+    targets: selector,
+    opacity: [1, 0, 0, 1],
+    translateX: [0, -30, 30, 0],
+    duration: 600,
+    easing: 'easeInOutQuad',
+  });
+};
+
 // =========================================================================
 // SVG イラスト生成 — 定食屋「灯」の世界観モチーフ
 //
