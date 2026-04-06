@@ -14,6 +14,10 @@ pub(all) enum GamePhase {
   Scene         // 行動結果のテキスト表示
   Story         // 本編ADVストーリー
   Album         // アルバム（味の記憶・発見ノート・会話メモ・ストーリー回想）
+  Gacha         // ガチャ（カード獲得）画面
+  CardEnhance   // カード強化画面
+  DayResult     // デイリザルト（1日の成果サマリー）画面
+  LoginBonus    // ログインボーナス画面
 } derive(Eq)
 
 /// 行動タイプ — 灯の中で何をするか
@@ -192,6 +196,7 @@ pub(all) enum UnlockCondition {
   SeasonOnly(Season)    // 特定季節のみ出現
   WeatherOnly(Weather)  // 特定天候のみ出現
   MemoryAcquired(String) // 特定の思い出を獲得済み
+  GachaOnly             // ガチャでのみ入手可能
 } derive(Eq)
 
 /// 行動カード（学マスのスキルカードに対応）
@@ -293,4 +298,76 @@ pub(all) struct WeeklyMission {
   completed : Bool
   reward_type : String  // "card" / "memory" / "text"
   reward_id : String    // 報酬の参照ID
+}
+
+// =========================================================================
+// ソーシャルゲーム追加システム — ガチャ・通貨・カード強化・ログボ
+// =========================================================================
+
+/// 所持カード情報
+///
+/// ガチャ or 条件解放で獲得したカードのレベル管理用。
+/// level 1-5 で、レベルが上がるとパラメータ獲得量が +20% ずつ増える。
+pub(all) struct OwnedCard {
+  card_id : String
+  level : Int     // 1-5
+}
+
+/// ガチャ1回分の結果表示データ
+///
+/// ガチャ演出画面で使用。新規/被りで表示を分ける。
+pub(all) struct GachaResult {
+  card : ActionCard
+  is_new : Bool       // true = 新規獲得、false = 被り→シャード変換
+  shards_gained : Int // 被り時に獲得するシャード数
+}
+
+/// ログインボーナス1日分の報酬定義
+pub(all) struct LoginBonusReward {
+  day : Int             // 1-7 のサイクル内日数
+  reward_type : String  // "coin" / "gem" / "shard" / "ticket"
+  reward_amount : Int
+  description : String  // 表示用テキスト
+}
+
+/// デイリザルト（1日の成果サマリー）
+///
+/// 「次の日へ」遷移前に表示し、成長実感を与える。
+/// 学マスのプロデュース結果画面に対応。
+pub(all) struct DayResultData {
+  trust_gained : Int
+  understanding_gained : Int
+  empathy_gained : Int
+  coins_earned : Int
+  cards_played : Int
+  memories_acquired : Array[String]
+  rank_up : Bool          // ★ランクが上がったか
+  new_star : Int          // 現在の★数
+  season_milestone : Bool // 季節の節目だったか
+  milestone_rank : String // S/A/B/C（節目時のみ有効）
+}
+
+/// カード強化に必要なコスト定義
+pub(all) struct EnhanceCost {
+  shards : Int  // 必要シャード数
+  coins : Int   // 必要コイン数
+}
+
+/// ガチャバナー情報
+///
+/// ピックアップ対象カードとレートを管理。
+/// 現在は常設バナー1種のみ。将来的に期間限定バナーを追加可能。
+pub(all) struct GachaBanner {
+  id : String
+  name : String
+  description : String
+  // レート: Normal 70%, Uncommon 25%, Rare 5%
+  rate_normal : Int   // パーセント
+  rate_uncommon : Int
+  rate_rare : Int
+  // 天井（pity）: この回数引いてRare未獲得なら確定
+  pity_threshold : Int
+  // 単発/10連コスト
+  single_cost : Int   // コイン
+  multi_cost : Int    // コイン（10連、割引あり）
 }

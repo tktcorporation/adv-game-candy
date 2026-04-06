@@ -67,6 +67,9 @@ fn finish_chapter(state : GameState) -> Unit {
     return
   }
 
+  // 章クリア報酬（通貨）
+  grant_chapter_reward(state, current)
+
   // 次の章が即座に解放可能かチェック
   let next = chapters[current + 1]
   let intimacy = state.intimacy.get()
@@ -125,36 +128,72 @@ pub fn get_current_chapter(state : GameState) -> @data.Chapter? {
 /// タイトル画面から「はじめる」— ch0 ストーリーへ遷移
 ///
 /// ch0 は unlock_intimacy: 0 なので即座に再生可能。
-/// 初日の手札もここでドローする。
+/// 初期カードの登録・初日の手札ドロー・デイスタートスナップショットもここで行う。
 pub fn start_game(state : GameState) -> Unit {
   state.current_chapter.set(0)
   state.scene_index.set(0)
   state.line_index.set(0)
+  // 初期カード（Always）を所持カードに��録
+  register_initial_cards(state)
   // 初日の手札をドロー
   draw_daily_hand(state)
+  // デイリザルト用のスナップショット
+  snapshot_day_start(state)
   state.phase.set(@data.GamePhase::Story)
 }
 
 /// 今日の手札をドロー（毎朝呼ばれる）
 ///
-/// 現在の進行状況・季節・天候に応じて有効カードプールを構築し、
-/// そこから hand_size 枚をドローする。
+/// 所持カード + 季節/天候条件 を満たすカードからドロー。
+/// ガチャで獲得したカードも所持していればドロー候補に入る。
 fn draw_daily_hand(state : GameState) -> Unit {
   let day = state.day.get()
-  let stars = get_intimacy_stars(state.intimacy.get())
-  let chapter = state.current_chapter.get()
   let season = @data.get_season(day)
   let weather = @data.get_weather(day)
+  let owned = state.owned_cards.get()
+  let all_cards = @data.get_all_cards()
 
-  // 獲得済み思い出IDリスト
-  let memory_ids : Array[String] = []
-  for record in state.acquired_memories.get() {
-    memory_ids.push(record.memory_id)
+  // 所持カードIDセット
+  let owned_ids : Array[String] = []
+  for oc in owned {
+    owned_ids.push(oc.card_id)
   }
 
-  let pool = build_available_pool(
-    stars, chapter, season, weather, memory_ids,
-  )
+  // ドロー候補: 所持済み + 季節/天候条件クリア
+  let pool : Array[@data.ActionCard] = []
+  for card in all_cards {
+    // 所持チェック
+    let mut is_owned = false
+    for oid in owned_ids {
+      if oid == card.id {
+        is_owned = true
+        break
+      }
+    }
+
+    // 季節/天候限定カードは所持 + 条件一致で候補入り
+    match card.unlock_condition {
+      SeasonOnly(s) => {
+        if is_owned && s == season {
+          pool.push(card)
+        }
+        continue
+      }
+      WeatherOnly(w) => {
+        if is_owned && w == weather {
+          pool.push(card)
+        }
+        continue
+      }
+      _ => ()
+    }
+
+    // それ以外は所持していれば候補
+    if is_owned {
+      pool.push(card)
+    }
+  }
+
   let hand = draw_hand(pool, day)
   state.hand.set(hand)
 }
@@ -238,10 +277,16 @@ pub fn play_card(state : GameState, card_id : String) -> Unit {
     state.memory_slots.get(), memory_ids,
   )
 
-  // 3. 3軸パラメータ加算
-  let (trust_gain, understanding_gain, empathy_gain) = calculate_card_gains(
+  // 3. 3軸パラメータ加算（カードレベルによるボーナス適用）
+  let card_level = get_card_level(state, card.id)
+  let effective_level = if card_level > 0 { card_level } else { 1 }
+  let (base_trust, base_understanding, base_empathy) = calculate_card_gains(
     card, mem_trust, mem_understanding, mem_empathy,
   )
+  // レベルボーナス適用
+  let trust_gain = apply_level_bonus(base_trust, effective_level)
+  let understanding_gain = apply_level_bonus(base_understanding, effective_level)
+  let empathy_gain = apply_level_bonus(base_empathy, effective_level)
   state.trust.update(fn(v) { v + trust_gain })
   state.understanding.update(fn(v) { v + understanding_gain })
   state.empathy.update(fn(v) { v + empathy_gain })
@@ -337,8 +382,15 @@ pub fn play_card(state : GameState, card_id : String) -> Unit {
     result
   })
 
+  // 10. 通貨・EXP報酬
+  grant_action_rewards(state, card)
+
+  // 11. 条件解放カードのチェック
+  check_condition_unlocks(state)
+
   // パラメータ上昇メッセージ
-  let msg = card.name + " — 信頼+" + trust_gain.to_string() + " 理解+" + understanding_gain.to_string() + " 共感+" + empathy_gain.to_string()
+  let coin_reward = get_card_coin_reward(card.rarity)
+  let msg = card.name + " — 信頼+" + trust_gain.to_string() + " 理解+" + understanding_gain.to_string() + " 共感+" + empathy_gain.to_string() + " +" + coin_reward.to_string() + "コイン"
   add_message(state, msg)
 
   // Scene フェーズへ
@@ -454,11 +506,25 @@ pub fn finish_scene(state : GameState) -> Unit {
 
 /// 次の日へ進む
 ///
-/// 1. 季節の節目チェック（昨日が節目日なら結果を記録）
-/// 2. day をインクリメント
+/// まず DayResult 画面を表示（今日の成果サマリー）。
+/// DayResult を閉じると実際の日送り処理が走り、
+/// ログボチェック → Home の順で遷移する。
+pub fn next_day(state : GameState) -> Unit {
+  // デイリザルトを生成して DayResult フェーズへ
+  let result = build_day_result(state)
+  state.day_result.set(result)
+  state.phase.set(@data.GamePhase::DayResult)
+}
+
+/// DayResult画面から実際に翌日へ進む（close_day_result から呼ばれる）
+///
+/// 1. 季節の節目チェック
+/// 2. day インクリメント
 /// 3. AP回復、行動履歴クリア、ミッションリセット
 /// 4. 新しい手札をドロー
-pub fn next_day(state : GameState) -> Unit {
+/// 5. デイスタートスナップショット
+/// 6. ログボ → Home
+pub fn advance_to_next_day(state : GameState) -> Unit {
   let current_day = state.day.get()
 
   // 1. 季節の節目チェック（今日=節目日なら、結果を記録してから翌日へ）
@@ -498,16 +564,26 @@ pub fn next_day(state : GameState) -> Unit {
 
     // 節目で思い出獲得チェック
     check_and_acquire_memories(state, "", Some(rank))
+
+    // 季節S ランクのジェム報酬
+    if rank == @data.MilestoneRank::S {
+      state.gems.update(fn(g) { g + 100 })
+      add_message(state, "Sランクボーナス: +100 星石")
+    }
   }
 
   // 2. 翌日へ
   state.day.update(fn(d) { d + 1 })
-  state.ap.set(max_ap)
+  let current_max_ap = get_max_ap(state)
+  state.ap.set(current_max_ap)
   state.today_actions.set([])
   state.daily_missions.set(create_daily_missions())
 
   // 3. 新しい手札をドロー
   draw_daily_hand(state)
+
+  // 4. デイスタートスナップショット
+  snapshot_day_start(state)
 
   // 季節・天候情報をメッセージに
   let new_day = state.day.get()
@@ -517,7 +593,12 @@ pub fn next_day(state : GameState) -> Unit {
   let day_msg = @data.season_to_string(new_season) + " " + day_in_season.to_string() + "日目 " + @data.weather_to_icon(new_weather) + @data.weather_to_string(new_weather)
   add_message(state, day_msg)
 
-  state.phase.set(@data.GamePhase::Home)
+  // 5. ログボチェック → Home
+  if check_login_bonus(state) {
+    state.phase.set(@data.GamePhase::LoginBonus)
+  } else {
+    state.phase.set(@data.GamePhase::Home)
+  }
 }
 
 // =========================================================================
@@ -588,28 +669,28 @@ pub fn get_param_display(state : GameState) -> String {
 ///
 /// ミッションの行動カテゴリに応じて主軸を決定:
 /// eat → 共感メイン、talk → 信頼メイン、actions_3 → 均等分配
+///
+/// バランス調整: 報酬値にスケーリング係数を適用（カードと同じ）
 fn grant_mission_reward(state : GameState, mission_id : String, reward : Int) -> Unit {
+  let scaled = reward * param_scale_percent / 100
+  let effective = if scaled < 1 { 1 } else { scaled }
   match mission_id {
     "eat" => {
-      // 食事ミッション → 共感メイン (6:2:2)
-      state.empathy.update(fn(v) { v + reward * 6 / 10 })
-      state.understanding.update(fn(v) { v + reward * 2 / 10 })
-      state.trust.update(fn(v) { v + reward * 2 / 10 })
+      state.empathy.update(fn(v) { v + effective * 6 / 10 })
+      state.understanding.update(fn(v) { v + effective * 2 / 10 })
+      state.trust.update(fn(v) { v + effective * 2 / 10 })
     }
     "talk" => {
-      // 会話ミッション → 信頼メイン (6:2:2)
-      state.trust.update(fn(v) { v + reward * 6 / 10 })
-      state.understanding.update(fn(v) { v + reward * 2 / 10 })
-      state.empathy.update(fn(v) { v + reward * 2 / 10 })
+      state.trust.update(fn(v) { v + effective * 6 / 10 })
+      state.understanding.update(fn(v) { v + effective * 2 / 10 })
+      state.empathy.update(fn(v) { v + effective * 2 / 10 })
     }
     _ => {
-      // 汎用ミッション → 均等分配
-      state.trust.update(fn(v) { v + reward / 3 })
-      state.understanding.update(fn(v) { v + reward / 3 })
-      state.empathy.update(fn(v) { v + reward / 3 })
+      state.trust.update(fn(v) { v + effective / 3 })
+      state.understanding.update(fn(v) { v + effective / 3 })
+      state.empathy.update(fn(v) { v + effective / 3 })
     }
   }
-  // intimacy を同期
   sync_intimacy(state)
 }
 
@@ -645,14 +726,17 @@ fn check_missions(state : GameState) -> Unit {
       } else if m.id == "eat" && had_eat {
         result.push({ ..m, completed: true })
         grant_mission_reward(state, m.id, m.reward)
+        grant_mission_coin_reward(state, m.id)
         add_message(state, "ミッション達成: " + m.description + " (+" + m.reward.to_string() + ")")
       } else if m.id == "talk" && had_talk {
         result.push({ ..m, completed: true })
         grant_mission_reward(state, m.id, m.reward)
+        grant_mission_coin_reward(state, m.id)
         add_message(state, "ミッション達成: " + m.description + " (+" + m.reward.to_string() + ")")
       } else if m.id == "actions_3" && action_count >= 3 {
         result.push({ ..m, completed: true })
         grant_mission_reward(state, m.id, m.reward)
+        grant_mission_coin_reward(state, m.id)
         add_message(state, "ミッション達成: " + m.description + " (+" + m.reward.to_string() + ")")
       } else {
         result.push(m)

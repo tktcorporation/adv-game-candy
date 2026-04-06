@@ -37,6 +37,7 @@ pub fn is_card_unlocked(
       }
       found
     }
+    GachaOnly => false  // ガチャ専用カードは条件解放しない（ガチャで獲得）
   }
 }
 
@@ -184,18 +185,35 @@ pub fn draw_hand(
   hand
 }
 
+/// グローバルパラメータスケーリング係数（パーセント）
+///
+/// 全カードのパラメータ獲得値にこの係数を適用する。
+/// 100 = 元の値、50 = 半分、33 = 1/3。
+/// バランス調整はここで一括管理。
+///
+/// 設計根拠（シミュレーター検証済み）:
+/// - 100% → ★5到達21日（速すぎ）
+/// - 35% → ★5到達51日（やや速い）
+/// - 15% → ★5到達約90日（適正レンジ）
+/// ミッション報酬にも同じ係数が適用される
+pub let param_scale_percent : Int = 15
+
 /// カードをプレイした際の3軸パラメータ獲得値を計算
 ///
-/// カード基本値 + 装備メモリーのパッシブボーナスを加算する。
+/// カード基本値 × グローバルスケール + 装備メモリーのパッシブボーナス。
+/// スケール後の最低値は各軸1（ゼロ行動を防ぐ）。
 pub fn calculate_card_gains(
   card : @data.ActionCard,
   memory_trust_bonus : Int,
   memory_understanding_bonus : Int,
   memory_empathy_bonus : Int
 ) -> (Int, Int, Int) {
-  (
-    card.trust_gain + memory_trust_bonus,
-    card.understanding_gain + memory_understanding_bonus,
-    card.empathy_gain + memory_empathy_bonus,
-  )
+  let trust = card.trust_gain * param_scale_percent / 100 + memory_trust_bonus
+  let understanding = card.understanding_gain * param_scale_percent / 100 + memory_understanding_bonus
+  let empathy = card.empathy_gain * param_scale_percent / 100 + memory_empathy_bonus
+  // 最低1ポイント保証（元値が1以上なら）
+  let t = if card.trust_gain > 0 && trust < 1 { 1 } else { trust }
+  let u = if card.understanding_gain > 0 && understanding < 1 { 1 } else { understanding }
+  let e = if card.empathy_gain > 0 && empathy < 1 { 1 } else { empathy }
+  (t, u, e)
 }

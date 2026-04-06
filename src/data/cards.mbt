@@ -306,6 +306,108 @@ pub fn get_seasonal_cards() -> Array[ActionCard] {
 }
 
 // =========================================================================
+// ガチャ専用カード — ガチャでのみ入手可能な限定カード
+// =========================================================================
+
+/// ガチャ専用カード
+///
+/// 通常プレイでは入手不可。ガチャで引くことで初めてデッキに追加される。
+/// 効果はやや高め＋ユニークなフレーバーテキスト。
+pub fn get_gacha_exclusive_cards() -> Array[ActionCard] {
+  [
+    // --- Rare (SSR相当) ---
+    {
+      id: "c_g_silent_meal", name: "二人きりの定食屋",
+      description: "他に客がいない夕方。灯に、二人だけの時間が流れる。",
+      category: CardCategory::Eat, rarity: CardRarity::Rare, ap_cost: 2,
+      trust_gain: 10, understanding_gain: 8, empathy_gain: 15,
+      unlock_condition: UnlockCondition::GachaOnly, scene_key: "special",
+    },
+    {
+      id: "c_g_same_book", name: "同じ本を読んでいた",
+      description: "文庫本の表紙が同じだと気づいた瞬間、目が合った。",
+      category: CardCategory::Observe, rarity: CardRarity::Rare, ap_cost: 2,
+      trust_gain: 5, understanding_gain: 18, empathy_gain: 10,
+      unlock_condition: UnlockCondition::GachaOnly, scene_key: "special",
+    },
+    {
+      id: "c_g_closing_time", name: "閉店まで",
+      description: "気づけば、二人とも最後の客だった。丸山が笑っている。",
+      category: CardCategory::Talk, rarity: CardRarity::Rare, ap_cost: 2,
+      trust_gain: 15, understanding_gain: 5, empathy_gain: 12,
+      unlock_condition: UnlockCondition::GachaOnly, scene_key: "special",
+    },
+    {
+      id: "c_g_birthday_menu", name: "誕生日の特別メニュー",
+      description: "丸山がこっそり作った、一人分だけの特別な一皿。",
+      category: CardCategory::Eat, rarity: CardRarity::Rare, ap_cost: 2,
+      trust_gain: 12, understanding_gain: 5, empathy_gain: 18,
+      unlock_condition: UnlockCondition::GachaOnly, scene_key: "special",
+    },
+
+    // --- Uncommon (SR相当) ---
+    {
+      id: "c_g_counter_clean", name: "カウンターを拭く手",
+      description: "食べ終わったカウンターを、さっと拭く仕草。誰に頼まれたわけでもなく。",
+      category: CardCategory::Observe, rarity: CardRarity::Uncommon, ap_cost: 1,
+      trust_gain: 3, understanding_gain: 7, empathy_gain: 3,
+      unlock_condition: UnlockCondition::GachaOnly, scene_key: "observe",
+    },
+    {
+      id: "c_g_regular_seat", name: "「いつもの」が通じる日",
+      description: "丸山が注文を聞く前に料理を出した。常連の特権。",
+      category: CardCategory::Talk, rarity: CardRarity::Uncommon, ap_cost: 1,
+      trust_gain: 6, understanding_gain: 3, empathy_gain: 5,
+      unlock_condition: UnlockCondition::GachaOnly, scene_key: "talk",
+    },
+    {
+      id: "c_g_chopstick_rest", name: "箸置きの向き",
+      description: "彼女がそっと箸置きの向きを揃えた。几帳面な人だ。",
+      category: CardCategory::Observe, rarity: CardRarity::Uncommon, ap_cost: 1,
+      trust_gain: 2, understanding_gain: 8, empathy_gain: 2,
+      unlock_condition: UnlockCondition::GachaOnly, scene_key: "observe",
+    },
+    {
+      id: "c_g_maruyama_secret", name: "丸山の秘密レシピ",
+      description: "「これは誰にも教えてないんだけどな」——秘伝のタレの話を聞く。",
+      category: CardCategory::Talk, rarity: CardRarity::Uncommon, ap_cost: 1,
+      trust_gain: 7, understanding_gain: 4, empathy_gain: 3,
+      unlock_condition: UnlockCondition::GachaOnly, scene_key: "talk",
+    },
+    {
+      id: "c_g_extra_rice", name: "おかわりの温かさ",
+      description: "「ご飯、もう一杯いきますか？」——丸山の気遣いが沁みる。",
+      category: CardCategory::Eat, rarity: CardRarity::Uncommon, ap_cost: 2,
+      trust_gain: 4, understanding_gain: 3, empathy_gain: 10,
+      unlock_condition: UnlockCondition::GachaOnly, scene_key: "eat",
+    },
+
+    // --- Normal (R相当) ---
+    {
+      id: "c_g_tea_refill", name: "お茶のおかわり",
+      description: "湯呑みが空になったタイミングで、丸山が黙って注いでくれた。",
+      category: CardCategory::Eat, rarity: CardRarity::Normal, ap_cost: 1,
+      trust_gain: 3, understanding_gain: 2, empathy_gain: 4,
+      unlock_condition: UnlockCondition::GachaOnly, scene_key: "eat",
+    },
+    {
+      id: "c_g_weather_talk", name: "天気の話から",
+      description: "「今日は冷えますね」——天気の話は、距離を測る道具だ。",
+      category: CardCategory::Talk, rarity: CardRarity::Normal, ap_cost: 1,
+      trust_gain: 4, understanding_gain: 2, empathy_gain: 2,
+      unlock_condition: UnlockCondition::GachaOnly, scene_key: "talk",
+    },
+    {
+      id: "c_g_menu_board", name: "手書きメニューの観察",
+      description: "壁のメニュー、よく見ると値段の数字が何度も書き直されている。",
+      category: CardCategory::Observe, rarity: CardRarity::Normal, ap_cost: 1,
+      trust_gain: 2, understanding_gain: 5, empathy_gain: 2,
+      unlock_condition: UnlockCondition::GachaOnly, scene_key: "observe",
+    },
+  ]
+}
+
+// =========================================================================
 // カードプール統合
 // =========================================================================
 
@@ -325,6 +427,9 @@ pub fn get_all_cards() -> Array[ActionCard] {
     result.push(card)
   }
   for card in get_seasonal_cards() {
+    result.push(card)
+  }
+  for card in get_gacha_exclusive_cards() {
     result.push(card)
   }
   result

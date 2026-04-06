@@ -1,0 +1,12 @@
+import {
+  "tktcorporation/cafe_game/game",
+  "tktcorporation/cafe_game/data",
+  "mizchi/signals",
+}
+
+supported_targets = "js"
+
+options(
+  "is-main": true,
+  link: { "js": { "exports": [ "main" ], "format": "esm" } },
+)

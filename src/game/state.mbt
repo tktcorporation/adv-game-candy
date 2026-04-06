@@ -93,6 +93,52 @@ pub(all) struct GameState {
 
   // ストーリー完了
   story_complete : @signals.Signal[Bool]
+
+  // --- 通貨システム ---
+  /// 灯コイン — 行動・ミッション・ストーリーで獲得。ガチャ・強化に使う
+  coins : @signals.Signal[Int]
+  /// 星石 — プレミアム通貨。ストーリー・実績・ログボで獲得
+  gems : @signals.Signal[Int]
+  /// 強化シャード — ガチャ被り or ミッション報酬で獲得。カード強化に使う
+  enhancement_shards : @signals.Signal[Int]
+
+  // --- カードコレクション ---
+  /// 獲得済みカード一覧（レベル管理）。IDが含まれていればそのカードを所持
+  owned_cards : @signals.Signal[Array[@data.OwnedCard]]
+
+  // --- ガチャ ---
+  /// 天井カウンタ — Rare未獲得の連続回数。pity_threshold に達したら確定
+  gacha_pity : @signals.Signal[Int]
+  /// 累計ガチャ回数
+  gacha_total_pulls : @signals.Signal[Int]
+  /// 直近のガチャ結果（演出画面で表示）
+  gacha_results : @signals.Signal[Array[@data.GachaResult]]
+
+  // --- ログインボーナス ---
+  /// 連続ログイン日数（1-7サイクル）
+  login_streak : @signals.Signal[Int]
+  /// 最後にログボを受け取ったゲーム内日数
+  last_login_bonus_day : @signals.Signal[Int]
+
+  // --- デイリザルト ---
+  /// 今日のリザルトデータ（「次の日へ」時に生成）
+  day_result : @signals.Signal[@data.DayResultData]
+  /// 今日獲得したコイン数（リザルト表示用にトラッキング）
+  today_coins_earned : @signals.Signal[Int]
+  /// 今日の開始時の3軸値（差分計算用）
+  day_start_trust : @signals.Signal[Int]
+  day_start_understanding : @signals.Signal[Int]
+  day_start_empathy : @signals.Signal[Int]
+
+  // --- プレイヤーレベル ---
+  /// プレイヤー経験値 — 行動するたびに蓄積
+  player_exp : @signals.Signal[Int]
+  /// プレイヤーレベル（レベルアップでAP上限増加などの恩恵）
+  player_level : @signals.Signal[Int]
+
+  // --- 強化画面用 ---
+  /// 現在選択中のカードID（強化画面）
+  enhance_target_card : @signals.Signal[String]
 }
 
 /// デイリーミッションの初期値を生成
@@ -149,5 +195,34 @@ pub fn create_game_state() -> GameState {
     message_log: @signals.signal([]),
     album_tab: @signals.signal(0),
     story_complete: @signals.signal(false),
+    // --- 通貨 ---
+    coins: @signals.signal(500),        // 初期500コインでチュートリアルガチャ可能
+    gems: @signals.signal(0),
+    enhancement_shards: @signals.signal(0),
+    // --- カードコレクション（初期カードは start_game で自動登録）---
+    owned_cards: @signals.signal([]),
+    // --- ガチャ ---
+    gacha_pity: @signals.signal(0),
+    gacha_total_pulls: @signals.signal(0),
+    gacha_results: @signals.signal([]),
+    // --- ログインボーナス ---
+    login_streak: @signals.signal(0),
+    last_login_bonus_day: @signals.signal(0),
+    // --- デイリザルト ---
+    day_result: @signals.signal({
+      trust_gained: 0, understanding_gained: 0, empathy_gained: 0,
+      coins_earned: 0, cards_played: 0, memories_acquired: [],
+      rank_up: false, new_star: 1,
+      season_milestone: false, milestone_rank: "",
+    }),
+    today_coins_earned: @signals.signal(0),
+    day_start_trust: @signals.signal(0),
+    day_start_understanding: @signals.signal(0),
+    day_start_empathy: @signals.signal(0),
+    // --- プレイヤーレベル ---
+    player_exp: @signals.signal(0),
+    player_level: @signals.signal(1),
+    // --- 強化画面用 ---
+    enhance_target_card: @signals.signal(""),
   }
 }
