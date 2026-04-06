@@ -6,6 +6,12 @@
 - `moon check` — 型チェックのみ（高速）
 - `npm run lint:scenario` — シナリオ lint
 
+## ファイルサイズ制限
+- `.mbt` ファイルは **300行以下** を目標とする（PostToolUse hook で自動チェック）
+- 500行超過はエラー扱い。責務ごとにファイル分割すること
+- 分割例: `ui/app.mbt` → `ui/app_render.mbt` + `ui/app_handlers.mbt` + `ui/app_state.mbt`
+- 大きなファイルの編集が必要な場合は、まず分割してから変更する
+
 ## Data SSOT
 - キャラクター設定: `src/data/characters.mbt`（コメント含む）が唯一の真実源
 - ストーリー構成: `src/data/scenarios.mbt` + 各章ファイル
