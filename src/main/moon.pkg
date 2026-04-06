@@ -1,7 +1,9 @@
 import {
   "tktcorporation/cafe_game/game",
+  "tktcorporation/cafe_game/data",
   "tktcorporation/cafe_game/ui",
   "mizchi/luna/dom" @dom,
+  "mizchi/signals",
   "mizchi/js/browser/dom" @js_dom,
 }
 

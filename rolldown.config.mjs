@@ -20,6 +20,7 @@ export default defineConfig({
         );
         writeFileSync("dist/index.html", html);
         copyFileSync("style.css", "dist/style.css");
+        copyFileSync("animations.js", "dist/animations.js");
       },
     },
   ],

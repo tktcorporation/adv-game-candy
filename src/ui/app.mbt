@@ -1,7 +1,31 @@
 // メインUI — 定食屋「灯」に通うADV
 //
-// AP行動選択制のUI。
-// Title → Story(ch0) → Home → ActionSelect → Scene → Home のサイクル。
+// カードシステムUI。手札から行動カードを選んでプレイする。
+// Title → Story(ch0) → Home → ActionSelect(手札) → Scene → Home のサイクル。
+// ヘッダーに3軸パラメータ・季節・天候を表示。
+
+/// 季節に対応するCSSクラス名を返す
+fn season_class(state : @game.GameState) -> String {
+  let day = state.day.get()
+  let season = @data.get_season(day)
+  match season {
+    Spring => "season-spring"
+    Summer => "season-summer"
+    Autumn => "season-autumn"
+    Winter => "season-winter"
+  }
+}
+
+/// 天候に対応するCSSクラス名を返す
+fn weather_class(state : @game.GameState) -> String {
+  let day = state.day.get()
+  let weather = @data.get_weather(day)
+  match weather {
+    Rainy => "weather-rainy"
+    Snowy => "weather-snowy"
+    _ => ""
+  }
+}
 
 /// メインアプリコンポーネント
 pub fn app(state : @game.GameState) -> @dom.DomNode {
@@ -47,9 +71,9 @@ pub fn app(state : @game.GameState) -> @dom.DomNode {
 // ヘッダー
 // =========================================================================
 
-/// ヘッダー — タイトルと基本ステータス
+/// ヘッダー — ステータス表示
 ///
-/// Title フェーズ以外で表示。AP と ★ を常時表示。
+/// Title フェーズ以外で表示。3軸パラメータ・季節・天候・AP を常時表示。
 fn render_header(state : @game.GameState) -> @dom.DomNode {
   @dom.header_(
     class="game-header",
@@ -58,27 +82,41 @@ fn render_header(state : @game.GameState) -> @dom.DomNode {
         class="header-title",
         [
           @dom.h1(class="title", [@dom.text("灯")]),
+          // 季節・天候・日数
           @dom.span(
             class="subtitle",
             [@dom.text_dyn(fn() {
-              let ch = state.current_chapter.get()
-              let chapters = @data.get_chapters()
-              if ch < chapters.length() {
-                chapters[ch].title + " " + chapters[ch].subtitle
-              } else {
-                "Complete"
-              }
+              let day = state.day.get()
+              let season = @data.get_season(day)
+              let weather = @data.get_weather(day)
+              let day_in_season = @data.get_day_in_season(day)
+              let s = @data.season_to_string(season) + " " + day_in_season.to_string() + "日目 " + @data.weather_to_icon(weather)
+              s
             })],
+          ),
+        ],
+      ),
+      // 3軸パラメータバー
+      @dom.div(
+        class="header-params",
+        [
+          @dom.span(
+            class="param param-trust",
+            [@dom.text_dyn(fn() { "信頼 " + state.trust.get().to_string() })],
+          ),
+          @dom.span(
+            class="param param-understanding",
+            [@dom.text_dyn(fn() { "理解 " + state.understanding.get().to_string() })],
+          ),
+          @dom.span(
+            class="param param-empathy",
+            [@dom.text_dyn(fn() { "共感 " + state.empathy.get().to_string() })],
           ),
         ],
       ),
       @dom.div(
         class="header-stats",
         [
-          @dom.span(
-            class="stat",
-            [@dom.text_dyn(fn() { state.day.get().to_string() + "日目" })],
-          ),
           @dom.span(
             class="stat stat-stars",
             [@dom.text_dyn(fn() {
@@ -161,15 +199,32 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
           ),
         ],
       ),
-      // 親密度と★
+      // 3軸パラメータ表示
       @dom.div(
-        class="intimacy-display",
+        class="params-display",
         [
           @dom.div(
             class="star-display",
             [@dom.text_dyn(fn() {
               @game.get_star_display(state.intimacy.get())
             })],
+          ),
+          @dom.div(
+            class="param-bars",
+            [
+              @dom.div(
+                class="param-bar param-trust",
+                [@dom.text_dyn(fn() { "信頼 " + state.trust.get().to_string() })],
+              ),
+              @dom.div(
+                class="param-bar param-understanding",
+                [@dom.text_dyn(fn() { "理解 " + state.understanding.get().to_string() })],
+              ),
+              @dom.div(
+                class="param-bar param-empathy",
+                [@dom.text_dyn(fn() { "共感 " + state.empathy.get().to_string() })],
+              ),
+            ],
           ),
           @dom.div(
             class="intimacy-bar",
@@ -182,7 +237,7 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
               } else {
                 1000
               }
-              pts.to_string() + " / " + next_threshold.to_string()
+              "次の章まで " + pts.to_string() + " / " + next_threshold.to_string()
             })],
           ),
         ],
@@ -293,19 +348,24 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
 }
 
 // =========================================================================
-// ActionSelect ビュー
+// ActionSelect ビュー — 手札カードUI
 // =========================================================================
 
-/// 行動選択画面 — 灯の中で何をするか選ぶ
+/// 行動選択画面 — 手札からカードを選んでプレイ
 fn render_action_select_view(state : @game.GameState) -> @dom.DomNode {
   @dom.div(
     class="action-select-view",
     [
       @dom.div(
         class="action-header",
-        [@dom.text("灯の中。昼時。")],
+        [@dom.text_dyn(fn() {
+          let day = state.day.get()
+          let weather = @data.get_weather(day)
+          let weather_text = @data.weather_to_string(weather)
+          "灯の中。" + weather_text + "の昼時。"
+        })],
       ),
-      // AP表示
+      // AP ゲージ
       @dom.div(
         class="ap-gauge",
         [@dom.text_dyn(fn() {
@@ -321,38 +381,25 @@ fn render_action_select_view(state : @game.GameState) -> @dom.DomNode {
           "AP " + dots
         })],
       ),
-      // 行動カード: 食べる
-      render_action_card(
-        state,
-        @data.ActionType::Eat,
-        "食べる",
-        "日替わりを食べる。ひよりも来るかも。",
-      ),
-      // 行動カード: 観察する
-      render_action_card(
-        state,
-        @data.ActionType::Observe,
-        "観察する",
-        "店内を見回す。小さな発見があるかも。",
-      ),
-      // 行動カード: 丸山と話す
-      render_action_card(
-        state,
-        @data.ActionType::Talk,
-        "丸山と話す",
-        "店主と世間話。ひよりの話が聞けるかも。",
-      ),
-      // 行動カード: 特別行動（★3以降）
-      @dom.show(
-        fn() { @game.get_intimacy_stars(state.intimacy.get()) >= 3 },
-        fn() {
-          render_action_card(
-            state,
-            @data.ActionType::Special,
-            "特別行動",
-            "もう少し踏み込んだことをしてみる。",
-          )
-        },
+      // 手札カード一覧
+      @dom.div(
+        class="hand-cards",
+        [
+          @dom.for_each(
+            fn() { state.hand.get() },
+            fn(card, _i) { render_hand_card(state, card) },
+          ),
+          // 手札が空のとき
+          @dom.show(
+            fn() { state.hand.get().length() == 0 },
+            fn() {
+              @dom.div(
+                class="hand-empty",
+                [@dom.text("今日の手札はすべて使いました。")],
+              )
+            },
+          ),
+        ],
       ),
       // 帰るボタン
       @dom.div(
@@ -369,66 +416,115 @@ fn render_action_select_view(state : @game.GameState) -> @dom.DomNode {
   )
 }
 
-/// 行動カード — 各行動のUI
-fn render_action_card(
+/// 手札カード — 1枚分のUI
+///
+/// カード名・説明・APコスト・3軸パラメータ予告を表示。
+/// APが足りない場合はdisabled表示。レアリティでボーダー色を変える。
+fn render_hand_card(
   state : @game.GameState,
-  action : @data.ActionType,
-  name : String,
-  description : String
+  card : @data.ActionCard
 ) -> @dom.DomNode {
-  let cost = @game.get_action_cost(action)
+  let card_id = card.id
+  let can_play = state.ap.get() >= card.ap_cost
+  let rarity_class = match card.rarity {
+    Normal => "rarity-normal"
+    Uncommon => "rarity-uncommon"
+    Rare => "rarity-rare"
+  }
+  let base_class = if can_play {
+    "hand-card " + rarity_class
+  } else {
+    "hand-card disabled " + rarity_class
+  }
   @dom.div(
-    class="action-card-wrapper",
+    class="hand-card-wrapper",
     [
-      @dom.show(
-        fn() { @game.can_perform_action(state, action) },
-        fn() {
-          @dom.button(
-            class="action-card",
-            on=@dom.events().click(fn(_e) { @game.perform_action(state, action) }),
-            [
-              @dom.div(
-                class="action-card-header",
-                [
-                  @dom.span(class="action-name", [@dom.text(name)]),
-                  @dom.span(
-                    class="action-cost",
-                    [@dom.text(cost.to_string() + " AP")],
-                  ),
-                ],
-              ),
-              @dom.div(
-                class="action-desc",
-                [@dom.text(description)],
-              ),
-            ],
-          )
-        },
-      ),
-      @dom.show(
-        fn() { !@game.can_perform_action(state, action) },
-        fn() {
-          @dom.div(
-            class="action-card disabled",
-            [
-              @dom.div(
-                class="action-card-header",
-                [
-                  @dom.span(class="action-name", [@dom.text(name)]),
-                  @dom.span(
-                    class="action-cost",
-                    [@dom.text(cost.to_string() + " AP")],
-                  ),
-                ],
-              ),
-              @dom.div(
-                class="action-desc",
-                [@dom.text(description)],
-              ),
-            ],
-          )
-        },
-      ),
+      if can_play {
+        @dom.button(
+          class=base_class,
+          on=@dom.events().click(fn(_e) { @game.play_card(state, card_id) }),
+          [
+            // カードヘッダー: 名前 + APコスト
+            @dom.div(
+              class="card-header",
+              [
+                @dom.span(class="card-name", [@dom.text(card.name)]),
+                @dom.span(
+                  class="card-cost",
+                  [@dom.text(card.ap_cost.to_string() + " AP")],
+                ),
+              ],
+            ),
+            // カード説明
+            @dom.div(
+              class="card-desc",
+              [@dom.text(card.description)],
+            ),
+            // 3軸パラメータ予告
+            @dom.div(
+              class="card-params",
+              [
+                @dom.show(
+                  fn() { card.trust_gain > 0 },
+                  fn() {
+                    @dom.span(
+                      class="card-param param-trust",
+                      [@dom.text("信+" + card.trust_gain.to_string())],
+                    )
+                  },
+                ),
+                @dom.show(
+                  fn() { card.understanding_gain > 0 },
+                  fn() {
+                    @dom.span(
+                      class="card-param param-understanding",
+                      [@dom.text("理+" + card.understanding_gain.to_string())],
+                    )
+                  },
+                ),
+                @dom.show(
+                  fn() { card.empathy_gain > 0 },
+                  fn() {
+                    @dom.span(
+                      class="card-param param-empathy",
+                      [@dom.text("共+" + card.empathy_gain.to_string())],
+                    )
+                  },
+                ),
+              ],
+            ),
+          ],
+        )
+      } else {
+        @dom.div(
+          class=base_class,
+          [
+            @dom.div(
+              class="card-header",
+              [
+                @dom.span(class="card-name", [@dom.text(card.name)]),
+                @dom.span(
+                  class="card-cost",
+                  [@dom.text(card.ap_cost.to_string() + " AP")],
+                ),
+              ],
+            ),
+            @dom.div(
+              class="card-desc",
+              [@dom.text(card.description)],
+            ),
+            @dom.div(
+              class="card-params",
+              [
+                @dom.span(
+                  class="card-param",
+                  [@dom.text("AP不足")],
+                ),
+              ],
+            ),
+          ],
+        )
+      },
     ],
   )
 }
@@ -575,6 +671,7 @@ fn render_album_view(state : @game.GameState) -> @dom.DomNode {
           render_album_tab(state, 1, "発見ノート"),
           render_album_tab(state, 2, "会話メモ"),
           render_album_tab(state, 3, "ストーリー"),
+          render_album_tab(state, 4, "思い出"),
         ],
       ),
       // タブコンテンツ
@@ -597,6 +694,11 @@ fn render_album_view(state : @game.GameState) -> @dom.DomNode {
       @dom.show(
         fn() { state.album_tab.get() == 3 },
         fn() { render_album_stories(state) },
+      ),
+      // Tab 4: 思い出コレクション
+      @dom.show(
+        fn() { state.album_tab.get() == 4 },
+        fn() { render_album_memories(state) },
       ),
     ],
   )
@@ -756,6 +858,59 @@ fn render_album_stories(state : @game.GameState) -> @dom.DomNode {
               result = result + "✓ " + ch.title + " 「" + ch.subtitle + "」\n"
             } else {
               result = result + "？ " + ch.title + "\n"
+            }
+          }
+          result
+        })],
+      ),
+    ],
+  )
+}
+
+// =========================================================================
+// アルバム: 思い出コレクション
+// =========================================================================
+
+/// アルバム: 思い出コレクション
+///
+/// 全思い出の一覧。獲得済みはタイトルと説明、未獲得はヒントを表示。
+/// 装備状態も表示。
+fn render_album_memories(state : @game.GameState) -> @dom.DomNode {
+  @dom.div(
+    class="album-content album-memories",
+    [
+      // 獲得数
+      @dom.div(
+        class="memory-count",
+        [@dom.text_dyn(fn() {
+          let all = @data.get_all_memories()
+          let acquired = state.acquired_memories.get()
+          acquired.length().to_string() + " / " + all.length().to_string() + " 獲得"
+        })],
+      ),
+      // 思い出一覧
+      @dom.div(
+        class="memory-list",
+        [@dom.text_dyn(fn() {
+          let all = @data.get_all_memories()
+          let acquired = state.acquired_memories.get()
+          let mut result = ""
+          for memory in all {
+            let mut is_acquired = false
+            for record in acquired {
+              if record.memory_id == memory.id {
+                is_acquired = true
+                break
+              }
+            }
+            if is_acquired {
+              result = result + "✦ " + memory.title + "\n"
+              result = result + "  " + memory.description + "\n"
+              let bonus_text = "  [+" + memory.trust_bonus.to_string() + "信 +" + memory.understanding_bonus.to_string() + "理 +" + memory.empathy_bonus.to_string() + "共]\n\n"
+              result = result + bonus_text
+            } else {
+              result = result + "？ ???\n"
+              result = result + "  ヒント: " + memory.hint + "\n\n"
             }
           }
           result
