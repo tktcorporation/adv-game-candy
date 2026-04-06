@@ -1,18 +1,23 @@
 // デイリーサイクル — 次の日・パッシブ収入・ミッション・思い出装備
 //
+// 学マス参考リデザイン:
+// - 毎朝ムード更新 + 最初のターン選択肢ドロー
+// - 週末に週イベント判定
+// - ターン数・コンボチェインのリセット
+//
 // next_day() → DayResult表示 → advance_to_next_day() で翌日へ。
-// 季節の節目チェック、パッシブ収入、デイリーミッション判定もここ。
 
 /// 次の日へ進む（DayResult表示）
 pub fn next_day(state : GameState) -> Unit {
+  // 週イベント判定（DayResult前に行うことで結果をサマリーに含められる）
+  check_weekly_event(state)
+
   let result = build_day_result(state)
   state.day_result.set(result)
   state.phase.set(@data.GamePhase::DayResult)
 }
 
 /// DayResult画面から実際に翌日へ進む
-///
-/// 追加: パッシブ収入付与（ブルアカのカフェ相当）
 pub fn advance_to_next_day(state : GameState) -> Unit {
   let current_day = state.day.get()
 
@@ -64,27 +69,46 @@ pub fn advance_to_next_day(state : GameState) -> Unit {
   state.today_actions.set([])
   state.daily_missions.set(create_daily_missions())
 
-  // 3. パッシブ収入（ブルアカのカフェ相当）
+  // 3. パッシブ収入
   let passive_coins = grant_passive_income(state)
   if passive_coins > 0 {
     add_message(state, "定食屋パッシブ: +" + passive_coins.to_string() + "コイン")
   }
 
-  // 4. 新しい手札をドロー
-  draw_daily_hand(state)
+  // 4. ターン制リセット + ムード更新（学マス参考リデザイン）
+  state.turn_number.set(0)
+  state.combo_chain.set(0)
+  state.last_card_category.set("")
+  state.last_combo_bonus.set(
+    { name: "", description: "", trust_bonus: 0, understanding_bonus: 0, empathy_bonus: 0 },
+  )
+  state.last_play_grade.set(@data.PlayGrade::Normal)
+  update_daily_mood(state)
 
-  // 5. デイスタートスナップショット
+  // 5. 最初のターン選択肢をドロー（旧hand互換も維持）
+  draw_turn_choices_for_state(state, 0)
+  // 旧hand互換: 選択肢をhandにも入れる
+  let initial_choices = state.turn_choices.get()
+  state.hand.set(initial_choices.cards)
+
+  // 6. デイスタートスナップショット
   snapshot_day_start(state)
 
-  // 季節・天候情報
+  // 7. 週の開始ならスナップショット
   let new_day = state.day.get()
+  if (new_day - 1) % 7 == 0 {
+    snapshot_week_start(state)
+  }
+
+  // 季節・天候・ムード情報
   let new_season = @data.get_season(new_day)
   let new_weather = @data.get_weather(new_day)
   let day_in_season = @data.get_day_in_season(new_day)
-  let day_msg = @data.season_to_string(new_season) + " " + day_in_season.to_string() + "日目 " + @data.weather_to_icon(new_weather) + @data.weather_to_string(new_weather)
+  let mood = state.mood.get()
+  let day_msg = @data.season_to_string(new_season) + " " + day_in_season.to_string() + "日目 " + @data.weather_to_icon(new_weather) + @data.weather_to_string(new_weather) + " — " + mood_to_icon(mood) + mood_to_string(mood)
   add_message(state, day_msg)
 
-  // 6. ログボ → Home
+  // 8. ログボ → Home
   if check_login_bonus(state) {
     state.phase.set(@data.GamePhase::LoginBonus)
   } else {

@@ -8,6 +8,35 @@ fn render_scene_view(state : @game.GameState) -> @dom.DomNode {
   @dom.div(
     class="scene-view",
     [
+      // グレード表示（PERFECT/GOOD）— 学マス参考
+      @dom.show(
+        fn() { state.last_play_grade.get() != @data.PlayGrade::Normal },
+        fn() {
+          let grade_class = match state.last_play_grade.get() {
+            Perfect => "grade-display grade-perfect"
+            Good => "grade-display grade-good"
+            Normal => "grade-display"
+          }
+          @dom.div(
+            class=grade_class,
+            [@dom.text_dyn(fn() { @game.grade_to_string(state.last_play_grade.get()) })],
+          )
+        },
+      ),
+      // コンボ表示
+      @dom.show(
+        fn() { state.last_combo_bonus.get().name != "" },
+        fn() {
+          @dom.div(
+            class="combo-result",
+            [@dom.text_dyn(fn() {
+              let bonus = state.last_combo_bonus.get()
+              let chain = state.combo_chain.get()
+              "CHAIN x" + chain.to_string() + " — " + bonus.name
+            })],
+          )
+        },
+      ),
       // メニュー名
       @dom.div(
         class="scene-menu",

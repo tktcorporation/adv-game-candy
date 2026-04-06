@@ -155,6 +155,38 @@ pub(all) struct GameState {
 
   /// 親密度マイルストーン報酬を受け取った最大レベル
   claimed_affection_milestone : @signals.Signal[Int]
+
+  // =========================================================================
+  // 学マス参考リデザイン: ムード・コンボ・週イベント・ターン制
+  // =========================================================================
+
+  /// ひよりの今日の気分（学マスのコンディション相当）
+  /// 毎日変化し、特定軸のカード効果を強化する
+  mood : @signals.Signal[@data.Mood]
+
+  /// 今ターンの選択肢（3枚提示→1枚選択）
+  /// 学マスのレッスン選択に対応
+  turn_choices : @signals.Signal[@data.TurnChoices]
+
+  /// 今日のターン数（何ターン目か）
+  turn_number : @signals.Signal[Int]
+
+  /// 直前のカードプレイのグレード（PERFECT/GOOD/NORMAL）
+  last_play_grade : @signals.Signal[@data.PlayGrade]
+
+  /// コンボチェイン数（連続で同系統 or 相性良いカードを出した回数）
+  combo_chain : @signals.Signal[Int]
+  /// 直前にプレイしたカードのカテゴリ（コンボ判定用）
+  last_card_category : @signals.Signal[String]
+  /// 直前のコンボボーナス（UI表示用）
+  last_combo_bonus : @signals.Signal[@data.ComboBonus]
+
+  /// 週イベント結果の履歴
+  weekly_event_results : @signals.Signal[Array[@data.WeeklyEventResult]]
+  /// 週の開始時パラメータ（週イベントで「その週の獲得量」を判定するため）
+  week_start_trust : @signals.Signal[Int]
+  week_start_understanding : @signals.Signal[Int]
+  week_start_empathy : @signals.Signal[Int]
 }
 
 /// デイリーミッションの初期値を生成
@@ -243,5 +275,19 @@ pub fn create_game_state() -> GameState {
     enhance_mode: @signals.signal("star"),
     // 親密度マイルストーン
     claimed_affection_milestone: @signals.signal(0),
+    // 学マス参考リデザイン
+    mood: @signals.signal(@data.Mood::Calm),
+    turn_choices: @signals.signal({ cards: [], turn_number: 0 } : @data.TurnChoices),
+    turn_number: @signals.signal(0),
+    last_play_grade: @signals.signal(@data.PlayGrade::Normal),
+    combo_chain: @signals.signal(0),
+    last_card_category: @signals.signal(""),
+    last_combo_bonus: @signals.signal(
+      { name: "", description: "", trust_bonus: 0, understanding_bonus: 0, empathy_bonus: 0 } : @data.ComboBonus,
+    ),
+    weekly_event_results: @signals.signal([]),
+    week_start_trust: @signals.signal(0),
+    week_start_understanding: @signals.signal(0),
+    week_start_empathy: @signals.signal(0),
   }
 }

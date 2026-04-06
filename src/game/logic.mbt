@@ -120,13 +120,24 @@ pub fn get_current_chapter(state : GameState) -> @data.Chapter? {
 // =========================================================================
 
 /// タイトル画面から「はじめる」
+///
+/// 学マス参考リデザイン: 初日のムード設定 + ターン選択肢ドロー
 pub fn start_game(state : GameState) -> Unit {
   state.current_chapter.set(0)
   state.scene_index.set(0)
   state.line_index.set(0)
   register_initial_cards(state)
+  // ムード初期化
+  update_daily_mood(state)
+  // ターン制: 最初の選択肢をドロー
   draw_daily_hand(state)
+  draw_turn_choices_for_state(state, 0)
+  // 旧hand互換: 選択肢をhandにも入れる
+  let initial_choices = state.turn_choices.get()
+  state.hand.set(initial_choices.cards)
   snapshot_day_start(state)
+  // 週スタートスナップショット
+  snapshot_week_start(state)
   state.phase.set(@data.GamePhase::Story)
 }
 

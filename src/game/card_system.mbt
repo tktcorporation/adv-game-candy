@@ -105,23 +105,29 @@ pub fn build_available_pool(
   pool
 }
 
-/// 毎日の手札をドロー
+/// 毎ターンの選択肢をドロー（学マスのレッスン選択に対応）
 ///
-/// 有効カードプールからランダムに max_hand_size 枚を選ぶ。
-/// day ベースの決定的シャッフル。
+/// 有効カードプールからランダムに3枚を選ぶ。
+/// プレイヤーは3枚から1枚を選び、残りは捨てる。
+/// 「どれを取るか」の悩みがゲームの面白さの核心。
+///
+/// day + turn でシードを作るため、同じ日の同じターンなら同じ結果。
 /// レアリティ重み: Normal=3, Uncommon=2, Rare=1。
-/// 天候/季節限定カードは1枚保証。
-pub fn draw_hand(
+/// 天候/季節限定カードは出現時に1枚保証スロット。
+pub fn draw_turn_choices(
   pool : Array[@data.ActionCard],
-  day : Int
+  day : Int,
+  turn : Int
 ) -> Array[@data.ActionCard] {
+  let choices_size = 3 // 毎ターン3枚提示
+
   if pool.length() == 0 {
     return []
   }
 
-  let hand : Array[@data.ActionCard] = []
+  let choices : Array[@data.ActionCard] = []
 
-  // 1. 天候/季節限定カードがあれば1枚確定
+  // 1. 天候/季節限定カードがあれば1枚確定（最初のターンのみ）
   let special_pool : Array[@data.ActionCard] = []
   let normal_pool : Array[@data.ActionCard] = []
   for card in pool {
@@ -131,9 +137,9 @@ pub fn draw_hand(
     }
   }
 
-  if special_pool.length() > 0 {
+  if special_pool.length() > 0 && turn == 0 {
     let idx = ((day * 4957) % special_pool.length() + special_pool.length()) % special_pool.length()
-    hand.push(special_pool[idx])
+    choices.push(special_pool[idx])
   }
 
   // 2. 残りスロットを通常プールから重み付き選択
@@ -147,8 +153,9 @@ pub fn draw_hand(
     weighted.push((card, weight))
   }
 
-  let mut seed = day * 6271
-  let remaining = max_hand_size - hand.length()
+  // day + turn でシードを変える（同じ日でもターンごとに異なる選択肢）
+  let mut seed = day * 6271 + turn * 9377
+  let remaining = choices_size - choices.length()
   for _ in 0..<remaining {
     if weighted.length() == 0 {
       break
@@ -178,10 +185,10 @@ pub fn draw_hand(
 
     let (card, _) = weighted[chosen_idx]
 
-    let mut already_in_hand = false
-    for h in hand {
-      if h.id == card.id {
-        already_in_hand = true
+    let mut already_chosen = false
+    for c in choices {
+      if c.id == card.id {
+        already_chosen = true
         break
       }
     }
@@ -193,8 +200,8 @@ pub fn draw_hand(
       }
     }
 
-    if !already_in_hand {
-      hand.push(card)
+    if !already_chosen {
+      choices.push(card)
     }
 
     while weighted.length() > 0 {
@@ -205,7 +212,17 @@ pub fn draw_hand(
     }
   }
 
-  hand
+  choices
+}
+
+/// 旧互換: draw_hand は draw_turn_choices のラッパー
+///
+/// 初回ターンの選択肢を返す。既存コードとの互換性のため残す。
+pub fn draw_hand(
+  pool : Array[@data.ActionCard],
+  day : Int
+) -> Array[@data.ActionCard] {
+  draw_turn_choices(pool, day, 0)
 }
 
 // =========================================================================

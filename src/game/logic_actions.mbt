@@ -1,7 +1,10 @@
 // 行動処理 — カードプレイ・思い出獲得チェック
 //
-// play_card() がメイン。★ランク+レベルの2軸でパラメータ計算し、
-// 親密度マイルストーン・ミッション・思い出・手札更新まで一連で処理。
+// 学マス参考リデザイン:
+// - 毎ターン3枚から1枚選択（レッスン選択方式）
+// - ムードボーナス（コンディション方式）
+// - コンボチェイン（スキルカード連携方式）
+// - PERFECT/GOOD/NORMAL判定（パーフェクトレッスン方式）
 
 fn card_category_to_action_string(category : @data.CardCategory) -> String {
   match category {
@@ -16,17 +19,35 @@ pub fn can_play_card(state : GameState, card : @data.ActionCard) -> Bool {
   state.ap.get() >= card.ap_cost
 }
 
-/// 行動カードをプレイする
+/// 行動カードをプレイする（学マス参考リデザイン版）
 ///
-/// ★ランク + レベルの2軸でパラメータ計算。
-/// 親密度マイルストーンチェックを追加（上限なし対応）。
+/// 新しいフロー:
+/// 1. AP消費
+/// 2. ムードボーナス計算（ひよりの気分 × カードカテゴリ）
+/// 3. コンボ判定（前のカードとの連携）
+/// 4. PERFECT/GOOD/NORMAL グレード判定
+/// 5. 最終パラメータ = base × ★倍率 × Lv倍率 × ムード倍率 × グレード倍率 + メモリー + コンボ
+/// 6. テキスト生成 → Scene
+/// 7. 次ターンの選択肢をドロー
 pub fn play_card(state : GameState, card_id : String) -> Unit {
-  let hand = state.hand.get()
+  // ターン選択肢から対象カードを探す
+  let choices = state.turn_choices.get()
   let mut target_card : @data.ActionCard? = None
-  for c in hand {
+  for c in choices.cards {
     if c.id == card_id {
       target_card = Some(c)
       break
+    }
+  }
+
+  // 選択肢にない場合、旧hand互換でも探す
+  if target_card == None {
+    let hand = state.hand.get()
+    for c in hand {
+      if c.id == card_id {
+        target_card = Some(c)
+        break
+      }
     }
   }
 
@@ -40,6 +61,7 @@ pub fn play_card(state : GameState, card_id : String) -> Unit {
   }
 
   let day = state.day.get()
+  let turn = state.turn_number.get()
   let action_str = card_category_to_action_string(card.category)
 
   // 1. AP消費
@@ -54,34 +76,60 @@ pub fn play_card(state : GameState, card_id : String) -> Unit {
     state.memory_slots.get(), memory_ids,
   )
 
-  // 3. ★ランク + レベル による3軸パラメータ計算
+  // 3. ★ランク + レベル によるベースパラメータ
   let card_star = get_card_star_rank(state, card.id)
   let card_level = get_card_level(state, card.id)
   let effective_star = if card_star > 0 { card_star } else { 1 }
   let effective_level = if card_level > 0 { card_level } else { 1 }
 
-  let (trust_gain, understanding_gain, empathy_gain) = calculate_card_gains(
+  let (base_trust, base_understanding, base_empathy) = calculate_card_gains(
     card, effective_star, effective_level,
     mem_trust, mem_understanding, mem_empathy,
   )
-  state.trust.update(fn(v) { v + trust_gain })
-  state.understanding.update(fn(v) { v + understanding_gain })
-  state.empathy.update(fn(v) { v + empathy_gain })
+
+  // 4. ムードボーナス（ひよりの気分）
+  let mood = state.mood.get()
+  let mood_mult = get_mood_multiplier(mood, card.category)
+
+  // 5. コンボ判定
+  let (combo_t, combo_u, combo_e) = process_combo(state, card.category)
+  let chain = state.combo_chain.get()
+  let chain_mult = get_chain_multiplier(chain)
+
+  // 6. PERFECT/GOOD/NORMAL 判定
+  let grade = determine_play_grade(day, turn, mood, card.category, chain)
+  let grade_mult = grade_multiplier(grade)
+  state.last_play_grade.set(grade)
+
+  // 7. 最終パラメータ計算
+  //    = base × mood_mult/100 × grade_mult/100 × chain_mult/100 + combo_bonus
+  let trust_gain = base_trust * mood_mult * grade_mult * chain_mult / 1_000_000 + combo_t
+  let understanding_gain = base_understanding * mood_mult * grade_mult * chain_mult / 1_000_000 + combo_u
+  let empathy_gain = base_empathy * mood_mult * grade_mult * chain_mult / 1_000_000 + combo_e
+
+  // 最低1ポイント保証
+  let final_trust = if card.trust_gain > 0 && trust_gain < 1 { 1 } else { trust_gain }
+  let final_understanding = if card.understanding_gain > 0 && understanding_gain < 1 { 1 } else { understanding_gain }
+  let final_empathy = if card.empathy_gain > 0 && empathy_gain < 1 { 1 } else { empathy_gain }
+
+  state.trust.update(fn(v) { v + final_trust })
+  state.understanding.update(fn(v) { v + final_understanding })
+  state.empathy.update(fn(v) { v + final_empathy })
 
   // 親密度（合計値）を同期
   sync_intimacy(state)
 
-  // 4. 親密度マイルストーンチェック（上限なし対応）
+  // 8. 親密度マイルストーンチェック
   check_affection_milestones(state)
 
-  // 5. テキスト生成 → Scene へ
+  // 9. テキスト生成 → Scene へ
   let scene_text = @data.get_action_text(action_str, state.intimacy.get(), day)
   state.today_scene_text.set(scene_text)
 
   let menu = @data.get_today_menu(day)
   state.today_menu.set(menu.name)
 
-  // 6. 行動履歴
+  // 10. 行動履歴
   state.today_actions.update(fn(actions) {
     let result : Array[String] = []
     for a in actions {
@@ -137,7 +185,7 @@ pub fn play_card(state : GameState, card_id : String) -> Unit {
     })
   }
 
-  // 7. 行動カウンタ更新
+  // 11. 行動カウンタ更新
   match card.category {
     Eat => state.total_eat_count.update(fn(n) { n + 1 })
     Observe => state.total_observe_count.update(fn(n) { n + 1 })
@@ -145,13 +193,13 @@ pub fn play_card(state : GameState, card_id : String) -> Unit {
     _ => ()
   }
 
-  // 8. ミッション判定
+  // 12. ミッション判定
   check_missions(state)
 
-  // 9. 思い出獲得チェック
+  // 13. 思い出獲得チェック
   check_and_acquire_memories(state, card.id, None)
 
-  // 10. 手札からカード除去
+  // 14. 手札からカード除去（旧互換）
   state.hand.update(fn(h) {
     let result : Array[@data.ActionCard] = []
     for c in h {
@@ -162,29 +210,95 @@ pub fn play_card(state : GameState, card_id : String) -> Unit {
     result
   })
 
-  // 11. 通貨・EXP報酬
+  // 15. 通貨・EXP報酬
   grant_action_rewards(state, card)
 
-  // 12. 条件解放カードチェック
+  // 16. 条件解放カードチェック
   check_condition_unlocks(state)
 
-  // 13. カード結果をScene表示用に保存
+  // 17. カード結果をScene表示用に保存
   let coin_reward = get_card_coin_reward(card.rarity)
   let exp_reward = get_card_exp_reward(card.rarity)
   let gem_reward = get_card_gem_reward(card.rarity)
   let affection_level = get_affection_level(state.intimacy.get())
   let reaction = @data.get_reaction_text(action_str, affection_level)
   state.last_card_result.set({
-    trust_gain, understanding_gain, empathy_gain,
+    trust_gain: final_trust, understanding_gain: final_understanding,
+    empathy_gain: final_empathy,
     coin_reward, exp_reward, gem_reward,
     reaction_text: reaction,
   })
 
-  // メッセージ
-  let msg = card.name + " — 信頼+" + trust_gain.to_string() + " 理解+" + understanding_gain.to_string() + " 共感+" + empathy_gain.to_string() + " +" + coin_reward.to_string() + "コイン"
+  // 18. メッセージ（グレード表示付き）
+  let grade_str = grade_to_string(grade)
+  let grade_prefix = if grade_str != "" { grade_str + " " } else { "" }
+  let msg = grade_prefix + card.name + " — 信頼+" + final_trust.to_string() + " 理解+" + final_understanding.to_string() + " 共感+" + final_empathy.to_string() + " +" + coin_reward.to_string() + "コイン"
   add_message(state, msg)
 
+  // 19. ターン数を進めて次の選択肢をドロー
+  state.turn_number.update(fn(t) { t + 1 })
+  let next_turn = state.turn_number.get()
+
+  // APが残っていれば次ターンの選択肢をドロー
+  if state.ap.get() > 0 {
+    draw_turn_choices_for_state(state, next_turn)
+  } else {
+    // AP切れ: 選択肢をクリア
+    state.turn_choices.set({ cards: [], turn_number: next_turn })
+  }
+
   state.phase.set(@data.GamePhase::Scene)
+}
+
+/// ターン選択肢をステートにドロー
+///
+/// カードプールを構築し、draw_turn_choices で3枚ドローして
+/// turn_choices に設定する。
+pub fn draw_turn_choices_for_state(state : GameState, turn : Int) -> Unit {
+  let day = state.day.get()
+  let season = @data.get_season(day)
+  let weather = @data.get_weather(day)
+  let owned = state.owned_cards.get()
+  let all_cards = @data.get_all_cards()
+
+  let owned_ids : Array[String] = []
+  for oc in owned {
+    owned_ids.push(oc.card_id)
+  }
+
+  let pool : Array[@data.ActionCard] = []
+  for card in all_cards {
+    let mut is_owned = false
+    for oid in owned_ids {
+      if oid == card.id {
+        is_owned = true
+        break
+      }
+    }
+
+    match card.unlock_condition {
+      SeasonOnly(s) => {
+        if is_owned && s == season {
+          pool.push(card)
+        }
+        continue
+      }
+      WeatherOnly(w) => {
+        if is_owned && w == weather {
+          pool.push(card)
+        }
+        continue
+      }
+      _ => ()
+    }
+
+    if is_owned {
+      pool.push(card)
+    }
+  }
+
+  let choices = draw_turn_choices(pool, day, turn)
+  state.turn_choices.set({ cards: choices, turn_number: turn })
 }
 
 /// 思い出獲得チェック（親密度レベル使用、上限なし）
