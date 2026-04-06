@@ -4,6 +4,29 @@
 // Title → Story(ch0) → Home → ActionSelect(手札) → Scene → Home のサイクル。
 // ヘッダーに3軸パラメータ・季節・天候を表示。
 
+/// 季節に対応するCSSクラス名を返す
+fn season_class(state : @game.GameState) -> String {
+  let day = state.day.get()
+  let season = @data.get_season(day)
+  match season {
+    Spring => "season-spring"
+    Summer => "season-summer"
+    Autumn => "season-autumn"
+    Winter => "season-winter"
+  }
+}
+
+/// 天候に対応するCSSクラス名を返す
+fn weather_class(state : @game.GameState) -> String {
+  let day = state.day.get()
+  let weather = @data.get_weather(day)
+  match weather {
+    Rainy => "weather-rainy"
+    Snowy => "weather-snowy"
+    _ => ""
+  }
+}
+
 /// メインアプリコンポーネント
 pub fn app(state : @game.GameState) -> @dom.DomNode {
   @dom.div(
