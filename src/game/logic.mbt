@@ -1,17 +1,13 @@
 // ゲームロジック — 定食屋「灯」に通うADV
 //
-// AP行動選択制:
-//   Title → Story(ch0) → Home → ActionSelect → Scene → ActionSelect → Home
-// 毎日の手札からカードを選び、3軸パラメータを育ててストーリーを解放する。
-//
-// 学マス参考のソーシャルゲームシステム:
-// - 行動カードの手札ドローとプレイ
-// - 3軸パラメータ（信頼/理解/共感）の成長
-// - 季節の節目イベント（S/A/B/C ランク判定）
-// - 思い出の自動獲得チェック
+// ブルアカ参考リライト:
+// - メインストーリーはプレイヤーレベルでゲート（親密度ではない）
+// - 親密度は上限なし、ボンドストーリー・カード解放用
+// - カード育成は★ランク+レベルの2軸
+// - パッシブ収入で通い続けることが報われる
 
 // =========================================================================
-// ストーリー進行（既存ロジックを維持）
+// ストーリー進行（プレイヤーレベルでゲート）
 // =========================================================================
 
 /// ストーリーを1行進める
@@ -27,13 +23,10 @@ pub fn advance_story(state : GameState) -> Unit {
   if next_line < scene.lines.length() {
     state.line_index.set(next_line)
   } else {
-    // シーン完了 — 次のシーンへ or 章終了
     let next_scene_id = scene.next_scene
     if next_scene_id == "" {
-      // 章のストーリー完了 — Home フェーズへ
       finish_chapter(state)
     } else {
-      // 次のシーンを探す
       let mut found = -1
       for i, s in chapter.scenes {
         if s.id == next_scene_id {
@@ -53,13 +46,12 @@ pub fn advance_story(state : GameState) -> Unit {
 
 /// 章のストーリー終了時の処理
 ///
-/// 次の章がすぐ解放可能なら連続でストーリーに入る（ch0→ch1 など）。
-/// そうでなければ Home フェーズへ。
+/// 設計変更: 次章の解放条件を intimacy → player_level に変更。
+/// プレイヤーレベルは行動すれば必ず上がるため、ストーリー進行が保証される。
 fn finish_chapter(state : GameState) -> Unit {
   let current = state.current_chapter.get()
   let chapters = @data.get_chapters()
 
-  // 最終章なら完了
   if current + 1 >= chapters.length() {
     state.story_complete.set(true)
     state.phase.set(@data.GamePhase::Home)
@@ -67,14 +59,13 @@ fn finish_chapter(state : GameState) -> Unit {
     return
   }
 
-  // 章クリア報酬（通貨）
+  // 章クリア報酬
   grant_chapter_reward(state, current)
 
-  // 次の章が即座に解放可能かチェック
+  // 次の章がプレイヤーレベルで即座に解放可能かチェック
   let next = chapters[current + 1]
-  let intimacy = state.intimacy.get()
-  if intimacy >= next.unlock_intimacy {
-    // 連続ストーリー解放（ch0→ch1 など）
+  let player_level = state.player_level.get()
+  if player_level >= next.unlock_player_level {
     state.current_chapter.set(current + 1)
     state.scene_index.set(0)
     state.line_index.set(0)
@@ -82,9 +73,7 @@ fn finish_chapter(state : GameState) -> Unit {
       state,
       next.title + " 「" + next.subtitle + "」が解放されました！",
     )
-    // phase は Story のまま
   } else {
-    // Home フェーズへ
     state.phase.set(@data.GamePhase::Home)
     state.line_index.set(0)
     state.scene_index.set(0)
@@ -125,19 +114,13 @@ pub fn get_current_chapter(state : GameState) -> @data.Chapter? {
 // タイトル・ゲーム開始
 // =========================================================================
 
-/// タイトル画面から「はじめる」— ch0 ストーリーへ遷移
-///
-/// ch0 は unlock_intimacy: 0 なので即座に再生可能。
-/// 初期カードの登録・初日の手札ドロー・デイスタートスナップショットもここで行う。
+/// タイトル画面から「はじめる」
 pub fn start_game(state : GameState) -> Unit {
   state.current_chapter.set(0)
   state.scene_index.set(0)
   state.line_index.set(0)
-  // 初期カード（Always）を所持カードに��録
   register_initial_cards(state)
-  // 初日の手札をドロー
   draw_daily_hand(state)
-  // デイリザルト用のスナップショット
   snapshot_day_start(state)
   state.phase.set(@data.GamePhase::Story)
 }
@@ -145,7 +128,6 @@ pub fn start_game(state : GameState) -> Unit {
 /// 今日の手札をドロー（毎朝呼ばれる）
 ///
 /// 所持カード + 季節/天候条件 を満たすカードからドロー。
-/// ガチャで獲得したカードも所持していればドロー候補に入る。
 fn draw_daily_hand(state : GameState) -> Unit {
   let day = state.day.get()
   let season = @data.get_season(day)
@@ -153,16 +135,13 @@ fn draw_daily_hand(state : GameState) -> Unit {
   let owned = state.owned_cards.get()
   let all_cards = @data.get_all_cards()
 
-  // 所持カードIDセット
   let owned_ids : Array[String] = []
   for oc in owned {
     owned_ids.push(oc.card_id)
   }
 
-  // ドロー候補: 所持済み + 季節/天候条件クリア
   let pool : Array[@data.ActionCard] = []
   for card in all_cards {
-    // 所持チェック
     let mut is_owned = false
     for oid in owned_ids {
       if oid == card.id {
@@ -171,7 +150,6 @@ fn draw_daily_hand(state : GameState) -> Unit {
       }
     }
 
-    // 季節/天候限定カードは所持 + 条件一致で候補入り
     match card.unlock_condition {
       SeasonOnly(s) => {
         if is_owned && s == season {
@@ -188,7 +166,6 @@ fn draw_daily_hand(state : GameState) -> Unit {
       _ => ()
     }
 
-    // それ以外は所持していれば候補
     if is_owned {
       pool.push(card)
     }
@@ -202,21 +179,18 @@ fn draw_daily_hand(state : GameState) -> Unit {
 // Home → ActionSelect → Scene → ActionSelect → Home
 // =========================================================================
 
-/// Home から灯に行く — ActionSelect フェーズへ遷移
 pub fn go_to_akari(state : GameState) -> Unit {
   state.phase.set(@data.GamePhase::ActionSelect)
 }
 
-/// ActionSelect から帰る — Home フェーズへ遷移
 pub fn leave_akari(state : GameState) -> Unit {
   state.phase.set(@data.GamePhase::Home)
 }
 
 // =========================================================================
-// 行動処理（ゲームのコア — カードシステム一本）
+// 行動処理（カードシステム）
 // =========================================================================
 
-/// カードカテゴリを行動文字列に変換（VisitRecord/ミッション判定用）
 fn card_category_to_action_string(category : @data.CardCategory) -> String {
   match category {
     Eat => "eat"
@@ -226,24 +200,15 @@ fn card_category_to_action_string(category : @data.CardCategory) -> String {
   }
 }
 
-/// 手札のカードをプレイできるか判定
 pub fn can_play_card(state : GameState, card : @data.ActionCard) -> Bool {
   state.ap.get() >= card.ap_cost
 }
 
-/// 行動カードをプレイする（新システムのメイン行動処理）
+/// 行動カードをプレイする
 ///
-/// 1. AP消費
-/// 2. 3軸パラメータ加算（カード値 + 装備メモリーボーナス）
-/// 3. 親密度（合計値）更新
-/// 4. 行動テキスト設定 → Scene フェーズへ
-/// 5. 訪問記録・コレクションに追加
-/// 6. 行動カウンタ更新
-/// 7. ミッション判定
-/// 8. 思い出獲得チェック
-/// 9. 手札からカードを除去
+/// ★ランク + レベルの2軸でパラメータ計算。
+/// 親密度マイルストーンチェックを追加（上限なし対応）。
 pub fn play_card(state : GameState, card_id : String) -> Unit {
-  // 手札からカードを探す
   let hand = state.hand.get()
   let mut target_card : @data.ActionCard? = None
   for c in hand {
@@ -255,7 +220,7 @@ pub fn play_card(state : GameState, card_id : String) -> Unit {
 
   let card = match target_card {
     Some(c) => c
-    None => return  // 手札にないカードは無視
+    None => return
   }
 
   if !can_play_card(state, card) {
@@ -268,7 +233,7 @@ pub fn play_card(state : GameState, card_id : String) -> Unit {
   // 1. AP消費
   state.ap.update(fn(ap) { ap - card.ap_cost })
 
-  // 2. 装備メモリーのパッシブボーナスを取得
+  // 2. メモリーボーナス
   let memory_ids : Array[String] = []
   for record in state.acquired_memories.get() {
     memory_ids.push(record.memory_id)
@@ -277,16 +242,16 @@ pub fn play_card(state : GameState, card_id : String) -> Unit {
     state.memory_slots.get(), memory_ids,
   )
 
-  // 3. 3軸パラメータ加算（カードレベルによるボーナス適用）
+  // 3. ★ランク + レベル による3軸パラメータ計算
+  let card_star = get_card_star_rank(state, card.id)
   let card_level = get_card_level(state, card.id)
+  let effective_star = if card_star > 0 { card_star } else { 1 }
   let effective_level = if card_level > 0 { card_level } else { 1 }
-  let (base_trust, base_understanding, base_empathy) = calculate_card_gains(
-    card, mem_trust, mem_understanding, mem_empathy,
+
+  let (trust_gain, understanding_gain, empathy_gain) = calculate_card_gains(
+    card, effective_star, effective_level,
+    mem_trust, mem_understanding, mem_empathy,
   )
-  // レベルボーナス適用
-  let trust_gain = apply_level_bonus(base_trust, effective_level)
-  let understanding_gain = apply_level_bonus(base_understanding, effective_level)
-  let empathy_gain = apply_level_bonus(base_empathy, effective_level)
   state.trust.update(fn(v) { v + trust_gain })
   state.understanding.update(fn(v) { v + understanding_gain })
   state.empathy.update(fn(v) { v + empathy_gain })
@@ -294,14 +259,17 @@ pub fn play_card(state : GameState, card_id : String) -> Unit {
   // 親密度（合計値）を同期
   sync_intimacy(state)
 
-  // 4. 行動テキスト生成 → Scene へ
+  // 4. 親密度マイルストーンチェック（上限なし対応）
+  check_affection_milestones(state)
+
+  // 5. テキスト生成 → Scene へ
   let scene_text = @data.get_action_text(action_str, state.intimacy.get(), day)
   state.today_scene_text.set(scene_text)
 
   let menu = @data.get_today_menu(day)
   state.today_menu.set(menu.name)
 
-  // 5. 行動履歴に追加
+  // 6. 行動履歴
   state.today_actions.update(fn(actions) {
     let result : Array[String] = []
     for a in actions {
@@ -311,7 +279,7 @@ pub fn play_card(state : GameState, card_id : String) -> Unit {
     result
   })
 
-  // 訪問記録に追加（Eat系の場合のみ味の記憶に記録）
+  // 訪問記録
   if card.category == @data.CardCategory::Eat {
     state.visit_log.update(fn(log) {
       let result : Array[@data.VisitRecord] = []
@@ -323,7 +291,7 @@ pub fn play_card(state : GameState, card_id : String) -> Unit {
     })
   }
 
-  // コレクション追加（Observe系 → 発見ノート、Talk系 → 会話メモ）
+  // コレクション
   if card.category == @data.CardCategory::Observe {
     let discovery = @data.get_discovery_text(state.intimacy.get(), day)
     state.discoveries.update(fn(arr) {
@@ -357,21 +325,21 @@ pub fn play_card(state : GameState, card_id : String) -> Unit {
     })
   }
 
-  // 6. 行動カウンタ更新
+  // 7. 行動カウンタ更新
   match card.category {
     Eat => state.total_eat_count.update(fn(n) { n + 1 })
     Observe => state.total_observe_count.update(fn(n) { n + 1 })
     Talk => state.total_talk_count.update(fn(n) { n + 1 })
-    _ => ()  // Special/Weather/Seasonal はカテゴリ別カウンタなし
+    _ => ()
   }
 
-  // 7. ミッション判定
+  // 8. ミッション判定
   check_missions(state)
 
-  // 8. 思い出獲得チェック
+  // 9. 思い出獲得チェック
   check_and_acquire_memories(state, card.id, None)
 
-  // 9. 手札からカードを除去
+  // 10. 手札からカード除去
   state.hand.update(fn(h) {
     let result : Array[@data.ActionCard] = []
     for c in h {
@@ -382,22 +350,21 @@ pub fn play_card(state : GameState, card_id : String) -> Unit {
     result
   })
 
-  // 10. 通貨・EXP報酬
+  // 11. 通貨・EXP報酬
   grant_action_rewards(state, card)
 
-  // 11. 条件解放カードのチェック
+  // 12. 条件解放カードチェック
   check_condition_unlocks(state)
 
-  // パラメータ上昇メッセージ
+  // メッセージ
   let coin_reward = get_card_coin_reward(card.rarity)
   let msg = card.name + " — 信頼+" + trust_gain.to_string() + " 理解+" + understanding_gain.to_string() + " 共感+" + empathy_gain.to_string() + " +" + coin_reward.to_string() + "コイン"
   add_message(state, msg)
 
-  // Scene フェーズへ
   state.phase.set(@data.GamePhase::Scene)
 }
 
-/// 思い出獲得チェックを実行し、新規獲得をメッセージに表示
+/// 思い出獲得チェック（親密度レベル使用、上限なし）
 fn check_and_acquire_memories(
   state : GameState,
   played_card_id : String,
@@ -409,7 +376,6 @@ fn check_and_acquire_memories(
     acquired_ids.push(record.memory_id)
   }
 
-  // 訪問済みメニューIDリスト
   let visited_menu_ids : Array[String] = []
   for record in state.visit_log.get() {
     let mut already = false
@@ -424,11 +390,12 @@ fn check_and_acquire_memories(
     }
   }
 
+  let aff_level = get_affection_level(state.intimacy.get())
   let newly = check_memory_conditions(
     state.total_eat_count.get(),
     state.total_talk_count.get(),
     state.total_observe_count.get(),
-    get_intimacy_stars(state.intimacy.get()),
+    aff_level,
     state.discoveries.get().length(),
     visited_menu_ids,
     @data.get_weather(day),
@@ -451,7 +418,6 @@ fn check_and_acquire_memories(
       result
     })
 
-    // 獲得メッセージ
     for id in newly {
       match get_memory_by_id(id) {
         Some(memory) =>
@@ -463,29 +429,23 @@ fn check_and_acquire_memories(
 }
 
 // =========================================================================
-// シーン終了 → ActionSelect に戻る or ストーリー解放
+// シーン終了 → ストーリー解放チェック（プレイヤーレベルでゲート）
 // =========================================================================
 
-/// ひとくちシーン終了 — ストーリー解放チェック
-///
-/// 親密度が次章の閾値に達していればストーリーへ、
-/// そうでなければ ActionSelect に戻る（APが残っていれば追加行動可能）。
+/// ひとくちシーン終了
 pub fn finish_scene(state : GameState) -> Unit {
   let current = state.current_chapter.get()
   let chapters = @data.get_chapters()
 
-  // 最終章クリア済み
   if current + 1 >= chapters.length() {
-    // ActionSelect に戻る（APがあればまだ行動できる）
     state.phase.set(@data.GamePhase::ActionSelect)
     return
   }
 
   let next = chapters[current + 1]
-  let intimacy = state.intimacy.get()
+  let player_level = state.player_level.get()
 
-  if intimacy >= next.unlock_intimacy {
-    // ストーリー解放
+  if player_level >= next.unlock_player_level {
     state.current_chapter.set(current + 1)
     state.scene_index.set(0)
     state.line_index.set(0)
@@ -495,39 +455,28 @@ pub fn finish_scene(state : GameState) -> Unit {
       next.title + " 「" + next.subtitle + "」が解放されました！",
     )
   } else {
-    // ActionSelect に戻る
     state.phase.set(@data.GamePhase::ActionSelect)
   }
 }
 
 // =========================================================================
-// 次の日 — デイリーリセット
+// 次の日 — デイリーリセット + パッシブ収入
 // =========================================================================
 
-/// 次の日へ進む
-///
-/// まず DayResult 画面を表示（今日の成果サマリー）。
-/// DayResult を閉じると実際の日送り処理が走り、
-/// ログボチェック → Home の順で遷移する。
+/// 次の日へ進む（DayResult表示）
 pub fn next_day(state : GameState) -> Unit {
-  // デイリザルトを生成して DayResult フェーズへ
   let result = build_day_result(state)
   state.day_result.set(result)
   state.phase.set(@data.GamePhase::DayResult)
 }
 
-/// DayResult画面から実際に翌日へ進む（close_day_result から呼ばれる）
+/// DayResult画面から実際に翌日へ進む
 ///
-/// 1. 季節の節目チェック
-/// 2. day インクリメント
-/// 3. AP回復、行動履歴クリア、ミッションリセット
-/// 4. 新しい手札をドロー
-/// 5. デイスタートスナップショット
-/// 6. ログボ → Home
+/// 追加: パッシブ収入付与（ブルアカのカフェ相当）
 pub fn advance_to_next_day(state : GameState) -> Unit {
   let current_day = state.day.get()
 
-  // 1. 季節の節目チェック（今日=節目日なら、結果を記録してから翌日へ）
+  // 1. 季節の節目チェック
   if @data.is_season_milestone(current_day) {
     let season = @data.get_season(current_day)
     let year = @data.get_year(current_day)
@@ -536,7 +485,6 @@ pub fn advance_to_next_day(state : GameState) -> Unit {
     let empathy = state.empathy.get()
     let rank = @data.evaluate_milestone_rank(trust, understanding, empathy)
 
-    // 節目結果を記録
     state.season_results.update(fn(results) {
       let new_results : Array[@data.SeasonResult] = []
       for r in results {
@@ -551,7 +499,6 @@ pub fn advance_to_next_day(state : GameState) -> Unit {
       new_results
     })
 
-    // 節目テキストを表示
     let milestone_text = @data.get_milestone_text(season, rank)
     state.today_scene_text.set(milestone_text)
 
@@ -562,10 +509,8 @@ pub fn advance_to_next_day(state : GameState) -> Unit {
       season_name + "の節目 — " + rank_name + "ランク！",
     )
 
-    // 節目で思い出獲得チェック
     check_and_acquire_memories(state, "", Some(rank))
 
-    // 季節S ランクのジェム報酬
     if rank == @data.MilestoneRank::S {
       state.gems.update(fn(g) { g + 100 })
       add_message(state, "Sランクボーナス: +100 星石")
@@ -579,13 +524,19 @@ pub fn advance_to_next_day(state : GameState) -> Unit {
   state.today_actions.set([])
   state.daily_missions.set(create_daily_missions())
 
-  // 3. 新しい手札をドロー
+  // 3. パッシブ収入（ブルアカのカフェ相当）
+  let passive_coins = grant_passive_income(state)
+  if passive_coins > 0 {
+    add_message(state, "定食屋パッシブ: +" + passive_coins.to_string() + "コイン")
+  }
+
+  // 4. 新しい手札をドロー
   draw_daily_hand(state)
 
-  // 4. デイスタートスナップショット
+  // 5. デイスタートスナップショット
   snapshot_day_start(state)
 
-  // 季節・天候情報をメッセージに
+  // 季節・天候情報
   let new_day = state.day.get()
   let new_season = @data.get_season(new_day)
   let new_weather = @data.get_weather(new_day)
@@ -593,7 +544,7 @@ pub fn advance_to_next_day(state : GameState) -> Unit {
   let day_msg = @data.season_to_string(new_season) + " " + day_in_season.to_string() + "日目 " + @data.weather_to_icon(new_weather) + @data.weather_to_string(new_weather)
   add_message(state, day_msg)
 
-  // 5. ログボチェック → Home
+  // 6. ログボ → Home
   if check_login_bonus(state) {
     state.phase.set(@data.GamePhase::LoginBonus)
   } else {
@@ -605,11 +556,7 @@ pub fn advance_to_next_day(state : GameState) -> Unit {
 // 思い出装備
 // =========================================================================
 
-/// 思い出をスロットに装備する
-///
-/// slot: 0=信頼, 1=理解, 2=共感
 pub fn equip_memory(state : GameState, slot : Int, memory_id : String) -> Unit {
-  // 獲得済みか確認
   let acquired = state.acquired_memories.get()
   let mut is_owned = false
   for record in acquired {
@@ -640,20 +587,17 @@ pub fn equip_memory(state : GameState, slot : Int, memory_id : String) -> Unit {
 }
 
 // =========================================================================
-// 季節・天候ヘルパー（UI用）
+// ヘルパー
 // =========================================================================
 
-/// 現在の季節を取得
 pub fn get_current_season(state : GameState) -> @data.Season {
   @data.get_season(state.day.get())
 }
 
-/// 現在の天候を取得
 pub fn get_current_weather(state : GameState) -> @data.Weather {
   @data.get_weather(state.day.get())
 }
 
-/// 3軸パラメータの表示用テキストを生成
 pub fn get_param_display(state : GameState) -> String {
   let trust = state.trust.get()
   let understanding = state.understanding.get()
@@ -661,16 +605,27 @@ pub fn get_param_display(state : GameState) -> String {
   "信頼:" + trust.to_string() + " 理解:" + understanding.to_string() + " 共感:" + empathy.to_string()
 }
 
+/// 3軸の合計値を intimacy に同期する
+pub fn sync_intimacy(state : GameState) -> Unit {
+  let total = state.trust.get() + state.understanding.get() + state.empathy.get()
+  state.intimacy.set(total)
+}
+
+/// 親密度レベル表示（上限なし）
+///
+/// 旧★表示を廃止し、レベル数値表示に変更。
+pub fn get_affection_display(state : GameState) -> String {
+  let level = get_affection_level(state.intimacy.get())
+  let next_points = affection_points_for_level(level + 1)
+  let current = state.intimacy.get()
+  "親密度Lv" + level.to_string() + " (" + current.to_string() + "/" + next_points.to_string() + ")"
+}
+
 // =========================================================================
 // デイリーミッション
 // =========================================================================
 
-/// ミッション報酬を3軸に分配して付与
-///
-/// ミッションの行動カテゴリに応じて主軸を決定:
-/// eat → 共感メイン、talk → 信頼メイン、actions_3 → 均等分配
-///
-/// バランス調整: 報酬値にスケーリング係数を適用（カードと同じ）
+/// ミッション報酬を3軸に分配（スケーリング適用）
 fn grant_mission_reward(state : GameState, mission_id : String, reward : Int) -> Unit {
   let scaled = reward * param_scale_percent / 100
   let effective = if scaled < 1 { 1 } else { scaled }
@@ -694,16 +649,6 @@ fn grant_mission_reward(state : GameState, mission_id : String, reward : Int) ->
   sync_intimacy(state)
 }
 
-/// 3軸の合計値を intimacy に同期する
-///
-/// trust + understanding + empathy = intimacy
-/// 3軸を変更した後は必ずこれを呼ぶ。
-pub fn sync_intimacy(state : GameState) -> Unit {
-  let total = state.trust.get() + state.understanding.get() + state.empathy.get()
-  state.intimacy.set(total)
-}
-
-/// 行動後にミッション達成をチェックし、未達成→達成のものに報酬を付与
 fn check_missions(state : GameState) -> Unit {
   let actions = state.today_actions.get()
   let mut had_eat = false
@@ -750,13 +695,11 @@ fn check_missions(state : GameState) -> Unit {
 // アルバム
 // =========================================================================
 
-/// アルバムを開く
 pub fn open_album(state : GameState) -> Unit {
   state.album_tab.set(0)
   state.phase.set(@data.GamePhase::Album)
 }
 
-/// アルバムを閉じる（Home に戻る）
 pub fn close_album(state : GameState) -> Unit {
   state.phase.set(@data.GamePhase::Home)
 }
@@ -765,7 +708,6 @@ pub fn close_album(state : GameState) -> Unit {
 // ユーティリティ
 // =========================================================================
 
-/// メッセージログに追加（最大20件を保持）
 pub fn add_message(state : GameState, msg : String) -> Unit {
   state.message_log.update(fn(log) {
     let result : Array[String] = []
@@ -783,30 +725,4 @@ pub fn add_message(state : GameState, msg : String) -> Unit {
       result
     }
   })
-}
-
-/// 親密度のスターランクを取得
-pub fn get_intimacy_stars(points : Int) -> Int {
-  let ranks = @data.get_intimacy_ranks()
-  let mut stars = 1
-  for rank in ranks {
-    if points >= rank.min_points {
-      stars = rank.stars
-    }
-  }
-  stars
-}
-
-/// ★表示用の文字列を生成（例: "★★☆☆☆"）
-pub fn get_star_display(points : Int) -> String {
-  let stars = get_intimacy_stars(points)
-  let mut result = ""
-  for i in 0..<5 {
-    if i < stars {
-      result = result + "★"
-    } else {
-      result = result + "☆"
-    }
-  }
-  result
 }

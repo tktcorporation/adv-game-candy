@@ -3,39 +3,33 @@
 // 特定条件を達成すると獲得する収集要素。
 // 装備スロット（3枠）にセットするとパッシブ効果が毎日の行動に加算される。
 //
-// 設計参照: docs/superpowers/specs/2026-04-06-social-game-system.md
+// 設計変更: intimacy_stars → affection_level（上限なし）
+// 旧★2→Lv5, ★3→Lv10, ★4→Lv15, ★5→Lv20 にマッピング。
 
 /// 思い出の獲得条件をチェックし、新たに獲得した思い出IDのリストを返す
 ///
 /// 毎行動後に呼び出され、条件を満たした未獲得の思い出を検出する。
-/// 戻り値: 今回新たに獲得した思い出のIDリスト。
 pub fn check_memory_conditions(
-  // プレイヤーの状態
   eat_count : Int,
   talk_count : Int,
   observe_count : Int,
-  intimacy_stars : Int,
+  affection_level : Int,
   discovery_count : Int,
   visited_menu_ids : Array[String],
   current_weather : @data.Weather,
-  // 既獲得の思い出ID
   acquired_ids : Array[String],
-  // 今回プレイしたカードID（特別行動系の判定用）
   played_card_id : String,
-  // 季節の節目ランク（節目イベント後に呼ばれる場合）
   season_rank : @data.MilestoneRank?,
   current_season : @data.Season
 ) -> Array[String] {
   let newly_acquired : Array[String] = []
 
-  // ヘルパー: 既に獲得済みか
   fn is_acquired(id : String) -> Bool {
     for aid in acquired_ids {
       if aid == id {
         return true
       }
     }
-    // 今回獲得済みリストもチェック
     for nid in newly_acquired {
       if nid == id {
         return true
@@ -54,21 +48,22 @@ pub fn check_memory_conditions(
   if talk_count >= 5 && !is_acquired("m_maruyama_laugh") {
     newly_acquired.push("m_maruyama_laugh")
   }
-  if observe_count >= 3 && intimacy_stars >= 2 && !is_acquired("m_page_finger") {
+  if observe_count >= 3 && affection_level >= 5 && !is_acquired("m_page_finger") {
     newly_acquired.push("m_page_finger")
   }
 
-  // --- 親密度ランク系 ---
-  if intimacy_stars >= 2 && !is_acquired("m_rank2") {
+  // --- 親密度レベル系（旧★ランク → 親密度レベル） ---
+  // 旧★2=Lv5, ★3=Lv10, ★4=Lv15, ★5=Lv20
+  if affection_level >= 5 && !is_acquired("m_rank2") {
     newly_acquired.push("m_rank2")
   }
-  if intimacy_stars >= 3 && !is_acquired("m_rank3") {
+  if affection_level >= 10 && !is_acquired("m_rank3") {
     newly_acquired.push("m_rank3")
   }
-  if intimacy_stars >= 4 && !is_acquired("m_rank4") {
+  if affection_level >= 15 && !is_acquired("m_rank4") {
     newly_acquired.push("m_rank4")
   }
-  if intimacy_stars >= 5 && !is_acquired("m_rank5") {
+  if affection_level >= 20 && !is_acquired("m_rank5") {
     newly_acquired.push("m_rank5")
   }
 
@@ -89,12 +84,10 @@ pub fn check_memory_conditions(
   }
 
   // --- コレクション系 ---
-  // 全12メニュー制覇
   let total_menus = @data.get_daily_menus().length()
   if visited_menu_ids.length() >= total_menus && !is_acquired("m_all_menus") {
     newly_acquired.push("m_all_menus")
   }
-  // 発見ノート10個
   if discovery_count >= 10 && !is_acquired("m_ten_discoveries") {
     newly_acquired.push("m_ten_discoveries")
   }
@@ -121,9 +114,6 @@ pub fn check_memory_conditions(
 }
 
 /// 装備中の思い出スロットから合計パッシブボーナスを計算
-///
-/// 3つのスロットにセットされた思い出のボーナスを合算して返す。
-/// 戻り値: (trust_bonus, understanding_bonus, empathy_bonus)
 pub fn calculate_memory_bonus(
   slots : @data.MemorySlots,
   acquired_ids : Array[String]
@@ -139,7 +129,6 @@ pub fn calculate_memory_bonus(
     if slot_id == "" {
       continue
     }
-    // 獲得済みか確認（不正防止）
     let mut is_owned = false
     for aid in acquired_ids {
       if aid == slot_id {
@@ -150,7 +139,6 @@ pub fn calculate_memory_bonus(
     if !is_owned {
       continue
     }
-    // 思い出のボーナスを加算
     for memory in all_memories {
       if memory.id == slot_id {
         trust = trust + memory.trust_bonus

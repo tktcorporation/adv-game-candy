@@ -116,17 +116,20 @@ pub fn get_initial_cards() -> Array[ActionCard] {
 
 /// 進行に応じて解放されるカード
 ///
-/// IntimacyRankReached / ChapterCleared で条件指定。
-/// プレイヤーの成長とともにデッキが膨らみ、戦略の幅が広がる。
+/// AffectionLevel / ChapterCleared で条件指定。
+/// 親密度レベルが上がるとともにデッキが膨らみ、戦略の幅が広がる。
+///
+/// 設計変更: 旧 IntimacyRankReached(★N) → AffectionLevel(N)
+/// 親密度レベルは上限なしのため、将来的に高レベル解放カードも追加可能。
 pub fn get_unlockable_cards() -> Array[ActionCard] {
   [
-    // ★2解放（醤油差し程度の距離）
+    // 親密度Lv5解放（醤油差し程度の距離）
     {
       id: "c_sp_recommend", name: "「これ、美味しいですよ」",
       description: "思わず声をかけてしまった。彼女がこちらを見る。",
       category: CardCategory::Special, rarity: CardRarity::Uncommon, ap_cost: 2,
       trust_gain: 5, understanding_gain: 5, empathy_gain: 8,
-      unlock_condition: UnlockCondition::IntimacyRankReached(2),
+      unlock_condition: UnlockCondition::AffectionLevel(5),
       scene_key: "special",
     },
     {
@@ -134,17 +137,17 @@ pub fn get_unlockable_cards() -> Array[ActionCard] {
       description: "今日はどんな本を読んでいるのか。タイトルが気になる。",
       category: CardCategory::Observe, rarity: CardRarity::Uncommon, ap_cost: 1,
       trust_gain: 1, understanding_gain: 7, empathy_gain: 2,
-      unlock_condition: UnlockCondition::IntimacyRankReached(2),
+      unlock_condition: UnlockCondition::AffectionLevel(5),
       scene_key: "observe",
     },
 
-    // ★3解放（名前を知る距離）
+    // 親密度Lv10解放（名前を知る距離）
     {
       id: "c_sp_book_talk", name: "本の話を振ってみる",
       description: "「その本、面白いですか？」——初めて、本のことを聞いた。",
       category: CardCategory::Special, rarity: CardRarity::Rare, ap_cost: 2,
       trust_gain: 8, understanding_gain: 10, empathy_gain: 3,
-      unlock_condition: UnlockCondition::IntimacyRankReached(3),
+      unlock_condition: UnlockCondition::AffectionLevel(10),
       scene_key: "special",
     },
     {
@@ -152,17 +155,17 @@ pub fn get_unlockable_cards() -> Array[ActionCard] {
       description: "「椎名さん」——名前を呼ぶのは、こんなに緊張するものなのか。",
       category: CardCategory::Talk, rarity: CardRarity::Rare, ap_cost: 1,
       trust_gain: 8, understanding_gain: 3, empathy_gain: 5,
-      unlock_condition: UnlockCondition::IntimacyRankReached(3),
+      unlock_condition: UnlockCondition::AffectionLevel(10),
       scene_key: "talk",
     },
 
-    // ★4解放（隣の席の距離）
+    // 親密度Lv15解放（隣の席の距離）
     {
       id: "c_sp_next_seat", name: "隣の席に座る",
       description: "今日は、こちら側に座ってみる。一つだけ間を空けて。",
       category: CardCategory::Special, rarity: CardRarity::Rare, ap_cost: 2,
       trust_gain: 10, understanding_gain: 5, empathy_gain: 10,
-      unlock_condition: UnlockCondition::IntimacyRankReached(4),
+      unlock_condition: UnlockCondition::AffectionLevel(15),
       scene_key: "special",
     },
     {
@@ -170,7 +173,7 @@ pub fn get_unlockable_cards() -> Array[ActionCard] {
       description: "小鉢を差し出す。こんなこと、前ならできなかった。",
       category: CardCategory::Eat, rarity: CardRarity::Rare, ap_cost: 2,
       trust_gain: 8, understanding_gain: 3, empathy_gain: 15,
-      unlock_condition: UnlockCondition::IntimacyRankReached(4),
+      unlock_condition: UnlockCondition::AffectionLevel(15),
       scene_key: "special",
     },
   ]

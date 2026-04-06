@@ -1,71 +1,48 @@
-// カード強化システム
+// カード強化システム — ブルアカの生徒育成に対応
 //
-// 所持カードのレベルを上げてパラメータ獲得量を増加させる。
-// シャード（ガチャ被り or ミッション報酬）+ コインで強化。
-// レベル1→5で最大2倍の効果。
+// ★ランクアップ: カード固有シャード + コインで★1→★5
+// レベルアップ: コインのみでLv1→max（上限=★ランク×10、プレイヤーレベルで制約）
 //
-// レベル毎の効果倍率:
-//   Lv1: 1.0x（基本値）
-//   Lv2: 1.2x
-//   Lv3: 1.4x
-//   Lv4: 1.7x
-//   Lv5: 2.0x（MAX）
+// ★ランクアップコスト:
+//   ★1→★2: 10シャード + 1000コイン
+//   ★2→★3: 30シャード + 3000コイン
+//   ★3→★4: 100シャード + 10000コイン
+//   ★4→★5: 300シャード + 30000コイン
+//
+// レベルアップコスト:
+//   1レベルにつき (current_level * 10 + 50) コイン
 
-/// カードレベルの上限
-pub let max_card_level : Int = 5
+/// ★ランクの上限
+pub let max_star_rank : Int = 5
 
-/// レベルごとのパラメータ倍率（10倍して整数管理、実適用時に /10 する）
-///
-/// Lv1=10, Lv2=12, Lv3=14, Lv4=17, Lv5=20
-/// 適用: base_gain * multiplier / 10
-pub fn get_level_multiplier(level : Int) -> Int {
-  match level {
-    1 => 10
-    2 => 12
-    3 => 14
-    4 => 17
-    5 => 20
-    _ => 10
+/// ★ランクアップに必要なコスト
+pub fn get_star_up_cost(current_star : Int) -> @data.StarUpCost? {
+  match current_star {
+    1 => Some({ shards: 10, coins: 1000 })
+    2 => Some({ shards: 30, coins: 3000 })
+    3 => Some({ shards: 100, coins: 10000 })
+    4 => Some({ shards: 300, coins: 30000 })
+    _ => None  // ★5 = MAX
   }
 }
 
-/// レベルアップに必要なコスト
-///
-/// 現在レベル → 次レベルへのコスト。
-/// MAXの場合は None。
-pub fn get_enhance_cost(current_level : Int) -> @data.EnhanceCost? {
-  match current_level {
-    1 => Some({ shards: 2, coins: 100 })
-    2 => Some({ shards: 4, coins: 200 })
-    3 => Some({ shards: 6, coins: 400 })
-    4 => Some({ shards: 10, coins: 800 })
-    _ => None  // Lv5 = MAX
-  }
+/// レベルアップに必要なコスト（1レベル分）
+pub fn get_level_up_cost(current_level : Int) -> @data.LevelUpCost {
+  { coins: current_level * 10 + 50 }
 }
 
-/// カードの強化済みパラメータ値を計算
+/// ★ランクアップを実行
 ///
-/// base_gain にレベル倍率を適用して返す。
-/// 端数切り上げ（最低でも base_gain は保証）。
-pub fn apply_level_bonus(base_gain : Int, level : Int) -> Int {
-  let mult = get_level_multiplier(level)
-  let result = base_gain * mult / 10
-  // 基本値より下がらないよう保証
-  if result < base_gain { base_gain } else { result }
-}
-
-/// カード強化を実行
-///
-/// 条件: 所持済み、MAX未満、シャード/コイン足りる。
-/// 成功でレベルアップ、コスト消費、メッセージ表示。
-pub fn enhance_card(state : GameState, card_id : String) -> Unit {
-  // 所持チェック
+/// 条件: 所持済み、★MAX未満、固有シャード/コイン足りる。
+pub fn star_up_card(state : GameState, card_id : String) -> Unit {
   let owned = state.owned_cards.get()
-  let mut current_level = 0
+  let mut current_star = 0
+  let mut current_shards = 0
   let mut found = false
   for oc in owned {
     if oc.card_id == card_id {
-      current_level = oc.level
+      current_star = oc.star_rank
+      current_shards = oc.shards
       found = true
       break
     }
@@ -75,34 +52,32 @@ pub fn enhance_card(state : GameState, card_id : String) -> Unit {
     return
   }
 
-  // コストチェック
-  let cost = match get_enhance_cost(current_level) {
+  let cost = match get_star_up_cost(current_star) {
     Some(c) => c
     None => {
-      add_message(state, "最大レベルに達しています")
+      add_message(state, "★MAXに達しています")
       return
     }
   }
 
-  if state.enhancement_shards.get() < cost.shards {
-    add_message(state, "シャードが足りません")
+  if current_shards < cost.shards {
+    add_message(state, "シャードが足りません（必要: " + cost.shards.to_string() + "）")
     return
   }
   if state.coins.get() < cost.coins {
-    add_message(state, "コインが足りません")
+    add_message(state, "コインが足りません（必要: " + cost.coins.to_string() + "）")
     return
   }
 
   // コスト消費
-  state.enhancement_shards.update(fn(s) { s - cost.shards })
   state.coins.update(fn(c) { c - cost.coins })
 
-  // レベルアップ
+  // ★ランクアップ + シャード消費
   state.owned_cards.update(fn(arr) {
     let result : Array[@data.OwnedCard] = []
     for oc in arr {
       if oc.card_id == card_id {
-        result.push({ card_id: oc.card_id, level: oc.level + 1 })
+        result.push({ ..oc, star_rank: oc.star_rank + 1, shards: oc.shards - cost.shards })
       } else {
         result.push(oc)
       }
@@ -120,6 +95,75 @@ pub fn enhance_card(state : GameState, card_id : String) -> Unit {
     }
   }
 
+  let new_star = current_star + 1
+  add_message(
+    state,
+    "「" + card_name + "」を★" + new_star.to_string() + "にランクアップ！",
+  )
+}
+
+/// レベルアップを実行
+///
+/// 条件: 所持済み、レベル上限未満（★ランク×10 or プレイヤーレベル）、コイン足りる。
+pub fn level_up_card(state : GameState, card_id : String) -> Unit {
+  let owned = state.owned_cards.get()
+  let mut current_level = 0
+  let mut current_star = 0
+  let mut found = false
+  for oc in owned {
+    if oc.card_id == card_id {
+      current_level = oc.level
+      current_star = oc.star_rank
+      found = true
+      break
+    }
+  }
+  if !found {
+    add_message(state, "カードを所持していません")
+    return
+  }
+
+  let max_level = get_card_max_level(current_star, state.player_level.get())
+  if current_level >= max_level {
+    if current_level >= current_star * 10 {
+      add_message(state, "レベル上限です（★ランクを上げてください）")
+    } else {
+      add_message(state, "レベル上限です（プレイヤーレベルを上げてください）")
+    }
+    return
+  }
+
+  let cost = get_level_up_cost(current_level)
+  if state.coins.get() < cost.coins {
+    add_message(state, "コインが足りません（必要: " + cost.coins.to_string() + "）")
+    return
+  }
+
+  // コスト消費
+  state.coins.update(fn(c) { c - cost.coins })
+
+  // レベルアップ
+  state.owned_cards.update(fn(arr) {
+    let result : Array[@data.OwnedCard] = []
+    for oc in arr {
+      if oc.card_id == card_id {
+        result.push({ ..oc, level: oc.level + 1 })
+      } else {
+        result.push(oc)
+      }
+    }
+    result
+  })
+
+  let all = @data.get_all_cards()
+  let mut card_name = card_id
+  for c in all {
+    if c.id == card_id {
+      card_name = c.name
+      break
+    }
+  }
+
   let new_level = current_level + 1
   add_message(
     state,
@@ -127,9 +171,48 @@ pub fn enhance_card(state : GameState, card_id : String) -> Unit {
   )
 }
 
+/// エリグマをカード固有シャードに変換
+///
+/// ブルアカのエリグマ→神名文字変換に対応。
+/// 1エリグマ = 1カード固有シャード。
+pub fn convert_eligma(state : GameState, card_id : String, amount : Int) -> Unit {
+  if state.eligma.get() < amount {
+    add_message(state, "エリグマが足りません")
+    return
+  }
+
+  let mut found = false
+  for oc in state.owned_cards.get() {
+    if oc.card_id == card_id {
+      found = true
+      break
+    }
+  }
+  if !found {
+    add_message(state, "カードを所持していません")
+    return
+  }
+
+  state.eligma.update(fn(e) { e - amount })
+  state.owned_cards.update(fn(arr) {
+    let result : Array[@data.OwnedCard] = []
+    for oc in arr {
+      if oc.card_id == card_id {
+        result.push({ ..oc, shards: oc.shards + amount })
+      } else {
+        result.push(oc)
+      }
+    }
+    result
+  })
+
+  add_message(state, "エリグマ×" + amount.to_string() + "をシャードに変換")
+}
+
 /// 強化画面を開く
 pub fn open_enhance(state : GameState) -> Unit {
   state.enhance_target_card.set("")
+  state.enhance_mode.set("star")
   state.phase.set(@data.GamePhase::CardEnhance)
 }
 

@@ -120,13 +120,13 @@ fn render_header(state : @game.GameState) -> @dom.DomNode {
           @dom.span(
             class="stat stat-stars",
             [@dom.text_dyn(fn() {
-              @game.get_star_display(state.intimacy.get())
+              @game.get_affection_display(state)
             })],
           ),
           @dom.span(
             class="stat stat-ap",
             [@dom.text_dyn(fn() {
-              "AP " + state.ap.get().to_string() + "/" + @game.max_ap.to_string()
+              "AP " + state.ap.get().to_string() + "/" + @game.get_max_ap(state).to_string()
             })],
           ),
         ],
@@ -206,7 +206,7 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
           @dom.div(
             class="star-display",
             [@dom.text_dyn(fn() {
-              @game.get_star_display(state.intimacy.get())
+              @game.get_affection_display(state)
             })],
           ),
           @dom.div(
@@ -232,12 +232,13 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
               let pts = state.intimacy.get()
               let current_ch = state.current_chapter.get()
               let chapters = @data.get_chapters()
-              let next_threshold = if current_ch + 1 < chapters.length() {
-                chapters[current_ch + 1].unlock_intimacy
+              let player_lv = state.player_level.get()
+              let next_level = if current_ch + 1 < chapters.length() {
+                chapters[current_ch + 1].unlock_player_level
               } else {
-                1000
+                99
               }
-              "次の章まで " + pts.to_string() + " / " + next_threshold.to_string()
+              "PLv" + player_lv.to_string() + " 次の章: Lv" + next_level.to_string() + " | 親密度" + pts.to_string()
             })],
           ),
         ],
@@ -248,7 +249,7 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
         [@dom.text_dyn(fn() {
           let ap = state.ap.get()
           let mut dots = ""
-          for i in 0..<@game.max_ap {
+          for i in 0..<@game.base_ap {
             if i < ap {
               dots = dots + "●"
             } else {
@@ -286,7 +287,7 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
       ),
       // AP が残っていても次の日へ行けるボタン
       @dom.show(
-        fn() { state.ap.get() > 0 && state.ap.get() < @game.max_ap },
+        fn() { state.ap.get() > 0 && state.ap.get() < @game.base_ap },
         fn() {
           @dom.div(
             class="home-secondary-actions",
@@ -371,7 +372,7 @@ fn render_action_select_view(state : @game.GameState) -> @dom.DomNode {
         [@dom.text_dyn(fn() {
           let ap = state.ap.get()
           let mut dots = ""
-          for i in 0..<@game.max_ap {
+          for i in 0..<@game.base_ap {
             if i < ap {
               dots = dots + "●"
             } else {
@@ -561,7 +562,7 @@ fn render_scene_view(state : @game.GameState) -> @dom.DomNode {
               let chapters = @data.get_chapters()
               if current + 1 < chapters.length() {
                 let next = chapters[current + 1]
-                if state.intimacy.get() >= next.unlock_intimacy {
+                if state.player_level.get() >= next.unlock_player_level {
                   "ストーリーが解放されました"
                 } else {
                   "ごちそうさまでした"
