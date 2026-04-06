@@ -60,6 +60,10 @@ pub fn app(state : @game.GameState) -> @dom.DomNode {
             fn() { state.phase.get() == @data.GamePhase::Album },
             fn() { render_album_view(state) },
           ),
+          @dom.show(
+            fn() { state.phase.get() == @data.GamePhase::DayResult },
+            fn() { render_day_result_view(state) },
+          ),
         ],
       ),
       render_message_log(state),
@@ -96,31 +100,15 @@ fn render_header(state : @game.GameState) -> @dom.DomNode {
           ),
         ],
       ),
-      // 3軸パラメータバー
-      @dom.div(
-        class="header-params",
-        [
-          @dom.span(
-            class="param param-trust",
-            [@dom.text_dyn(fn() { "信頼 " + state.trust.get().to_string() })],
-          ),
-          @dom.span(
-            class="param param-understanding",
-            [@dom.text_dyn(fn() { "理解 " + state.understanding.get().to_string() })],
-          ),
-          @dom.span(
-            class="param param-empathy",
-            [@dom.text_dyn(fn() { "共感 " + state.empathy.get().to_string() })],
-          ),
-        ],
-      ),
+      // ♡親密度Lv + AP（簡素化: 3軸数値はHome画面に移動）
       @dom.div(
         class="header-stats",
         [
           @dom.span(
-            class="stat stat-stars",
+            class="stat stat-affection",
             [@dom.text_dyn(fn() {
-              @game.get_affection_display(state)
+              let level = @game.get_affection_level(state.intimacy.get())
+              "♡Lv" + level.to_string()
             })],
           ),
           @dom.span(
@@ -165,23 +153,96 @@ fn render_title_view(state : @game.GameState) -> @dom.DomNode {
 // Home ビュー
 // =========================================================================
 
-/// ホーム画面 — 日付・AP・今日の日替わり・ミッション・ボタン
+/// ホーム画面 — 親密度・目標・日替わり・アクション・ミッション
+///
+/// 情報階層: ♡親密度+関係性テキスト → 次の目標 → 日替わり → アクション → ミッション → ステータス
+/// 学マス参考: 目標の常時表示。ブルアカ参考: ♡+数字のシンプルさ。
 fn render_home_view(state : @game.GameState) -> @dom.DomNode {
   @dom.div(
     class="home-view",
     [
-      // 日付表示
+      // ♡ 親密度 + 関係性テキスト（画面上部に大きく）
       @dom.div(
-        class="home-date",
-        [@dom.text_dyn(fn() { state.day.get().to_string() + "日目" })],
+        class="affection-display",
+        [
+          @dom.div(
+            class="affection-level",
+            [@dom.text_dyn(fn() {
+              let level = @game.get_affection_level(state.intimacy.get())
+              let next_pts = @game.affection_points_for_level(level + 1)
+              let current_pts = state.intimacy.get()
+              "♡ 親密度 Lv" + level.to_string() + " (" + current_pts.to_string() + "/" + next_pts.to_string() + ")"
+            })],
+          ),
+          @dom.div(
+            class="affection-desc",
+            [@dom.text_dyn(fn() {
+              let level = @game.get_affection_level(state.intimacy.get())
+              @data.get_affection_description(level)
+            })],
+          ),
+        ],
       ),
-      // 今日の日替わりカード
+      // 次の目標セクション（学マス風: 常に目標が見える）
+      @dom.div(
+        class="next-goal",
+        [
+          @dom.div(
+            class="next-goal-header",
+            [@dom.text("── 次の目標 ──")],
+          ),
+          @dom.div(
+            class="next-goal-content",
+            [@dom.text_dyn(fn() {
+              let current_ch = state.current_chapter.get()
+              let chapters = @data.get_chapters()
+              let player_lv = state.player_level.get()
+              let exp = state.player_exp.get()
+              if current_ch + 1 < chapters.length() {
+                let next = chapters[current_ch + 1]
+                let needed_lv = next.unlock_player_level
+                let chapter_label = next.title + " 「" + next.subtitle + "」"
+                if player_lv >= needed_lv {
+                  "📖 " + chapter_label + " — 読めます！"
+                } else {
+                  let exp_to_next = @game.exp_for_next_level(player_lv) - exp
+                  "📖 " + chapter_label + " — PLv" + needed_lv.to_string() + " (EXP あと" + exp_to_next.to_string() + ")"
+                }
+              } else {
+                "📖 全章クリア済み"
+              }
+            })],
+          ),
+          // PLv進捗バー
+          @dom.div(
+            class="plv-progress",
+            [@dom.text_dyn(fn() {
+              let player_lv = state.player_level.get()
+              let exp = state.player_exp.get()
+              let needed = @game.exp_for_next_level(player_lv)
+              // テキストベースの進捗バー
+              let filled = if needed > 0 { exp * 10 / needed } else { 10 }
+              let mut bar = "PLv" + player_lv.to_string() + " "
+              for i in 0..<10 {
+                if i < filled {
+                  bar = bar + "█"
+                } else {
+                  bar = bar + "░"
+                }
+              }
+              bar = bar + " " + exp.to_string() + "/" + needed.to_string()
+              bar
+            })],
+          ),
+        ],
+      ),
+      // 今日の日替わり
       @dom.div(
         class="daily-menu-card",
         [
           @dom.div(
             class="menu-label",
-            [@dom.text("今日の日替わり")],
+            [@dom.text("🍽 今日の日替わり")],
           ),
           @dom.div(
             class="menu-name",
@@ -199,66 +260,6 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
           ),
         ],
       ),
-      // 3軸パラメータ表示
-      @dom.div(
-        class="params-display",
-        [
-          @dom.div(
-            class="star-display",
-            [@dom.text_dyn(fn() {
-              @game.get_affection_display(state)
-            })],
-          ),
-          @dom.div(
-            class="param-bars",
-            [
-              @dom.div(
-                class="param-bar param-trust",
-                [@dom.text_dyn(fn() { "信頼 " + state.trust.get().to_string() })],
-              ),
-              @dom.div(
-                class="param-bar param-understanding",
-                [@dom.text_dyn(fn() { "理解 " + state.understanding.get().to_string() })],
-              ),
-              @dom.div(
-                class="param-bar param-empathy",
-                [@dom.text_dyn(fn() { "共感 " + state.empathy.get().to_string() })],
-              ),
-            ],
-          ),
-          @dom.div(
-            class="intimacy-bar",
-            [@dom.text_dyn(fn() {
-              let pts = state.intimacy.get()
-              let current_ch = state.current_chapter.get()
-              let chapters = @data.get_chapters()
-              let player_lv = state.player_level.get()
-              let next_level = if current_ch + 1 < chapters.length() {
-                chapters[current_ch + 1].unlock_player_level
-              } else {
-                99
-              }
-              "PLv" + player_lv.to_string() + " 次の章: Lv" + next_level.to_string() + " | 親密度" + pts.to_string()
-            })],
-          ),
-        ],
-      ),
-      // AP ゲージ
-      @dom.div(
-        class="ap-gauge",
-        [@dom.text_dyn(fn() {
-          let ap = state.ap.get()
-          let mut dots = ""
-          for i in 0..<@game.base_ap {
-            if i < ap {
-              dots = dots + "●"
-            } else {
-              dots = dots + "○"
-            }
-          }
-          "AP " + dots
-        })],
-      ),
       // メインアクションボタン
       @dom.div(
         class="home-actions",
@@ -269,7 +270,7 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
               @dom.button(
                 class="btn btn-primary btn-large",
                 on=@dom.events().click(fn(_e) { @game.go_to_akari(state) }),
-                [@dom.text("灯に行く")],
+                [@dom.text("🍽 灯に行く")],
               )
             },
           ),
@@ -285,9 +286,26 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
           ),
         ],
       ),
+      // AP ゲージ
+      @dom.div(
+        class="ap-gauge",
+        [@dom.text_dyn(fn() {
+          let ap = state.ap.get()
+          let max_ap = @game.get_max_ap(state)
+          let mut dots = ""
+          for i in 0..<max_ap {
+            if i < ap {
+              dots = dots + "●"
+            } else {
+              dots = dots + "○"
+            }
+          }
+          "AP " + dots + " (" + ap.to_string() + "/" + max_ap.to_string() + ")"
+        })],
+      ),
       // AP が残っていても次の日へ行けるボタン
       @dom.show(
-        fn() { state.ap.get() > 0 && state.ap.get() < @game.base_ap },
+        fn() { state.ap.get() > 0 && state.ap.get() < @game.get_max_ap(state) },
         fn() {
           @dom.div(
             class="home-secondary-actions",
@@ -330,6 +348,27 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
                 ],
               )
             },
+          ),
+        ],
+      ),
+      // ステータス（3軸 + 通貨）— 下部に補助的に表示
+      @dom.div(
+        class="home-status",
+        [
+          @dom.div(
+            class="param-summary",
+            [@dom.text_dyn(fn() {
+              "信頼 " + state.trust.get().to_string() +
+              " ▸ 理解 " + state.understanding.get().to_string() +
+              " ▸ 共感 " + state.empathy.get().to_string()
+            })],
+          ),
+          @dom.div(
+            class="currency-display",
+            [@dom.text_dyn(fn() {
+              "コイン " + state.coins.get().to_string() +
+              "  星石 " + state.gems.get().to_string()
+            })],
           ),
         ],
       ),
@@ -419,7 +458,8 @@ fn render_action_select_view(state : @game.GameState) -> @dom.DomNode {
 
 /// 手札カード — 1枚分のUI
 ///
-/// カード名・説明・APコスト・3軸パラメータ予告を表示。
+/// カード名・説明・APコスト・実効パラメータ値・♡合計を表示。
+/// 実効値は preview_card_gains() で計算（★ランク・レベル・メモリーボーナス反映済み）。
 /// APが足りない場合はdisabled表示。レアリティでボーダー色を変える。
 fn render_hand_card(
   state : @game.GameState,
@@ -437,6 +477,9 @@ fn render_hand_card(
   } else {
     "hand-card disabled " + rarity_class
   }
+  // 実効値を計算（base値ではなくスケーリング後の値）
+  let (eff_t, eff_u, eff_e) = @game.preview_card_gains(state, card)
+  let total_gain = eff_t + eff_u + eff_e
   @dom.div(
     class="hand-card-wrapper",
     [
@@ -461,38 +504,43 @@ fn render_hand_card(
               class="card-desc",
               [@dom.text(card.description)],
             ),
-            // 3軸パラメータ予告
+            // 3軸パラメータ（実効値）
             @dom.div(
               class="card-params",
               [
                 @dom.show(
-                  fn() { card.trust_gain > 0 },
+                  fn() { eff_t > 0 },
                   fn() {
                     @dom.span(
                       class="card-param param-trust",
-                      [@dom.text("信+" + card.trust_gain.to_string())],
+                      [@dom.text("信+" + eff_t.to_string())],
                     )
                   },
                 ),
                 @dom.show(
-                  fn() { card.understanding_gain > 0 },
+                  fn() { eff_u > 0 },
                   fn() {
                     @dom.span(
                       class="card-param param-understanding",
-                      [@dom.text("理+" + card.understanding_gain.to_string())],
+                      [@dom.text("理+" + eff_u.to_string())],
                     )
                   },
                 ),
                 @dom.show(
-                  fn() { card.empathy_gain > 0 },
+                  fn() { eff_e > 0 },
                   fn() {
                     @dom.span(
                       class="card-param param-empathy",
-                      [@dom.text("共+" + card.empathy_gain.to_string())],
+                      [@dom.text("共+" + eff_e.to_string())],
                     )
                   },
                 ),
               ],
+            ),
+            // ♡合計寄与（親密度にどれだけ進むか一目で分かる）
+            @dom.div(
+              class="card-affection-total",
+              [@dom.text("♡+" + total_gain.to_string())],
             ),
           ],
         )
@@ -534,7 +582,10 @@ fn render_hand_card(
 // Scene ビュー
 // =========================================================================
 
-/// Scene ビュー — 行動結果のテキスト表示
+/// Scene ビュー — 行動結果のテキスト + 獲得値 + リアクション表示
+///
+/// 学マス参考: カード使用後に「何が得られたか」を明示。
+/// シーンテキスト → 結果（パラメータ・通貨） → リアクション → ボタン の順。
 fn render_scene_view(state : @game.GameState) -> @dom.DomNode {
   @dom.div(
     class="scene-view",
@@ -548,6 +599,60 @@ fn render_scene_view(state : @game.GameState) -> @dom.DomNode {
       @dom.div(
         class="scene-text",
         [@dom.text_dyn(fn() { state.today_scene_text.get() })],
+      ),
+      // 結果セクション（獲得値・報酬・リアクション）
+      @dom.div(
+        class="scene-result",
+        [
+          @dom.div(
+            class="scene-result-header",
+            [@dom.text("─── 結果 ───")],
+          ),
+          // パラメータ獲得値 + ♡合計
+          @dom.div(
+            class="scene-gains",
+            [@dom.text_dyn(fn() {
+              let r = state.last_card_result.get()
+              let mut s = ""
+              if r.trust_gain > 0 {
+                s = s + "信頼 +" + r.trust_gain.to_string() + "  "
+              }
+              if r.understanding_gain > 0 {
+                s = s + "理解 +" + r.understanding_gain.to_string() + "  "
+              }
+              if r.empathy_gain > 0 {
+                s = s + "共感 +" + r.empathy_gain.to_string() + "  "
+              }
+              let total = r.trust_gain + r.understanding_gain + r.empathy_gain
+              s = s + "♡ +" + total.to_string()
+              s
+            })],
+          ),
+          // 通貨・EXP報酬
+          @dom.div(
+            class="scene-rewards",
+            [@dom.text_dyn(fn() {
+              let r = state.last_card_result.get()
+              let mut s = "+" + r.coin_reward.to_string() + " コイン  +" + r.exp_reward.to_string() + " EXP"
+              if r.gem_reward > 0 {
+                s = s + "  +" + r.gem_reward.to_string() + " 星石"
+              }
+              s
+            })],
+          ),
+          // ひよりのリアクション
+          @dom.show(
+            fn() { state.last_card_result.get().reaction_text != "" },
+            fn() {
+              @dom.div(
+                class="scene-reaction",
+                [@dom.text_dyn(fn() {
+                  "♪ " + state.last_card_result.get().reaction_text
+                })],
+              )
+            },
+          ),
+        ],
       ),
       // ボタン
       @dom.div(
@@ -916,6 +1021,165 @@ fn render_album_memories(state : @game.GameState) -> @dom.DomNode {
           }
           result
         })],
+      ),
+    ],
+  )
+}
+
+// =========================================================================
+// DayResult ビュー — 1日の成果まとめ
+// =========================================================================
+
+/// DayResult画面 — 1日の記録と明日の目標を表示
+///
+/// build_day_result() が生成した DayResultData を表示する。
+/// 「次の日へ」ボタンで advance_to_next_day() を呼び、翌日へ遷移する。
+///
+/// 設計意図: ブルアカのステージクリア画面を参考に、
+/// プレイヤーが「今日何をして何を得たか」を振り返れるようにする。
+fn render_day_result_view(state : @game.GameState) -> @dom.DomNode {
+  @dom.div(
+    class="day-result-view",
+    [
+      // タイトル
+      @dom.div(
+        class="day-result-title",
+        [@dom.text_dyn(fn() {
+          "── " + state.day.get().to_string() + "日目の記録 ──"
+        })],
+      ),
+      // 行動回数
+      @dom.div(
+        class="day-result-actions",
+        [@dom.text_dyn(fn() {
+          "今日の行動: " + state.day_result.get().cards_played.to_string() + "回"
+        })],
+      ),
+      // パラメータ変化
+      @dom.div(
+        class="day-result-gains",
+        [@dom.text_dyn(fn() {
+          let r = state.day_result.get()
+          let mut s = ""
+          if r.trust_gained > 0 {
+            s = s + "信頼 +" + r.trust_gained.to_string() + "  "
+          }
+          if r.understanding_gained > 0 {
+            s = s + "理解 +" + r.understanding_gained.to_string() + "  "
+          }
+          if r.empathy_gained > 0 {
+            s = s + "共感 +" + r.empathy_gained.to_string() + "  "
+          }
+          let total = r.trust_gained + r.understanding_gained + r.empathy_gained
+          if total > 0 {
+            s = s + "♡ +" + total.to_string()
+          }
+          s
+        })],
+      ),
+      // 親密度レベルアップ
+      @dom.show(
+        fn() { state.day_result.get().affection_level_up },
+        fn() {
+          @dom.div(
+            class="day-result-levelup",
+            [@dom.text_dyn(fn() {
+              let r = state.day_result.get()
+              "♡ 親密度 → Lv" + r.new_affection_level.to_string() + " UP!"
+            })],
+          )
+        },
+      ),
+      // プレイヤーレベルアップ
+      @dom.show(
+        fn() {
+          // PLv変化があった場合（day_start_affection_levelの類似パターンで検出）
+          state.day_result.get().new_player_level > 1
+        },
+        fn() {
+          @dom.div(
+            class="day-result-plv",
+            [@dom.text_dyn(fn() {
+              "PLv " + state.day_result.get().new_player_level.to_string()
+            })],
+          )
+        },
+      ),
+      // 通貨獲得
+      @dom.div(
+        class="day-result-currency",
+        [@dom.text_dyn(fn() {
+          let r = state.day_result.get()
+          let mut s = "コイン +" + r.coins_earned.to_string()
+          if r.gems_earned > 0 {
+            s = s + "  星石 +" + r.gems_earned.to_string()
+          }
+          if r.passive_coins > 0 {
+            s = s + "  (パッシブ +" + r.passive_coins.to_string() + ")"
+          }
+          s
+        })],
+      ),
+      // 明日の目標
+      @dom.div(
+        class="day-result-next",
+        [
+          @dom.div(
+            class="day-result-next-header",
+            [@dom.text("── 明日の目標 ──")],
+          ),
+          @dom.div(
+            class="day-result-next-story",
+            [@dom.text_dyn(fn() {
+              let current_ch = state.current_chapter.get()
+              let chapters = @data.get_chapters()
+              let player_lv = state.player_level.get()
+              let exp = state.player_exp.get()
+              if current_ch + 1 < chapters.length() {
+                let next = chapters[current_ch + 1]
+                let needed_lv = next.unlock_player_level
+                if player_lv >= needed_lv {
+                  "📖 次の章が読めます！"
+                } else {
+                  let exp_to_next = @game.exp_for_next_level(player_lv) - exp
+                  "📖 " + next.title + "まで: PLv" + needed_lv.to_string() + " (EXP あと" + exp_to_next.to_string() + ")"
+                }
+              } else {
+                "📖 全章クリア済み"
+              }
+            })],
+          ),
+          @dom.div(
+            class="day-result-next-affection",
+            [@dom.text_dyn(fn() {
+              let level = @game.get_affection_level(state.intimacy.get())
+              let milestones = @data.get_affection_milestones()
+              let mut next_milestone = 0
+              for m in milestones {
+                if m.level > level {
+                  next_milestone = m.level
+                  break
+                }
+              }
+              if next_milestone > 0 {
+                "♡ 次のマイルストーン: Lv" + next_milestone.to_string()
+              } else {
+                ""
+              }
+            })],
+          ),
+        ],
+      ),
+      // ボタン
+      @dom.div(
+        class="day-result-btn",
+        [
+          @dom.button(
+            class="btn btn-primary btn-large",
+            on=@dom.events().click(fn(_e) { @game.advance_to_next_day(state) }),
+            [@dom.text("次の日へ")],
+          ),
+        ],
       ),
     ],
   )

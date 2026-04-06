@@ -356,8 +356,19 @@ pub fn play_card(state : GameState, card_id : String) -> Unit {
   // 12. 条件解放カードチェック
   check_condition_unlocks(state)
 
-  // メッセージ
+  // 13. カード結果をScene表示用に保存
   let coin_reward = get_card_coin_reward(card.rarity)
+  let exp_reward = get_card_exp_reward(card.rarity)
+  let gem_reward = get_card_gem_reward(card.rarity)
+  let affection_level = get_affection_level(state.intimacy.get())
+  let reaction = @data.get_reaction_text(action_str, affection_level)
+  state.last_card_result.set({
+    trust_gain, understanding_gain, empathy_gain,
+    coin_reward, exp_reward, gem_reward,
+    reaction_text: reaction,
+  })
+
+  // メッセージ
   let msg = card.name + " — 信頼+" + trust_gain.to_string() + " 理解+" + understanding_gain.to_string() + " 共感+" + empathy_gain.to_string() + " +" + coin_reward.to_string() + "コイン"
   add_message(state, msg)
 

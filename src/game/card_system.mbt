@@ -269,6 +269,31 @@ pub fn calculate_card_gains(
   (t, u, e)
 }
 
+/// カードプレイ前の獲得値プレビュー（UI表示用）
+///
+/// play_card() と同じ計算ロジック（★ランク・レベル・メモリーボーナス反映）で
+/// 実効値を返す。app.mbt のカード表示で、base値ではなく実効値を表示するために使用。
+///
+/// 背景: カードに「共+10」と表示されるが、param_scale_percent=15 適用後は「共+1」。
+/// この関数で正しい値を表示することで、プレイヤーの期待と実際の乖離をなくす。
+pub fn preview_card_gains(
+  state : GameState,
+  card : @data.ActionCard
+) -> (Int, Int, Int) {
+  let card_star = get_card_star_rank(state, card.id)
+  let card_level = get_card_level(state, card.id)
+  let effective_star = if card_star > 0 { card_star } else { 1 }
+  let effective_level = if card_level > 0 { card_level } else { 1 }
+  let memory_ids : Array[String] = []
+  for record in state.acquired_memories.get() {
+    memory_ids.push(record.memory_id)
+  }
+  let (m_t, m_u, m_e) = calculate_memory_bonus(
+    state.memory_slots.get(), memory_ids,
+  )
+  calculate_card_gains(card, effective_star, effective_level, m_t, m_u, m_e)
+}
+
 // =========================================================================
 // 定食屋パッシブ収入（ブルアカのカフェに対応）
 // =========================================================================

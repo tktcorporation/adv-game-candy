@@ -169,8 +169,12 @@ pub fn get_affection_description(level : Int) -> String {
     "言葉がなくても、隣にいるだけで落ち着く。"
   } else if level < 50 {
     "灯を出た後も、ふと相手のことを思い出す。"
-  } else {
+  } else if level < 70 {
     "いつからか、灯に来る理由が変わっていた。"
+  } else if level < 100 {
+    "灯にいる時間が、一日で一番穏やかだ。"
+  } else {
+    "言葉にしなくても、伝わっている気がする。"
   }
 }
 
@@ -192,6 +196,65 @@ pub fn get_affection_milestones() -> Array[AffectionMilestone] {
     { level: 30, reward_type: "gem", reward_amount: 120, description: "120 星石 + ボンドストーリー" },
     { level: 40, reward_type: "gem", reward_amount: 150, description: "150 星石 + ボンドストーリー" },
     { level: 50, reward_type: "gem", reward_amount: 200, description: "200 星石 + ボンドストーリー" },
+    { level: 60, reward_type: "gem", reward_amount: 200, description: "200 星石" },
+    { level: 70, reward_type: "gem", reward_amount: 200, description: "200 星石 + ボンドストーリー" },
+    { level: 80, reward_type: "gem", reward_amount: 250, description: "250 星石" },
+    { level: 100, reward_type: "gem", reward_amount: 300, description: "300 星石 + ボンドストーリー" },
   ]
+}
+
+/// カードプレイ後のひよりのリアクションテキスト
+///
+/// 行動タイプ × 親密度レベルのマトリクスで、短い1行リアクションを返す。
+/// 親密度が上がるほどリアクションが豊かになる。上限なし対応（Lv50+にもテキストあり）。
+///
+/// Scene画面で「♪ ひよりが少しこちらを見た」のように表示する。
+/// 呼び出し元: logic.mbt の play_card() → state.last_card_result に格納
+pub fn get_reaction_text(action_type : String, affection_level : Int) -> String {
+  match action_type {
+    "eat" =>
+      if affection_level < 3 {
+        ""
+      } else if affection_level < 10 {
+        "箸の動きが揃った。"
+      } else if affection_level < 20 {
+        "「……美味しいですね」"
+      } else if affection_level < 30 {
+        "二人分のいただきます。"
+      } else if affection_level < 50 {
+        "自然に小鉢を分けた。"
+      } else {
+        "「今日も一緒ですね」"
+      }
+    "observe" =>
+      if affection_level < 3 {
+        "本に集中している。"
+      } else if affection_level < 10 {
+        "ちらりとこちらを見た。"
+      } else if affection_level < 20 {
+        "視線が合って微笑んだ。"
+      } else if affection_level < 30 {
+        "「……見すぎですよ」"
+      } else if affection_level < 50 {
+        "読んでる本を見せてくれた。"
+      } else {
+        "肩が触れても離れない。"
+      }
+    "talk" =>
+      if affection_level < 3 {
+        "丸山が間に入ってくれた。"
+      } else if affection_level < 10 {
+        "小さく頷いた��"
+      } else if affection_level < 20 {
+        "自分から話し始めた。"
+      } else if affection_level < 30 {
+        "穏やかに笑っている。"
+      } else if affection_level < 50 {
+        "声を出して笑った。"
+      } else {
+        "「……ずっと、こうしていたい」"
+      }
+    _ => ""
+  }
 }
 

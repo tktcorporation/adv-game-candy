@@ -119,6 +119,8 @@ pub(all) struct GameState {
   // =========================================================================
 
   day_result : @signals.Signal[@data.DayResultData]
+  /// 直前のカードプレイ結果（Scene画面で獲得値・報酬・リアクションを表示するため）
+  last_card_result : @signals.Signal[@data.CardResult]
   today_coins_earned : @signals.Signal[Int]
   today_gems_earned : @signals.Signal[Int]
   day_start_trust : @signals.Signal[Int]
@@ -222,6 +224,10 @@ pub fn create_game_state() -> GameState {
       affection_level_up: false, new_affection_level: 1,
       season_milestone: false, milestone_rank: "",
       passive_coins: 0,
+    }),
+    last_card_result: @signals.signal({
+      trust_gain: 0, understanding_gain: 0, empathy_gain: 0,
+      coin_reward: 0, exp_reward: 0, gem_reward: 0, reaction_text: "",
     }),
     today_coins_earned: @signals.signal(0),
     today_gems_earned: @signals.signal(0),

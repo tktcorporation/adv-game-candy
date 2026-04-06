@@ -328,6 +328,20 @@ pub(all) struct DayResultData {
   passive_coins : Int
 }
 
+/// カードプレイ結果（Scene画面表示用）
+///
+/// play_card() で生成し、Scene画面で獲得値・報酬・リアクションを表示する。
+/// base値ではなくスケーリング後の実効値を保持。
+pub(all) struct CardResult {
+  trust_gain : Int
+  understanding_gain : Int
+  empathy_gain : Int
+  coin_reward : Int
+  exp_reward : Int
+  gem_reward : Int
+  reaction_text : String
+}
+
 /// ★ランクアップに必要なコスト
 ///
 /// カード固有シャード + コインで★ランクを上げる。
