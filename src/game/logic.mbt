@@ -174,38 +174,8 @@ pub fn leave_akari(state : GameState) -> Unit {
 }
 
 // =========================================================================
-// 行動処理（ゲームのコア）
+// 行動処理（ゲームのコア — カードシステム一本）
 // =========================================================================
-
-/// 行動の AP コストを返す（後方互換: 旧ActionType用）
-pub fn get_action_cost(action : @data.ActionType) -> Int {
-  match action {
-    Eat => 2
-    Observe => 1
-    Talk => 1
-    Special => 2
-  }
-}
-
-/// 行動の親密度ボーナスを計算（後方互換: 旧ActionType用）
-fn get_action_intimacy(action : @data.ActionType, day : Int) -> Int {
-  match action {
-    Eat => 10 + (day % 6)       // 10-15
-    Observe => 3 + (day % 3)    // 3-5
-    Talk => 5 + (day % 4)       // 5-8
-    Special => 15 + (day % 11)  // 15-25
-  }
-}
-
-/// 行動タイプを文字列に変換（VisitRecord 保存用）
-fn action_type_to_string(action : @data.ActionType) -> String {
-  match action {
-    Eat => "eat"
-    Observe => "observe"
-    Talk => "talk"
-    Special => "special"
-  }
-}
 
 /// カードカテゴリを行動文字列に変換（VisitRecord/ミッション判定用）
 fn card_category_to_action_string(category : @data.CardCategory) -> String {
@@ -213,23 +183,7 @@ fn card_category_to_action_string(category : @data.CardCategory) -> String {
     Eat => "eat"
     Observe => "observe"
     Talk => "talk"
-    Special => "special"
-    Weather => "special"
-    Seasonal => "special"
-  }
-}
-
-/// その行動を実行可能か判定（後方互換: 旧ActionType用）
-///
-/// AP が足りるか、Special の場合は ★3（親密度300）以上かをチェック。
-pub fn can_perform_action(state : GameState, action : @data.ActionType) -> Bool {
-  let cost = get_action_cost(action)
-  if state.ap.get() < cost {
-    return false
-  }
-  match action {
-    Special => get_intimacy_stars(state.intimacy.get()) >= 3
-    _ => true
+    Special | Weather | Seasonal => "special"
   }
 }
 
@@ -293,8 +247,7 @@ pub fn play_card(state : GameState, card_id : String) -> Unit {
   state.empathy.update(fn(v) { v + empathy_gain })
 
   // 親密度（合計値）を同期
-  let total = state.trust.get() + state.understanding.get() + state.empathy.get()
-  state.intimacy.set(total)
+  sync_intimacy(state)
 
   // 4. 行動テキスト生成 → Scene へ
   let scene_text = @data.get_action_text(action_str, state.intimacy.get(), day)
@@ -459,131 +412,6 @@ fn check_and_acquire_memories(
       }
     }
   }
-}
-
-/// 行動を実行する（後方互換: 旧ActionType用）
-///
-/// 既存UIからの呼び出しを維持するためのラッパー。
-/// 内部的には3軸パラメータに変換して処理する。
-pub fn perform_action(state : GameState, action : @data.ActionType) -> Unit {
-  if !can_perform_action(state, action) {
-    return
-  }
-
-  let day = state.day.get()
-  let cost = get_action_cost(action)
-  let intimacy_gain = get_action_intimacy(action, day)
-  let action_str = action_type_to_string(action)
-
-  // 1. AP消費
-  state.ap.update(fn(ap) { ap - cost })
-
-  // 2. 親密度加算（旧方式: 単一値）+ 3軸にも分配
-  state.intimacy.update(fn(i) { i + intimacy_gain })
-
-  // 3軸への分配（行動タイプに応じて偏りを持たせる）
-  match action {
-    Eat => {
-      state.empathy.update(fn(v) { v + intimacy_gain * 6 / 10 })
-      state.understanding.update(fn(v) { v + intimacy_gain * 2 / 10 })
-      state.trust.update(fn(v) { v + intimacy_gain * 2 / 10 })
-    }
-    Observe => {
-      state.understanding.update(fn(v) { v + intimacy_gain * 6 / 10 })
-      state.trust.update(fn(v) { v + intimacy_gain * 2 / 10 })
-      state.empathy.update(fn(v) { v + intimacy_gain * 2 / 10 })
-    }
-    Talk => {
-      state.trust.update(fn(v) { v + intimacy_gain * 6 / 10 })
-      state.understanding.update(fn(v) { v + intimacy_gain * 2 / 10 })
-      state.empathy.update(fn(v) { v + intimacy_gain * 2 / 10 })
-    }
-    Special => {
-      state.trust.update(fn(v) { v + intimacy_gain / 3 })
-      state.understanding.update(fn(v) { v + intimacy_gain / 3 })
-      state.empathy.update(fn(v) { v + intimacy_gain / 3 })
-    }
-  }
-
-  // 3. 行動テキスト生成 → Scene へ
-  let scene_text = @data.get_action_text(action_str, state.intimacy.get(), day)
-  state.today_scene_text.set(scene_text)
-
-  let menu = @data.get_today_menu(day)
-  state.today_menu.set(menu.name)
-
-  // 4. 行動履歴に追加
-  state.today_actions.update(fn(actions) {
-    let result : Array[String] = []
-    for a in actions {
-      result.push(a)
-    }
-    result.push(action_str)
-    result
-  })
-
-  // 訪問記録
-  if action == @data.ActionType::Eat {
-    state.visit_log.update(fn(log) {
-      let result : Array[@data.VisitRecord] = []
-      for r in log {
-        result.push(r)
-      }
-      result.push({ day, menu_id: menu.id, scene_text, action_type: action_str })
-      result
-    })
-  }
-
-  // コレクション追加
-  if action == @data.ActionType::Observe {
-    let discovery = @data.get_discovery_text(state.intimacy.get(), day)
-    state.discoveries.update(fn(arr) {
-      for d in arr {
-        if d == discovery {
-          return arr
-        }
-      }
-      let result : Array[String] = []
-      for d in arr {
-        result.push(d)
-      }
-      result.push(discovery)
-      result
-    })
-  }
-  if action == @data.ActionType::Talk {
-    let memo = @data.get_talk_text(state.intimacy.get(), day)
-    state.talk_memos.update(fn(arr) {
-      for m in arr {
-        if m == memo {
-          return arr
-        }
-      }
-      let result : Array[String] = []
-      for m in arr {
-        result.push(m)
-      }
-      result.push(memo)
-      result
-    })
-  }
-
-  // 行動カウンタ更新
-  match action {
-    Eat => state.total_eat_count.update(fn(n) { n + 1 })
-    Observe => state.total_observe_count.update(fn(n) { n + 1 })
-    Talk => state.total_talk_count.update(fn(n) { n + 1 })
-    Special => ()
-  }
-
-  // 5. ミッション判定
-  check_missions(state)
-
-  // 6. 思い出獲得チェック
-  check_and_acquire_memories(state, "", None)
-
-  // Scene フェーズへ
-  state.phase.set(@data.GamePhase::Scene)
 }
 
 // =========================================================================
@@ -765,6 +593,44 @@ pub fn get_param_display(state : GameState) -> String {
 // デイリーミッション
 // =========================================================================
 
+/// ミッション報酬を3軸に分配して付与
+///
+/// ミッションの行動カテゴリに応じて主軸を決定:
+/// eat → 共感メイン、talk → 信頼メイン、actions_3 → 均等分配
+fn grant_mission_reward(state : GameState, mission_id : String, reward : Int) -> Unit {
+  match mission_id {
+    "eat" => {
+      // 食事ミッション → 共感メイン (6:2:2)
+      state.empathy.update(fn(v) { v + reward * 6 / 10 })
+      state.understanding.update(fn(v) { v + reward * 2 / 10 })
+      state.trust.update(fn(v) { v + reward * 2 / 10 })
+    }
+    "talk" => {
+      // 会話ミッション → 信頼メイン (6:2:2)
+      state.trust.update(fn(v) { v + reward * 6 / 10 })
+      state.understanding.update(fn(v) { v + reward * 2 / 10 })
+      state.empathy.update(fn(v) { v + reward * 2 / 10 })
+    }
+    _ => {
+      // 汎用ミッション → 均等分配
+      state.trust.update(fn(v) { v + reward / 3 })
+      state.understanding.update(fn(v) { v + reward / 3 })
+      state.empathy.update(fn(v) { v + reward / 3 })
+    }
+  }
+  // intimacy を同期
+  sync_intimacy(state)
+}
+
+/// 3軸の合計値を intimacy に同期する
+///
+/// trust + understanding + empathy = intimacy
+/// 3軸を変更した後は必ずこれを呼ぶ。
+pub fn sync_intimacy(state : GameState) -> Unit {
+  let total = state.trust.get() + state.understanding.get() + state.empathy.get()
+  state.intimacy.set(total)
+}
+
 /// 行動後にミッション達成をチェックし、未達成→達成のものに報酬を付与
 fn check_missions(state : GameState) -> Unit {
   let actions = state.today_actions.get()
@@ -779,7 +645,6 @@ fn check_missions(state : GameState) -> Unit {
       had_talk = true
     }
   }
-  // 今回の行動も含めるため action_count は既に今回分を含む
 
   state.daily_missions.update(fn(missions) {
     let result : Array[@data.DailyMission] = []
@@ -788,16 +653,15 @@ fn check_missions(state : GameState) -> Unit {
         result.push(m)
       } else if m.id == "eat" && had_eat {
         result.push({ ..m, completed: true })
-        // 報酬付与
-        state.intimacy.update(fn(i) { i + m.reward })
+        grant_mission_reward(state, m.id, m.reward)
         add_message(state, "ミッション達成: " + m.description + " (+" + m.reward.to_string() + ")")
       } else if m.id == "talk" && had_talk {
         result.push({ ..m, completed: true })
-        state.intimacy.update(fn(i) { i + m.reward })
+        grant_mission_reward(state, m.id, m.reward)
         add_message(state, "ミッション達成: " + m.description + " (+" + m.reward.to_string() + ")")
       } else if m.id == "actions_3" && action_count >= 3 {
         result.push({ ..m, completed: true })
-        state.intimacy.update(fn(i) { i + m.reward })
+        grant_mission_reward(state, m.id, m.reward)
         add_message(state, "ミッション達成: " + m.description + " (+" + m.reward.to_string() + ")")
       } else {
         result.push(m)
