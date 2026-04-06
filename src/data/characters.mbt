@@ -150,14 +150,111 @@ pub fn get_characters() -> Array[Character] {
   ]
 }
 
-/// Get intimacy ranks
-pub fn get_intimacy_ranks() -> Array[IntimacyRank] {
+/// 親密度レベルの説明テキスト（マイルストーン用）
+///
+/// 旧★システム(1-5)を廃止し、上限なしの親密度レベルに移行。
+/// 特定レベルで関係性の質的変化を表現する。
+pub fn get_affection_description(level : Int) -> String {
+  if level < 3 {
+    "同じ店の客。顔は知ってるが話したことはない。"
+  } else if level < 5 {
+    "醤油差しを渡す程度の関係。声を聞いたことがある。"
+  } else if level < 10 {
+    "名前を知っている。天気の話くらいはする。"
+  } else if level < 15 {
+    "隣に座っても気まずくない。好きな小鉢を知っている。"
+  } else if level < 20 {
+    "この席が、二人の場所になった。"
+  } else if level < 30 {
+    "言葉がなくても、隣にいるだけで落ち着く。"
+  } else if level < 50 {
+    "灯を出た後も、ふと相手のことを思い出す。"
+  } else if level < 70 {
+    "いつからか、灯に来る理由が変わっていた。"
+  } else if level < 100 {
+    "灯にいる時間が、一日で一番穏やかだ。"
+  } else {
+    "言葉にしなくても、伝わっている気がする。"
+  }
+}
+
+/// 親密度マイルストーン報酬テーブル
+///
+/// 親密度レベル到達時の報酬。5レベルごとにジェム、10レベルごとに大報酬。
+/// 上限なしのため、高レベルでも報酬が続く。
+pub fn get_affection_milestones() -> Array[AffectionMilestone] {
   [
-    { stars: 1, min_points: 0, description: "同じ店の客。顔は知ってるが話したことはない。" },
-    { stars: 2, min_points: 100, description: "醤油差しを渡す程度の関係。声を聞いたことがある。" },
-    { stars: 3, min_points: 300, description: "名前を知っている。天気の話くらいはする。" },
-    { stars: 4, min_points: 600, description: "隣に座っても気まずくない。好きな小鉢を知っている。" },
-    { stars: 5, min_points: 1000, description: "この席が、二人の場所になった。" },
+    { level: 3, reward_type: "gem", reward_amount: 20, description: "20 星石" },
+    { level: 5, reward_type: "gem", reward_amount: 50, description: "50 星石" },
+    { level: 8, reward_type: "gem", reward_amount: 30, description: "30 星石" },
+    { level: 10, reward_type: "gem", reward_amount: 100, description: "100 星石 + ボンドストーリー" },
+    { level: 13, reward_type: "gem", reward_amount: 30, description: "30 星石" },
+    { level: 15, reward_type: "gem", reward_amount: 50, description: "50 星石" },
+    { level: 18, reward_type: "gem", reward_amount: 30, description: "30 星石" },
+    { level: 20, reward_type: "gem", reward_amount: 100, description: "100 星石 + ボンドストーリー" },
+    { level: 25, reward_type: "gem", reward_amount: 80, description: "80 星石" },
+    { level: 30, reward_type: "gem", reward_amount: 120, description: "120 星石 + ボンドストーリー" },
+    { level: 40, reward_type: "gem", reward_amount: 150, description: "150 星石 + ボンドストーリー" },
+    { level: 50, reward_type: "gem", reward_amount: 200, description: "200 星石 + ボンドストーリー" },
+    { level: 60, reward_type: "gem", reward_amount: 200, description: "200 星石" },
+    { level: 70, reward_type: "gem", reward_amount: 200, description: "200 星石 + ボンドストーリー" },
+    { level: 80, reward_type: "gem", reward_amount: 250, description: "250 星石" },
+    { level: 100, reward_type: "gem", reward_amount: 300, description: "300 星石 + ボンドストーリー" },
   ]
+}
+
+/// カードプレイ後のひよりのリアクションテキスト
+///
+/// 行動タイプ × 親密度レベルのマトリクスで、短い1行リアクションを返す。
+/// 親密度が上がるほどリアクションが豊かになる。上限なし対応（Lv50+にもテキストあり）。
+///
+/// Scene画面で「♪ ひよりが少しこちらを見た」のように表示する。
+/// 呼び出し元: logic.mbt の play_card() → state.last_card_result に格納
+pub fn get_reaction_text(action_type : String, affection_level : Int) -> String {
+  match action_type {
+    "eat" =>
+      if affection_level < 3 {
+        ""
+      } else if affection_level < 10 {
+        "箸の動きが揃った。"
+      } else if affection_level < 20 {
+        "「……美味しいですね」"
+      } else if affection_level < 30 {
+        "二人分のいただきます。"
+      } else if affection_level < 50 {
+        "自然に小鉢を分けた。"
+      } else {
+        "「今日も一緒ですね」"
+      }
+    "observe" =>
+      if affection_level < 3 {
+        "本に集中している。"
+      } else if affection_level < 10 {
+        "ちらりとこちらを見た。"
+      } else if affection_level < 20 {
+        "視線が合って微笑んだ。"
+      } else if affection_level < 30 {
+        "「……見すぎですよ」"
+      } else if affection_level < 50 {
+        "読んでる本を見せてくれた。"
+      } else {
+        "肩が触れても離れない。"
+      }
+    "talk" =>
+      if affection_level < 3 {
+        "丸山が間に入ってくれた。"
+      } else if affection_level < 10 {
+        "小さく頷いた��"
+      } else if affection_level < 20 {
+        "自分から話し始めた。"
+      } else if affection_level < 30 {
+        "穏やかに笑っている。"
+      } else if affection_level < 50 {
+        "声を出して笑った。"
+      } else {
+        "「……ずっと、こうしていたい」"
+      }
+    _ => ""
+  }
 }
 
