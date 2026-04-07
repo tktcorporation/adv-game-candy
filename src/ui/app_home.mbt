@@ -30,6 +30,8 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
           ),
         ],
       ),
+      // ── ロードマップ（ストーリー進捗 + 次の目標） ──
+      render_roadmap(state),
       // ── 今週の目標（週チャレンジ） ──
       @dom.div(
         class="weekly-event-goal",

@@ -2080,3 +2080,126 @@ body::before {
   border-top: var(--border-whisper);
   border-bottom: var(--border-whisper);
 }
+
+/* ─── ロードマップ（ストーリー進捗） ─── */
+
+.roadmap {
+  background: var(--bg-subtle);
+  border-radius: var(--radius);
+  border: var(--border-whisper);
+  padding: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
+.roadmap-header {
+  font-family: var(--font-serif);
+  font-size: 0.82em;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: var(--space-3);
+  letter-spacing: 0.1em;
+}
+
+.roadmap-track {
+  text-align: center;
+  font-size: 1.3em;
+  letter-spacing: 0.15em;
+  padding: var(--space-2) 0;
+  color: var(--accent);
+  font-weight: 600;
+  /* 路線図のノードに温かみのあるグロー効果 */
+  text-shadow: 0 0 8px rgba(212, 105, 61, 0.15);
+}
+
+.roadmap-arc-labels {
+  text-align: center;
+  font-size: 0.7em;
+  color: var(--text-tertiary);
+  letter-spacing: 0.3em;
+  margin-bottom: var(--space-3);
+}
+
+.roadmap-gauge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  border: var(--border-whisper);
+  margin-bottom: var(--space-3);
+}
+
+.roadmap-gauge-label {
+  font-size: 0.78em;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  min-width: 5em;
+}
+
+.roadmap-gauge-bar {
+  font-family: monospace;
+  font-size: 0.92em;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+}
+
+.roadmap-next {
+  font-family: var(--font-serif);
+  font-size: 0.88em;
+  text-align: center;
+  padding: var(--space-2) 0;
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* ─── ログインボーナス ─── */
+
+.login-bonus-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-6);
+  text-align: center;
+}
+
+.login-bonus-title {
+  font-family: var(--font-serif);
+  font-size: 1.2em;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.1em;
+}
+
+.login-bonus-streak {
+  font-size: 1.4em;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.login-bonus-reward {
+  font-size: 1em;
+  padding: var(--space-4);
+  background: var(--accent-soft);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.login-bonus-cycle {
+  font-family: monospace;
+  font-size: 1.1em;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+}
+
+.login-bonus-btn {
+  margin-top: var(--space-4);
+}
+
+/* ─── Home: ロードマップのアニメーション遅延追加 ─── */
+
+.home-view > *:nth-child(8) { animation-delay: 0.42s; }
+.home-view > *:nth-child(9) { animation-delay: 0.48s; }
+.home-view > *:nth-child(10) { animation-delay: 0.54s; }
