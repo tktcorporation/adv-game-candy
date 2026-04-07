@@ -30,8 +30,6 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
           ),
         ],
       ),
-      // ── ロードマップ（ストーリー進捗 + 次の目標） ──
-      render_roadmap(state),
       // ── 今週の目標（週チャレンジ） ──
       @dom.div(
         class="weekly-event-goal",
@@ -102,13 +100,25 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
               )
             },
           ),
-          // Layer 2: 灯に行く
+          // Layer 2: 灯に行く（新章解放時に ✦ マーク）
           @dom.button(
             class="btn btn-secondary btn-large",
             on=@dom.events().click(fn(_e) { @game.go_to_visit(state) }),
             [@dom.text_dyn(fn() {
-              "灯に行く（" + state.akari_points.get().to_string() + "/" + @game.visit_cost.to_string() + "灯P）"
+              let has_new_story = has_unlocked_story(state)
+              let points = state.akari_points.get()
+              let cost = @game.visit_cost
+              if has_new_story && points >= cost {
+                "✦ 灯に行く（" + points.to_string() + "/" + cost.to_string() + "灯P）"
+              } else {
+                "灯に行く（" + points.to_string() + "/" + cost.to_string() + "灯P）"
+              }
             })],
+          ),
+          // 灯Pゲージ（ボタン直下にインライン表示）
+          @dom.div(
+            class="akari-gauge-inline",
+            [@dom.text_dyn(fn() { build_akari_gauge(state) })],
           ),
           // 次の日へ
           @dom.show(
@@ -200,10 +210,59 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
           @dom.button(
             class="btn btn-secondary",
             on=@dom.events().click(fn(_e) { @game.open_album(state) }),
-            [@dom.text("アルバム")],
+            [@dom.text_dyn(fn() {
+              if has_unlocked_story(state) {
+                "アルバム ●"
+              } else {
+                "アルバム"
+              }
+            })],
           ),
         ],
       ),
     ],
   )
+}
+
+/// 未読のストーリーが解放されているか判定（ブルアカ風NEWバッジ用）
+///
+/// 次章の unlock_visit_count を満たしているが、まだ読んでいない状態。
+/// Home画面の灯ボタン ✦ マークとアルバムボタン ● マークに使用。
+fn has_unlocked_story(state : @game.GameState) -> Bool {
+  let current = state.current_chapter.get()
+  let chapters = @data.get_chapters()
+  let visits = state.total_visits.get()
+  if current + 1 < chapters.length() {
+    visits >= chapters[current + 1].unlock_visit_count
+  } else {
+    false
+  }
+}
+
+/// 灯Pゲージ — ▓▓▓░░░░░░░ 形式のインラインゲージ
+///
+/// 「灯に行く」ボタン直下に配置。
+/// 満タン時は ★ マークで「行ける！」を視覚的に伝える。
+fn build_akari_gauge(state : @game.GameState) -> String {
+  let points = state.akari_points.get()
+  let cost = @game.visit_cost
+  let width = 10
+  if points >= cost {
+    let mut bar = ""
+    for _i in 0..<width {
+      bar = bar + "▓"
+    }
+    bar + " ★"
+  } else {
+    let filled = points * width / cost
+    let mut bar = ""
+    for i in 0..<width {
+      if i < filled {
+        bar = bar + "▓"
+      } else {
+        bar = bar + "░"
+      }
+    }
+    bar
+  }
 }
