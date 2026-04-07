@@ -1,50 +1,98 @@
-// ActionSelect ビュー — 手札カードUIと行動選択
+// ActionSelect ビュー — 学マス参考リデザイン版
+//
+// 旧: 手札4枚を並べて自由選択
+// 新: 毎ターン3枚提示→1枚選択（学マスのレッスン選択方式）
+//     + ひよりの気分表示（ムード一致でボーナス）
+//     + コンボチェイン表示
+//     + 週イベント目標の進捗バー
 
-/// 行動選択画面 — 手札からカードを選んでプレイ
+/// 行動選択画面（学マス参考リデザイン版）
 fn render_action_select_view(state : @game.GameState) -> @dom.DomNode {
   @dom.div(
     class="action-select-view",
     [
+      // ヘッダー: 天候 + ターン数
       @dom.div(
         class="action-header",
         [@dom.text_dyn(fn() {
           let day = state.day.get()
           let weather = @data.get_weather(day)
           let weather_text = @data.weather_to_string(weather)
-          "灯の中。" + weather_text + "の昼時。"
+          let turn = state.turn_number.get() + 1
+          "灯の中。" + weather_text + "の昼時。（ターン" + turn.to_string() + "）"
         })],
+      ),
+      // ムード表示（ひよりの気分）— 最重要情報
+      @dom.div(
+        class="mood-display",
+        [
+          @dom.div(
+            class="mood-icon",
+            [@dom.text_dyn(fn() { @game.mood_to_icon(state.mood.get()) })],
+          ),
+          @dom.div(
+            class="mood-text",
+            [@dom.text_dyn(fn() { @game.mood_to_description(state.mood.get()) })],
+          ),
+        ],
       ),
       // AP ゲージ
       @dom.div(
         class="ap-gauge",
         [@dom.text_dyn(fn() {
           let ap = state.ap.get()
+          let max_ap = @game.get_max_ap(state)
           let mut dots = ""
-          for i in 0..<@game.base_ap {
+          for i in 0..<max_ap {
             if i < ap {
               dots = dots + "●"
             } else {
               dots = dots + "○"
             }
           }
-          "AP " + dots
+          "AP " + dots + " (" + ap.to_string() + "/" + max_ap.to_string() + ")"
         })],
       ),
-      // 手札カード一覧
+      // コンボチェイン表示
+      @dom.show(
+        fn() { state.combo_chain.get() > 0 },
+        fn() {
+          @dom.div(
+            class="combo-display",
+            [@dom.text_dyn(fn() {
+              let chain = state.combo_chain.get()
+              let bonus = state.last_combo_bonus.get()
+              let chain_mult = @game.get_chain_multiplier(chain)
+              let mult_pct = chain_mult - 100
+              "CHAIN x" + chain.to_string() + " (+" + mult_pct.to_string() + "%) — " + bonus.name
+            })],
+          )
+        },
+      ),
+      // 週イベント目標（ミニ進捗バー）
       @dom.div(
-        class="hand-cards",
+        class="weekly-goal-mini",
+        [@dom.text_dyn(fn() { @game.get_weekly_goal_display(state) })],
+      ),
+      // ── ターン選択肢: 3枚から1枚選ぶ ──
+      @dom.div(
+        class="turn-choices",
         [
-          @dom.for_each(
-            fn() { state.hand.get() },
-            fn(card, _i) { render_hand_card(state, card) },
+          @dom.div(
+            class="choices-label",
+            [@dom.text("── 3枚から1枚を選べ ──")],
           ),
-          // 手札が空のとき
+          @dom.for_each(
+            fn() { state.turn_choices.get().cards },
+            fn(card, _i) { render_choice_card(state, card) },
+          ),
+          // 選択肢が空のとき
           @dom.show(
-            fn() { state.hand.get().length() == 0 },
+            fn() { state.turn_choices.get().cards.length() == 0 },
             fn() {
               @dom.div(
                 class="hand-empty",
-                [@dom.text("今日の手札はすべて使いました。")],
+                [@dom.text("APが尽きた。今日はここまで。")],
               )
             },
           ),
@@ -65,30 +113,39 @@ fn render_action_select_view(state : @game.GameState) -> @dom.DomNode {
   )
 }
 
-/// 手札カード — 1枚分のUI
+/// 選択肢カード — 1枚分のUI（ムード一致ハイライト付き）
 ///
-/// カード名・説明・APコスト・実効パラメータ値・♡合計を表示。
-/// 実効値は preview_card_gains() で計算（★ランク・レベル・メモリーボーナス反映済み）。
-/// APが足りない場合はdisabled表示。レアリティでボーダー色を変える。
-fn render_hand_card(
+/// ムード一致カードにはハイライトを付けて「今これを選ぶべき」感を出す。
+/// 実効値のプレビューにムードボーナスも反映する。
+fn render_choice_card(
   state : @game.GameState,
   card : @data.ActionCard
 ) -> @dom.DomNode {
   let card_id = card.id
   let can_play = state.ap.get() >= card.ap_cost
+  let mood = state.mood.get()
+  let mood_match = @game.is_mood_match(mood, card.category)
+
   let rarity_class = match card.rarity {
     Normal => "rarity-normal"
     Uncommon => "rarity-uncommon"
     Rare => "rarity-rare"
   }
+  let mood_class = if mood_match { " mood-match" } else { "" }
   let base_class = if can_play {
-    "hand-card " + rarity_class
+    "hand-card " + rarity_class + mood_class
   } else {
     "hand-card disabled " + rarity_class
   }
-  // 実効値を計算（base値ではなくスケーリング後の値）
-  let (eff_t, eff_u, eff_e) = @game.preview_card_gains(state, card)
+
+  // 実効値を計算（ムードボーナス込み）
+  let (base_t, base_u, base_e) = @game.preview_card_gains(state, card)
+  let mood_mult = @game.get_mood_multiplier(mood, card.category)
+  let eff_t = base_t * mood_mult / 100
+  let eff_u = base_u * mood_mult / 100
+  let eff_e = base_e * mood_mult / 100
   let total_gain = eff_t + eff_u + eff_e
+
   @dom.div(
     class="hand-card-wrapper",
     [
@@ -97,6 +154,15 @@ fn render_hand_card(
           class=base_class,
           on=@dom.events().click(fn(_e) { @game.play_card(state, card_id) }),
           [
+            // ムード一致バッジ
+            if mood_match {
+              @dom.div(
+                class="mood-badge",
+                [@dom.text(@game.mood_to_icon(mood) + " 効果UP!")],
+              )
+            } else {
+              @dom.text("")
+            },
             // カードヘッダー: 名前 + APコスト
             @dom.div(
               class="card-header",
@@ -113,7 +179,7 @@ fn render_hand_card(
               class="card-desc",
               [@dom.text(card.description)],
             ),
-            // 3軸パラメータ（実効値）
+            // 3軸パラメータ（ムードボーナス反映済み実効値）
             @dom.div(
               class="card-params",
               [
@@ -146,7 +212,7 @@ fn render_hand_card(
                 ),
               ],
             ),
-            // ♡合計寄与（親密度にどれだけ進むか一目で分かる）
+            // ♡合計
             @dom.div(
               class="card-affection-total",
               [@dom.text("♡+" + total_gain.to_string())],

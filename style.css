@@ -1905,3 +1905,178 @@ body::before {
     padding: var(--space-3) var(--space-4);
   }
 }
+
+/* =========================================================================
+ * 学マス参考リデザイン: ムード・コンボ・グレード・週イベント
+ * ========================================================================= */
+
+/* ── ムード表示 ── */
+.mood-display {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-3);
+  border: var(--border-whisper);
+}
+
+.mood-icon {
+  font-size: 1.5em;
+  line-height: 1;
+}
+
+.mood-text {
+  font-family: var(--font-serif);
+  font-size: 0.9em;
+  color: var(--text);
+}
+
+.mood-preview {
+  padding: var(--space-3) var(--space-4);
+  background: var(--accent-soft);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+  border: var(--border-whisper);
+}
+
+.mood-preview-icon {
+  font-size: 1.1em;
+  font-weight: 500;
+  margin-bottom: var(--space-1);
+}
+
+.mood-preview-desc {
+  font-family: var(--font-serif);
+  font-size: 0.85em;
+  color: var(--text-secondary);
+}
+
+/* ── ムード一致ハイライト ── */
+.hand-card.mood-match {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, var(--bg-elevated), rgba(212, 105, 61, 0.06));
+  box-shadow: var(--shadow-md), 0 0 0 1px rgba(212, 105, 61, 0.15);
+}
+
+.hand-card.mood-match:hover:not(.disabled) {
+  box-shadow: var(--shadow-lg), 0 0 0 2px rgba(212, 105, 61, 0.25);
+}
+
+.mood-badge {
+  font-size: 0.75em;
+  color: var(--accent);
+  font-weight: 600;
+  padding: 2px var(--space-2);
+  background: rgba(212, 105, 61, 0.1);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-1);
+  display: inline-block;
+}
+
+/* ── コンボチェイン表示 ── */
+.combo-display {
+  text-align: center;
+  padding: var(--space-2) var(--space-4);
+  background: linear-gradient(90deg, rgba(212, 105, 61, 0.05), rgba(212, 105, 61, 0.12), rgba(212, 105, 61, 0.05));
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-3);
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+}
+
+.combo-result {
+  text-align: center;
+  padding: var(--space-2) var(--space-4);
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: var(--space-2);
+}
+
+/* ── グレード表示（PERFECT / GOOD） ── */
+.grade-display {
+  text-align: center;
+  font-size: 1.8em;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-bottom: var(--space-3);
+  animation: grade-pop 0.5s ease-out;
+}
+
+.grade-perfect {
+  color: #e6a817;
+  text-shadow: 0 0 20px rgba(230, 168, 23, 0.4), 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.grade-good {
+  color: #5ba85b;
+  text-shadow: 0 0 12px rgba(91, 168, 91, 0.3);
+}
+
+@keyframes grade-pop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ── ターン選択肢ラベル ── */
+.turn-choices {
+  margin-top: var(--space-2);
+}
+
+.choices-label {
+  text-align: center;
+  font-size: 0.85em;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 2px;
+  margin-bottom: var(--space-3);
+}
+
+/* ── 週イベント目標 ── */
+.weekly-event-goal {
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+  border: var(--border-whisper);
+}
+
+.weekly-goal-header {
+  font-size: 0.8em;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 2px;
+  text-align: center;
+  margin-bottom: var(--space-2);
+}
+
+.weekly-goal-content {
+  font-size: 0.85em;
+  font-family: var(--font-sans);
+  color: var(--text);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.weekly-goal-mini {
+  font-size: 0.78em;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: var(--space-2) 0;
+  margin-bottom: var(--space-2);
+  border-top: var(--border-whisper);
+  border-bottom: var(--border-whisper);
+}

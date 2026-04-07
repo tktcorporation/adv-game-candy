@@ -1,12 +1,12 @@
-// Home ビュー — 親密度・目標・日替わり・アクション・ミッション・ステータス
+// Home ビュー — 学マス参考リデザイン版
 //
-// 情報階層: ♡親密度+関係性テキスト → 次の目標 → 日替わり → アクション → ミッション → ステータス
-// 学マス参考: 目標の常時表示。ブルアカ参考: ♡+数字のシンプルさ。
+// 情報階層:
+// ♡親密度+関係性テキスト → 今週の目標（週イベント） → ひよりの気分 → 日替わり → アクション → ミッション → ステータス
+//
+// 学マス参考: 目標の常時表示 + コンディション表示
+// ブルアカ参考: ♡+数字のシンプルさ
 
-/// ホーム画面 — 親密度・目標・日替わり・アクション・ミッション
-///
-/// 情報階層: ♡親密度+関係性テキスト → 次の目標 → 日替わり → アクション → ミッション → ステータス
-/// 学マス参考: 目標の常時表示。ブルアカ参考: ♡+数字のシンプルさ。
+/// ホーム画面（学マス参考リデザイン版）
 fn render_home_view(state : @game.GameState) -> @dom.DomNode {
   @dom.div(
     class="home-view",
@@ -33,13 +33,44 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
           ),
         ],
       ),
-      // 次の目標セクション（学マス風: 常に目標が見える）
+      // ── 今週の目標（週イベント） ──
+      @dom.div(
+        class="weekly-event-goal",
+        [
+          @dom.div(
+            class="weekly-goal-header",
+            [@dom.text("── 今週の目標 ──")],
+          ),
+          @dom.div(
+            class="weekly-goal-content",
+            [@dom.text_dyn(fn() { @game.get_weekly_goal_display(state) })],
+          ),
+        ],
+      ),
+      // ── ひよりの気分 ──
+      @dom.div(
+        class="mood-preview",
+        [
+          @dom.div(
+            class="mood-preview-icon",
+            [@dom.text_dyn(fn() {
+              let mood = state.mood.get()
+              @game.mood_to_icon(mood) + " " + @game.mood_to_string(mood)
+            })],
+          ),
+          @dom.div(
+            class="mood-preview-desc",
+            [@dom.text_dyn(fn() { @game.mood_to_description(state.mood.get()) })],
+          ),
+        ],
+      ),
+      // 次の目標セクション（ストーリー進行）
       @dom.div(
         class="next-goal",
         [
           @dom.div(
             class="next-goal-header",
-            [@dom.text("── 次の目標 ──")],
+            [@dom.text("── ストーリー ──")],
           ),
           @dom.div(
             class="next-goal-content",
@@ -53,13 +84,13 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
                 let needed_lv = next.unlock_player_level
                 let chapter_label = next.title + " 「" + next.subtitle + "」"
                 if player_lv >= needed_lv {
-                  "📖 " + chapter_label + " — 読めます！"
+                  chapter_label + " — 読めます！"
                 } else {
                   let exp_to_next = @game.exp_for_next_level(player_lv) - exp
-                  "📖 " + chapter_label + " — PLv" + needed_lv.to_string() + " (EXP あと" + exp_to_next.to_string() + ")"
+                  chapter_label + " — PLv" + needed_lv.to_string() + " (EXP あと" + exp_to_next.to_string() + ")"
                 }
               } else {
-                "📖 全章クリア済み"
+                "全章クリア済み"
               }
             })],
           ),
@@ -70,7 +101,6 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
               let player_lv = state.player_level.get()
               let exp = state.player_exp.get()
               let needed = @game.exp_for_next_level(player_lv)
-              // テキストベースの進捗バー
               let filled = if needed > 0 { exp * 10 / needed } else { 10 }
               let mut bar = "PLv" + player_lv.to_string() + " "
               for i in 0..<10 {
@@ -92,7 +122,7 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
         [
           @dom.div(
             class="menu-label",
-            [@dom.text("🍽 今日の日替わり")],
+            [@dom.text("今日の日替わり")],
           ),
           @dom.div(
             class="menu-name",
@@ -120,7 +150,7 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
               @dom.button(
                 class="btn btn-primary btn-large",
                 on=@dom.events().click(fn(_e) { @game.go_to_akari(state) }),
-                [@dom.text("🍽 灯に行く")],
+                [@dom.text("灯に行く")],
               )
             },
           ),
@@ -201,7 +231,7 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
           ),
         ],
       ),
-      // ステータス（3軸 + 通貨）— 下部に補助的に表示
+      // ステータス（3軸 + 通貨）
       @dom.div(
         class="home-status",
         [

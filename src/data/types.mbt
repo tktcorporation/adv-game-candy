@@ -396,3 +396,91 @@ pub(all) struct RestaurantPassive {
   daily_coins : Int     // 日あたりパッシブコイン
   daily_gems : Int      // 日あたりパッシブジェム（高親密度で発生）
 }
+
+// =========================================================================
+// 学マス参考リデザイン: ムード・コンボ・週イベント・パーフェクト判定
+// =========================================================================
+
+/// ひよりの気分（学マスのコンディションに対応）
+///
+/// 毎日変化し、特定軸のカード効果にボーナスを与える。
+/// 気分を読んでカードを選ぶことが「意味ある選択」の核心。
+///
+/// 設計根拠: 学マスではレッスン開始時のコンディションが
+/// どのレッスンを選ぶかの判断基準になる。同様に、ひよりの気分が
+/// 「今日は何をすべきか」の指針になる。
+pub(all) enum Mood {
+  Calm       // 穏やか — 信頼ボーナス(+50%)。静かに話を聞いてくれる
+  Bookworm   // 本に夢中 — 理解ボーナス(+50%)。観察の好機
+  Hungry     // お腹すいた — 共感ボーナス(+50%)。一緒に食べる喜び
+  Special    // 特別な日 — 全軸ボーナス(+25%)。何をしても効果的
+} derive(Eq)
+
+/// カードプレイの出来（学マスのパーフェクトレッスンに対応）
+///
+/// ムード一致時にPERFECT確率が上がる。
+/// 視覚的フィードバックで「上手くいった！」感を演出。
+pub(all) enum PlayGrade {
+  Perfect  // 1.5倍 — ムード一致で高確率
+  Good     // 1.2倍 — 通常確率
+  Normal   // 1.0倍 — ベース
+} derive(Eq)
+
+/// コンボの種類（カード連携ボーナス）
+///
+/// 前のターンのカードカテゴリと今のカードカテゴリの組み合わせで
+/// ボーナスが発生する。学マスのスキルカード連携に相当。
+///
+/// 設計根拠: ただカードを出すだけでなく「順番」に意味を持たせる。
+/// 「観察してから話しかける」「一緒に食べてからもう一品」など
+/// 物語的にも自然な流れがボーナスになる。
+pub(all) struct ComboBonus {
+  name : String           // コンボ名（「気づきから会話へ」等）
+  description : String    // フレーバーテキスト
+  trust_bonus : Int       // 信頼ボーナス
+  understanding_bonus : Int // 理解ボーナス
+  empathy_bonus : Int     // 共感ボーナス
+}
+
+/// 週イベント（学マスのオーディションに対応）
+///
+/// 7日ごとに発生するチェックポイント。
+/// 必要パラメータを満たしていれば成功→ボーナスシーン＋報酬。
+/// 失敗→慰めシーンだが限定報酬なし。
+/// 「あと3日で信頼を15上げないと…」という緊張感を生む。
+pub(all) struct WeeklyEvent {
+  id : String
+  name : String
+  description : String
+  /// 必要パラメータ（その週の獲得量で判定）
+  required_trust : Int
+  required_understanding : Int
+  required_empathy : Int
+  /// 報酬
+  reward_coins : Int
+  reward_gems : Int
+  /// 成功時のシーンテキスト
+  success_text : String
+  /// 失敗時のシーンテキスト
+  fail_text : String
+}
+
+/// 週イベント結果
+pub(all) struct WeeklyEventResult {
+  event_id : String
+  week_number : Int
+  passed : Bool
+  trust_achieved : Int
+  understanding_achieved : Int
+  empathy_achieved : Int
+}
+
+/// ターン選択肢（学マスのレッスン選択に対応）
+///
+/// 毎ターン3枚提示され、1枚を選ぶ。
+/// 残り2枚は捨てられる（次ターンで新たに3枚ドロー）。
+/// 「どれを取るか」の悩みがゲームの面白さの核心。
+pub(all) struct TurnChoices {
+  cards : Array[ActionCard]  // 提示された3枚（最大）
+  turn_number : Int          // 今日の何ターン目か
+}
