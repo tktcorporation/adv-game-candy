@@ -1,4 +1,4 @@
-// シミュレーションレポート出力 — 2層アーキテクチャ版
+// シミュレーションレポート出力 — 進行テーブル + バランス評価
 
 fn pad_left(s : String, width : Int) -> String {
   let mut result = s
@@ -10,6 +10,17 @@ fn pad_left(s : String, width : Int) -> String {
   result
 }
 
+fn pad_right(s : String, width : Int) -> String {
+  let mut result = s
+  let mut display_len = s.to_array().length()
+  while display_len < width {
+    result = result + " "
+    display_len = display_len + 1
+  }
+  result
+}
+
+/// 進行テーブル（週単位スナップショット）
 fn print_progression_report(
   sname : String,
   snapshots : Array[DaySnapshot]
@@ -37,9 +48,12 @@ fn print_progression_report(
   log("  └──────┴──────┴──────┴──────┴──────┴──────┴──────┴──────┴──────┘")
 }
 
-fn print_balance_assessment(snapshots : Array[DaySnapshot]) -> Unit {
+/// バランス評価サマリー
+fn print_detailed_analysis(result : SimResult) -> Unit {
+  let snapshots = result.snapshots
+  let stats = result.stats
   log("")
-  log_section("バランス評価サマリー")
+  log_section("バランス型 詳細分析")
 
   if snapshots.length() < 2 {
     log("  データ不足")
@@ -49,7 +63,7 @@ fn print_balance_assessment(snapshots : Array[DaySnapshot]) -> Unit {
   let last = snapshots[snapshots.length() - 1]
   let total_days = last.day
 
-  // 灯訪問頻度
+  // --- 灯訪問頻度 ---
   log("")
   log("  【灯訪問頻度】")
   let visit_rate = if total_days > 0 { last.total_visits * 100 / total_days } else { 0 }
@@ -57,7 +71,7 @@ fn print_balance_assessment(snapshots : Array[DaySnapshot]) -> Unit {
   log("    訪問率: " + visit_rate.to_string() + "%")
   log("    → 目標: 2-3日に1回来店 (33-50%)")
 
-  // チャプター進行
+  // --- ストーリー進行 ---
   log("")
   log("  【ストーリー進行】(灯訪問回数でゲート)")
   let chapter_gates = [(1, "ch1"), (2, "ch2"), (3, "ch3"), (5, "ch4"), (6, "ch5"), (8, "ch6"), (10, "ch7"), (13, "ch8"), (16, "ch9")]
@@ -77,7 +91,7 @@ fn print_balance_assessment(snapshots : Array[DaySnapshot]) -> Unit {
     log("    " + status)
   }
 
-  // 親密度進行
+  // --- 親密度レベル進行 ---
   log("")
   log("  【親密度レベル進行】")
   let aff_goals = [(3, "顔見知り"), (5, "醤油差し距離"), (10, "名前を知る"), (15, "隣の席"), (20, "二人の場所")]
@@ -93,7 +107,7 @@ fn print_balance_assessment(snapshots : Array[DaySnapshot]) -> Unit {
     log("    Lv" + level.to_string() + " (" + desc + "): " + day_str)
   }
 
-  // 3軸バランス
+  // --- 3軸バランス ---
   log("")
   log("  【3軸バランス】")
   let t = last.trust
@@ -104,6 +118,45 @@ fn print_balance_assessment(snapshots : Array[DaySnapshot]) -> Unit {
     log("    信頼: " + (t * 100 / total).to_string() + "% (" + t.to_string() + ")")
     log("    理解: " + (u * 100 / total).to_string() + "% (" + u.to_string() + ")")
     log("    共感: " + (e * 100 / total).to_string() + "% (" + e.to_string() + ")")
+  }
+
+  // --- バフシステム効率 ---
+  log("")
+  log("  【バフシステム効率】")
+  log("    バフ付与: " + stats.buff_grant_count.to_string() + "回")
+  log("    バフ消費(成功): " + stats.buff_consume_count.to_string() + "回")
+  log("    バフ消費(空振り): " + stats.buff_miss_count.to_string() + "回")
+  let consume_rate = if stats.buff_grant_count > 0 {
+    stats.buff_consume_count * 100 / stats.buff_grant_count
+  } else { 0 }
+  log("    消費/付与率: " + consume_rate.to_string() + "% → 目標: 60-80%")
+
+  // --- ミッション達成率 ---
+  log("")
+  log("  【デイリーミッション】")
+  let mission_rate = if stats.missions_total > 0 {
+    stats.missions_completed * 100 / stats.missions_total
+  } else { 0 }
+  log("    達成: " + stats.missions_completed.to_string() + "/" + stats.missions_total.to_string() + " (" + mission_rate.to_string() + "%)")
+
+  // --- 週チャレンジ結果 ---
+  log("")
+  log("  【週チャレンジ推移】")
+  let total_challenges = stats.challenge_s_count + stats.challenge_a_count + stats.challenge_b_count + stats.challenge_c_count
+  log("    S: " + stats.challenge_s_count.to_string() + "  A: " + stats.challenge_a_count.to_string() + "  B: " + stats.challenge_b_count.to_string() + "  C: " + stats.challenge_c_count.to_string() + "  (計" + total_challenges.to_string() + "週)")
+
+  // --- カード使用頻度 ---
+  log("")
+  log("  【カード使用頻度 TOP5】")
+  let top = if stats.card_play_counts.length() > 5 { 5 } else { stats.card_play_counts.length() }
+  for i in 0..<top {
+    let (card_id, count) = stats.card_play_counts[i]
+    let name = match @data.get_card_by_id(card_id) {
+      Some(c) => c.name
+      None => card_id
+    }
+    let pct = if stats.total_card_plays > 0 { count * 100 / stats.total_card_plays } else { 0 }
+    log("    " + (i + 1).to_string() + ". " + name + ": " + count.to_string() + "回 (" + pct.to_string() + "%)")
   }
 
   log("")
