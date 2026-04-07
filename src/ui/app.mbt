@@ -75,6 +75,10 @@ pub fn app(state : @game.GameState) -> @dom.DomNode {
             fn() { state.phase.get() == @data.GamePhase::DayResult },
             fn() { render_day_result_view(state) },
           ),
+          @dom.show(
+            fn() { state.phase.get() == @data.GamePhase::LoginBonus },
+            fn() { render_login_bonus_view(state) },
+          ),
         ],
       ),
       render_message_log(state),
