@@ -277,13 +277,15 @@ pub fn create_game_state() -> GameState {
     claimed_affection_milestone: @signals.signal(0),
     // 学マス参考リデザイン
     mood: @signals.signal(@data.Mood::Calm),
-    turn_choices: @signals.signal({ cards: [], turn_number: 0 } : @data.TurnChoices),
+    turn_choices: @signals.signal(
+      ({ cards: [], turn_number: 0 } : @data.TurnChoices),
+    ),
     turn_number: @signals.signal(0),
     last_play_grade: @signals.signal(@data.PlayGrade::Normal),
     combo_chain: @signals.signal(0),
     last_card_category: @signals.signal(""),
     last_combo_bonus: @signals.signal(
-      { name: "", description: "", trust_bonus: 0, understanding_bonus: 0, empathy_bonus: 0 } : @data.ComboBonus,
+      ({ name: "", description: "", trust_bonus: 0, understanding_bonus: 0, empathy_bonus: 0 } : @data.ComboBonus),
     ),
     weekly_event_results: @signals.signal([]),
     week_start_trust: @signals.signal(0),

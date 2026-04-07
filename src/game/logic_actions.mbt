@@ -41,12 +41,15 @@ pub fn play_card(state : GameState, card_id : String) -> Unit {
   }
 
   // 選択肢にない場合、旧hand互換でも探す
-  if target_card == None {
-    let hand = state.hand.get()
-    for c in hand {
-      if c.id == card_id {
-        target_card = Some(c)
-        break
+  match target_card {
+    Some(_) => ()
+    None => {
+      let hand = state.hand.get()
+      for c in hand {
+        if c.id == card_id {
+          target_card = Some(c)
+          break
+        }
       }
     }
   }
