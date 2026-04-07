@@ -35,7 +35,7 @@ pub fn get_chapter_9() -> Chapter {
     id: 9,
     title: "第九章",
     subtitle: "ただいま",
-    unlock_player_level: 35,
+    unlock_visit_count: 16,
     scenes: [
       // --- Scene 0: 5日目 ---
       // 前提: 5日目。期待を持たないようにして灯に来る

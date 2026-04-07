@@ -29,7 +29,7 @@ pub fn get_chapter_6() -> Chapter {
     id: 6,
     title: "第六章",
     subtitle: "おかわり",
-    unlock_player_level: 20,
+    unlock_visit_count: 8,
     scenes: [
       // --- Scene 0: いつもの昼 ---
       // 前提: 晴とひよりの日常会話が定着した頃

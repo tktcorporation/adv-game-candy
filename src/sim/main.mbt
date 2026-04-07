@@ -1,11 +1,6 @@
-// ゲームシミュレーター v2.0 — ブルアカ参考リライト版
+// ゲームシミュレーター — 2層アーキテクチャ版
 //
-// 実際のゲームロジック（game パッケージ）を使い、
 // N日間の自動プレイを複数戦略で実行してレポートを出力する。
-//
-// ファイル構成:
-//   main.mbt   — シミュレーション本体・戦略・メインエントリ
-//   report.mbt — レポート出力関数群
 //
 // 実行方法:
 //   moon build --target js --release
@@ -38,8 +33,7 @@ enum Strategy {
   Balanced
   TrustFocus
   EmpathyFocus
-  UnderstandingFocus
-  RarePriority
+  BuffOptimal
 }
 
 fn strategy_name(s : Strategy) -> String {
@@ -47,8 +41,7 @@ fn strategy_name(s : Strategy) -> String {
     Balanced => "バランス型"
     TrustFocus => "信頼特化型"
     EmpathyFocus => "共感特化型"
-    UnderstandingFocus => "理解特化型"
-    RarePriority => "レア優先型"
+    BuffOptimal => "バフ最適型"
   }
 }
 
@@ -61,28 +54,36 @@ fn choose_card(
   strategy : Strategy
 ) -> @data.ActionCard? {
   let hand = state.hand.get()
-  let ap = state.ap.get()
+  let stamina = state.stamina.get()
 
   let mut best : @data.ActionCard? = None
   let mut best_score = -1
 
   for card in hand {
-    if ap < card.ap_cost {
+    if stamina < card.stamina_cost {
       continue
     }
 
+    let base_score = card.trust_gain + card.understanding_gain + card.empathy_gain
+
     let score = match strategy {
-      Balanced => card.trust_gain + card.understanding_gain + card.empathy_gain
+      Balanced => base_score
       TrustFocus => card.trust_gain * 3 + card.understanding_gain + card.empathy_gain
       EmpathyFocus => card.empathy_gain * 3 + card.trust_gain + card.understanding_gain
-      UnderstandingFocus => card.understanding_gain * 3 + card.trust_gain + card.empathy_gain
-      RarePriority => {
-        let rarity_bonus = match card.rarity {
-          Normal => 0
-          Uncommon => 10
-          Rare => 30
+      BuffOptimal => {
+        // バフ消費カードでバフがあれば高スコア
+        let has_buff = if card.consumes_buff != "" {
+          @game.get_buff_count(state, card.consumes_buff) > 0
+        } else {
+          false
         }
-        card.trust_gain + card.understanding_gain + card.empathy_gain + rarity_bonus
+        if has_buff {
+          base_score * 2  // バフ消費で倍率が乗るので優先
+        } else if card.grants_buff != "" {
+          base_score + 5  // バフ付与も少し優先
+        } else {
+          base_score
+        }
       }
     }
 
@@ -93,49 +94,6 @@ fn choose_card(
   }
 
   best
-}
-
-/// ガチャ戦略: ジェムが10連分貯まったらガチャ
-fn maybe_do_gacha(state : @game.GameState) -> Unit {
-  if state.gems.get() >= @game.gacha_multi_cost {
-    @game.gacha_multi(state)
-  }
-}
-
-/// 強化戦略: コインが余っていたらレベルアップ、シャードが貯まったら★アップ
-fn maybe_enhance(state : @game.GameState) -> Unit {
-  let owned = state.owned_cards.get()
-  let coins = state.coins.get()
-
-  // まず★ランクアップを試みる（コスパが高いため）
-  for oc in owned {
-    if oc.star_rank < @game.max_star_rank {
-      let cost = @game.get_star_up_cost(oc.star_rank)
-      match cost {
-        Some(c) => {
-          if oc.shards >= c.shards && coins >= c.coins {
-            @game.star_up_card(state, oc.card_id)
-            return
-          }
-        }
-        None => ()
-      }
-    }
-  }
-
-  // 次にレベルアップ（コインに余裕がある場合のみ）
-  if coins > 500 {
-    for oc in owned {
-      let max_lv = @game.get_card_max_level(oc.star_rank, state.player_level.get())
-      if oc.level < max_lv {
-        let cost = @game.get_level_up_cost(oc.level)
-        if coins >= cost.coins + 300 {  // 300コイン余裕を持つ
-          @game.level_up_card(state, oc.card_id)
-          return
-        }
-      }
-    }
-  }
 }
 
 // =========================================================================
@@ -149,25 +107,15 @@ struct DaySnapshot {
   empathy : Int
   intimacy : Int
   affection_level : Int
-  player_level : Int
+  akari_points : Int
   coins : Int
-  gems : Int
-  eligma : Int
-  owned_cards : Int
+  total_visits : Int
+  deck_size : Int
   chapter : Int
-  total_star_ranks : Int
-  total_card_levels : Int
+  stamina : Int
 }
 
 fn take_snapshot(state : @game.GameState) -> DaySnapshot {
-  let owned = state.owned_cards.get()
-  let mut total_stars = 0
-  let mut total_levels = 0
-  for oc in owned {
-    total_stars = total_stars + oc.star_rank
-    total_levels = total_levels + oc.level
-  }
-
   {
     day: state.day.get(),
     trust: state.trust.get(),
@@ -175,71 +123,12 @@ fn take_snapshot(state : @game.GameState) -> DaySnapshot {
     empathy: state.empathy.get(),
     intimacy: state.intimacy.get(),
     affection_level: @game.get_affection_level(state.intimacy.get()),
-    player_level: state.player_level.get(),
+    akari_points: state.akari_points.get(),
     coins: state.coins.get(),
-    gems: state.gems.get(),
-    eligma: state.eligma.get(),
-    owned_cards: owned.length(),
+    total_visits: state.total_visits.get(),
+    deck_size: state.deck.get().card_ids.length(),
     chapter: state.current_chapter.get(),
-    total_star_ranks: total_stars,
-    total_card_levels: total_levels,
-  }
-}
-
-// =========================================================================
-// ガチャ統計
-// =========================================================================
-
-struct GachaStats {
-  total_pulls : Int
-  new_cards : Int
-  duplicate_cards : Int
-  eligma_total : Int
-  star3_count : Int
-  star2_count : Int
-  star1_count : Int
-  gems_spent : Int
-  spark_available : Bool
-}
-
-fn simulate_gacha_only(num_pulls : Int) -> GachaStats {
-  let state = @game.create_game_state()
-  @game.register_initial_cards(state)
-  state.gems.set(num_pulls * @game.gacha_single_cost + 100_000)
-
-  let mut new_count = 0
-  let mut dup_count = 0
-  let mut star3_count = 0
-  let mut star2_count = 0
-  let mut star1_count = 0
-
-  for _ in 0..<num_pulls {
-    @game.gacha_single(state)
-    let results = state.gacha_results.get()
-    for r in results {
-      if r.is_new {
-        new_count = new_count + 1
-      } else {
-        dup_count = dup_count + 1
-      }
-      match r.card.rarity {
-        Rare => star3_count = star3_count + 1
-        Uncommon => star2_count = star2_count + 1
-        Normal => star1_count = star1_count + 1
-      }
-    }
-  }
-
-  {
-    total_pulls: num_pulls,
-    new_cards: new_count,
-    duplicate_cards: dup_count,
-    eligma_total: state.eligma.get(),
-    star3_count,
-    star2_count,
-    star1_count,
-    gems_spent: num_pulls * @game.gacha_single_cost,
-    spark_available: state.gacha_spark_available.get(),
+    stamina: state.stamina.get(),
   }
 }
 
@@ -248,45 +137,55 @@ fn simulate_gacha_only(num_pulls : Int) -> GachaStats {
 // =========================================================================
 
 fn simulate_one_day(state : @game.GameState, strategy : Strategy) -> Unit {
+  // ストーリー自動送り
   while state.phase.get() == @data.GamePhase::Story {
     @game.advance_story(state)
   }
 
+  // ログインボーナス
   if state.phase.get() == @data.GamePhase::LoginBonus {
     @game.claim_login_bonus(state)
   }
 
+  // 日常行動（Layer 1）
   if state.phase.get() == @data.GamePhase::Home {
-    @game.go_to_akari(state)
+    @game.go_to_daily_action(state)
   }
 
   let mut action_count = 0
-  while state.phase.get() == @data.GamePhase::ActionSelect {
+  while state.phase.get() == @data.GamePhase::DailyAction {
     let card = choose_card(state, strategy)
     match card {
       Some(c) => {
-        @game.play_card(state, c.id)
+        @game.play_daily_action(state, c.id)
         action_count = action_count + 1
-        if state.phase.get() == @data.GamePhase::Scene {
-          @game.finish_scene(state)
-        }
-        while state.phase.get() == @data.GamePhase::Story {
-          @game.advance_story(state)
+        if state.phase.get() == @data.GamePhase::DailyScene {
+          @game.finish_daily_scene(state)
         }
       }
       None => {
-        @game.leave_akari(state)
+        @game.leave_daily_action(state)
       }
     }
     if action_count > 10 {
-      @game.leave_akari(state)
+      @game.leave_daily_action(state)
       break
     }
   }
 
-  maybe_do_gacha(state)
-  maybe_enhance(state)
+  // 灯訪問（Layer 2 — ポイント足りたら）
+  if state.phase.get() == @data.GamePhase::Home && state.akari_points.get() >= @game.visit_cost {
+    @game.go_to_visit(state)
+    // 訪問後にストーリーが解放されてたら読む
+    if state.phase.get() == @data.GamePhase::Visit {
+      @game.leave_visit(state)
+    }
+    while state.phase.get() == @data.GamePhase::Story {
+      @game.advance_story(state)
+    }
+  }
 
+  // 次の日
   if state.phase.get() == @data.GamePhase::Home {
     @game.next_day(state)
     if state.phase.get() == @data.GamePhase::DayResult {
@@ -329,43 +228,30 @@ fn run_simulation(
 // =========================================================================
 
 fn main {
-  log_section("灯 — ゲームバランスシミュレーター v2.0 (ブルアカ参考リライト)")
+  log_section("灯 — ゲームバランスシミュレーター v3.0 (2層アーキテクチャ)")
   log("")
-  log("  設計変更:")
-  log("    - プレイヤーランクでメインストーリーをゲート（親密度ではない）")
-  log("    - 親密度は上限なし（旧★1-5を廃止）")
-  log("    - ガチャ通貨をジェムに変更（120/単発、1200/10連）")
-  log("    - 200連スパーク（任意★3選択）")
-  log("    - カード育成: ★ランク(1-5) + レベル(1-N)の2軸")
-  log("    - 定食屋パッシブ収入（ブルアカのカフェ相当）")
+  log("  設計:")
+  log("    - Layer 1: ひよりの日常（バフ積み→消費の掛け算）")
+  log("    - Layer 2: 灯でご飯（灯ポイント消費でストーリー報酬）")
+  log("    - 週チャレンジ: 7日ごとのクライマックス")
   log("")
   log("  全カード: " + @data.get_all_cards().length().to_string() + "枚")
   log("  全思い出: " + @data.get_all_memories().length().to_string() + "個")
   log("  全チャプター: " + @data.get_chapters().length().to_string() + "章")
 
-  let sim_days = 180
+  let sim_days = 120
   let snapshot_interval = 10
 
   log_section("戦略別 " + sim_days.to_string() + "日間シミュレーション")
 
   let strategies : Array[Strategy] = [
-    Balanced, TrustFocus, EmpathyFocus, UnderstandingFocus, RarePriority,
+    Balanced, TrustFocus, EmpathyFocus, BuffOptimal,
   ]
 
   for strategy in strategies {
     let name = strategy_name(strategy)
     let snapshots = run_simulation(strategy, sim_days, snapshot_interval)
     print_progression_report(name, snapshots)
-    print_milestone_analysis(snapshots)
-    print_economy_analysis(snapshots)
-  }
-
-  log_section("ガチャ統計シミュレーション")
-
-  let gacha_counts = [10, 50, 100, 200, 500]
-  for count in gacha_counts {
-    let stats = simulate_gacha_only(count)
-    print_gacha_report(stats)
   }
 
   let balanced_snapshots = run_simulation(Balanced, sim_days, snapshot_interval)
@@ -374,6 +260,6 @@ fn main {
   log("")
   log_divider()
   log("  シミュレーション完了。")
-  log("  プレイヤーランクと親密度が独立して進行することを確認してください。")
+  log("  Layer1(日常)とLayer2(灯訪問)の分離を確認してください。")
   log_divider()
 }

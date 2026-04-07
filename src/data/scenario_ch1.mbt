@@ -32,7 +32,7 @@ pub fn get_chapter_1() -> Chapter {
     id: 1,
     title: "第一章",
     subtitle: "日替わり",
-    unlock_player_level: 2,
+    unlock_visit_count: 1,
     scenes: [
       // --- Scene 0: ラスト一つ ---
       // 前提: 数日後。いつもの灯。今日は限定メニュー
