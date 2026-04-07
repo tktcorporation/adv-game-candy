@@ -1,17 +1,14 @@
-// Home ビュー — 学マス参考リデザイン版
+// Home ビュー — 2層アーキテクチャのハブ画面
 //
-// 情報階層:
-// ♡親密度+関係性テキスト → 今週の目標（週イベント） → ひよりの気分 → 日替わり → アクション → ミッション → ステータス
-//
-// 学マス参考: 目標の常時表示 + コンディション表示
-// ブルアカ参考: ♡+数字のシンプルさ
+// Layer 1（日常行動）とLayer 2（灯訪問）の入口。
+// バフ状態・週チャレンジ目標・灯ポイントを常時表示。
 
-/// ホーム画面（学マス参考リデザイン版）
+/// ホーム画面
 fn render_home_view(state : @game.GameState) -> @dom.DomNode {
   @dom.div(
     class="home-view",
     [
-      // ♡ 親密度 + 関係性テキスト（画面上部に大きく）
+      // ♡ 親密度 + 関係性テキスト
       @dom.div(
         class="affection-display",
         [
@@ -33,7 +30,7 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
           ),
         ],
       ),
-      // ── 今週の目標（週イベント） ──
+      // ── 今週の目標（週チャレンジ） ──
       @dom.div(
         class="weekly-event-goal",
         [
@@ -47,115 +44,73 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
           ),
         ],
       ),
-      // ── ひよりの気分 ──
+      // ── バフ状態 ──
       @dom.div(
-        class="mood-preview",
-        [
-          @dom.div(
-            class="mood-preview-icon",
-            [@dom.text_dyn(fn() {
-              let mood = state.mood.get()
-              @game.mood_to_icon(mood) + " " + @game.mood_to_string(mood)
-            })],
-          ),
-          @dom.div(
-            class="mood-preview-desc",
-            [@dom.text_dyn(fn() { @game.mood_to_description(state.mood.get()) })],
-          ),
-        ],
+        class="buff-display",
+        [@dom.text_dyn(fn() {
+          let comfort = state.buff_comfort.get()
+          let curiosity = state.buff_curiosity.get()
+          let courage = state.buff_courage.get()
+          let mut s = ""
+          if comfort > 0 {
+            s = s + "♨安心×" + comfort.to_string() + " "
+          }
+          if curiosity > 0 {
+            s = s + "✧好奇心×" + curiosity.to_string() + " "
+          }
+          if courage > 0 {
+            s = s + "⚡勇気×" + courage.to_string() + " "
+          }
+          if s == "" {
+            "バフなし"
+          } else {
+            s
+          }
+        })],
       ),
-      // 次の目標セクション（ストーリー進行）
+      // ── 心の余裕ゲージ ──
       @dom.div(
-        class="next-goal",
-        [
-          @dom.div(
-            class="next-goal-header",
-            [@dom.text("── ストーリー ──")],
-          ),
-          @dom.div(
-            class="next-goal-content",
-            [@dom.text_dyn(fn() {
-              let current_ch = state.current_chapter.get()
-              let chapters = @data.get_chapters()
-              let player_lv = state.player_level.get()
-              let exp = state.player_exp.get()
-              if current_ch + 1 < chapters.length() {
-                let next = chapters[current_ch + 1]
-                let needed_lv = next.unlock_player_level
-                let chapter_label = next.title + " 「" + next.subtitle + "」"
-                if player_lv >= needed_lv {
-                  chapter_label + " — 読めます！"
-                } else {
-                  let exp_to_next = @game.exp_for_next_level(player_lv) - exp
-                  chapter_label + " — PLv" + needed_lv.to_string() + " (EXP あと" + exp_to_next.to_string() + ")"
-                }
-              } else {
-                "全章クリア済み"
-              }
-            })],
-          ),
-          // PLv進捗バー
-          @dom.div(
-            class="plv-progress",
-            [@dom.text_dyn(fn() {
-              let player_lv = state.player_level.get()
-              let exp = state.player_exp.get()
-              let needed = @game.exp_for_next_level(player_lv)
-              let filled = if needed > 0 { exp * 10 / needed } else { 10 }
-              let mut bar = "PLv" + player_lv.to_string() + " "
-              for i in 0..<10 {
-                if i < filled {
-                  bar = bar + "█"
-                } else {
-                  bar = bar + "░"
-                }
-              }
-              bar = bar + " " + exp.to_string() + "/" + needed.to_string()
-              bar
-            })],
-          ),
-        ],
+        class="stamina-gauge",
+        [@dom.text_dyn(fn() {
+          let stamina = state.stamina.get()
+          let max = @game.base_stamina
+          let mut dots = ""
+          for i in 0..<max {
+            if i < stamina {
+              dots = dots + "●"
+            } else {
+              dots = dots + "○"
+            }
+          }
+          "心の余裕 " + dots + " (" + stamina.to_string() + "/" + max.to_string() + ")"
+        })],
       ),
-      // 今日の日替わり
-      @dom.div(
-        class="daily-menu-card",
-        [
-          @dom.div(
-            class="menu-label",
-            [@dom.text("今日の日替わり")],
-          ),
-          @dom.div(
-            class="menu-name",
-            [@dom.text_dyn(fn() {
-              let menu = @data.get_today_menu(state.day.get())
-              menu.name
-            })],
-          ),
-          @dom.div(
-            class="menu-desc",
-            [@dom.text_dyn(fn() {
-              let menu = @data.get_today_menu(state.day.get())
-              menu.description
-            })],
-          ),
-        ],
-      ),
-      // メインアクションボタン
+      // メインアクションボタン群
       @dom.div(
         class="home-actions",
         [
+          // Layer 1: 日常行動
           @dom.show(
-            fn() { state.ap.get() > 0 },
+            fn() { state.stamina.get() > 0 },
             fn() {
               @dom.button(
                 class="btn btn-primary btn-large",
-                on=@dom.events().click(fn(_e) { @game.go_to_akari(state) }),
-                [@dom.text("灯に行く")],
+                on=@dom.events().click(fn(_e) { @game.go_to_daily_action(state) }),
+                [@dom.text("今日の行動")],
               )
             },
           ),
+          // Layer 2: 灯に行く
+          @dom.button(
+            class="btn btn-secondary btn-large",
+            on=@dom.events().click(fn(_e) { @game.go_to_visit(state) }),
+            [@dom.text_dyn(fn() {
+              "灯に行く（" + state.akari_points.get().to_string() + "/" + @game.visit_cost.to_string() + "灯P）"
+            })],
+          ),
+          // 次の日へ
           @dom.show(
-            fn() { state.ap.get() == 0 },
+            fn() { state.stamina.get() == 0 },
             fn() {
               @dom.button(
                 class="btn btn-primary btn-large",
@@ -166,26 +121,9 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
           ),
         ],
       ),
-      // AP ゲージ
-      @dom.div(
-        class="ap-gauge",
-        [@dom.text_dyn(fn() {
-          let ap = state.ap.get()
-          let max_ap = @game.get_max_ap(state)
-          let mut dots = ""
-          for i in 0..<max_ap {
-            if i < ap {
-              dots = dots + "●"
-            } else {
-              dots = dots + "○"
-            }
-          }
-          "AP " + dots + " (" + ap.to_string() + "/" + max_ap.to_string() + ")"
-        })],
-      ),
-      // AP が残っていても次の日へ行けるボタン
+      // 余裕残りがあっても次の日へ行けるボタン
       @dom.show(
-        fn() { state.ap.get() > 0 && state.ap.get() < @game.get_max_ap(state) },
+        fn() { state.stamina.get() > 0 && state.today_actions.get().length() > 0 },
         fn() {
           @dom.div(
             class="home-secondary-actions",
@@ -223,7 +161,7 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
                   ),
                   @dom.div(
                     class="mission-reward",
-                    [@dom.text("+" + mission.reward.to_string())],
+                    [@dom.text("+" + mission.reward.to_string() + "灯P")],
                   ),
                 ],
               )
@@ -247,7 +185,8 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
             class="currency-display",
             [@dom.text_dyn(fn() {
               "コイン " + state.coins.get().to_string() +
-              "  星石 " + state.gems.get().to_string()
+              "  灯P " + state.akari_points.get().to_string() +
+              "  来店 " + state.total_visits.get().to_string() + "回"
             })],
           ),
         ],

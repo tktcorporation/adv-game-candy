@@ -30,7 +30,7 @@ pub fn get_chapter_2() -> Chapter {
     id: 2,
     title: "第二章",
     subtitle: "小鉢",
-    unlock_player_level: 5,
+    unlock_visit_count: 2,
     scenes: [
       // --- Scene 0: 残された小鉢 ---
       // 前提: いつもの昼。二つ空けの距離が定着している

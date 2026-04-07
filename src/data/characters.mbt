@@ -178,30 +178,8 @@ pub fn get_affection_description(level : Int) -> String {
   }
 }
 
-/// 親密度マイルストーン報酬テーブル
-///
-/// 親密度レベル到達時の報酬。5レベルごとにジェム、10レベルごとに大報酬。
-/// 上限なしのため、高レベルでも報酬が続く。
-pub fn get_affection_milestones() -> Array[AffectionMilestone] {
-  [
-    { level: 3, reward_type: "gem", reward_amount: 20, description: "20 星石" },
-    { level: 5, reward_type: "gem", reward_amount: 50, description: "50 星石" },
-    { level: 8, reward_type: "gem", reward_amount: 30, description: "30 星石" },
-    { level: 10, reward_type: "gem", reward_amount: 100, description: "100 星石 + ボンドストーリー" },
-    { level: 13, reward_type: "gem", reward_amount: 30, description: "30 星石" },
-    { level: 15, reward_type: "gem", reward_amount: 50, description: "50 星石" },
-    { level: 18, reward_type: "gem", reward_amount: 30, description: "30 星石" },
-    { level: 20, reward_type: "gem", reward_amount: 100, description: "100 星石 + ボンドストーリー" },
-    { level: 25, reward_type: "gem", reward_amount: 80, description: "80 星石" },
-    { level: 30, reward_type: "gem", reward_amount: 120, description: "120 星石 + ボンドストーリー" },
-    { level: 40, reward_type: "gem", reward_amount: 150, description: "150 星石 + ボンドストーリー" },
-    { level: 50, reward_type: "gem", reward_amount: 200, description: "200 星石 + ボンドストーリー" },
-    { level: 60, reward_type: "gem", reward_amount: 200, description: "200 星石" },
-    { level: 70, reward_type: "gem", reward_amount: 200, description: "200 星石 + ボンドストーリー" },
-    { level: 80, reward_type: "gem", reward_amount: 250, description: "250 星石" },
-    { level: 100, reward_type: "gem", reward_amount: 300, description: "300 星石 + ボンドストーリー" },
-  ]
-}
+// 親密度マイルストーン報酬は灯ポイントシステムに統合されたため削除。
+// 報酬はデイリーミッション・週チャレンジ・ログインボーナスで付与する。
 
 /// カードプレイ後のひよりのリアクションテキスト
 ///

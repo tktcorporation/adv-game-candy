@@ -1,176 +1,127 @@
-// 週イベントシステム — 学マスのオーディションに対応
+// 週チャレンジシステム — Layer 1 のクライマックス
 //
-// 7日ごとに発生するチェックポイント。その週の獲得パラメータが
-// 目標値を達成していれば成功。短期目標として機能する。
-//
-// 設計根拠:
-// 学マスではプロデュース中にオーディションという明確なゴールがあり、
-// 「あのオーディションに間に合わせるためにどのレッスンを受けるか」
-// という逆算思考がゲームの面白さになる。
-// 同様に、「今週の目標まであと信頼15…」という緊張感を作る。
+// 7日ごとに発生。その週の育成成果で S/A/B/C ランク判定。
+// 学マスの中間/最終試験に対応。ストーリーとは独立して毎週遊べる。
 
-/// 週番号を取得（day 1-7 = week 1, 8-14 = week 2, ...）
+/// 週番号を取得（1始まり）
 pub fn get_week_number(day : Int) -> Int {
   (day - 1) / 7 + 1
 }
 
-/// 今日が週の最終日（7日目）かどうか
+/// その日が週末（7日目）かどうか
 pub fn is_week_end(day : Int) -> Bool {
-  day % 7 == 0 && day > 0
+  day > 1 && (day - 1) % 7 == 6
 }
 
-/// 週番号に応じた週イベントを生成
-///
-/// 週が進むほど要求値が上がるが、カード育成やコンボで
-/// 獲得量も増えるのでバランスが取れる。
-/// 4週サイクルで信頼→理解→共感→バランスのローテーション。
-pub fn get_weekly_event(week : Int) -> @data.WeeklyEvent {
-  // 難易度スケーリング: 週が進むほど要求値が上がる
-  let base = 5 + week * 2
-  let cycle = week % 4
-
-  match cycle {
-    0 => {
-      // 信頼重視の週
-      {
-        id: "week_" + week.to_string(),
-        name: "信頼の週",
-        description: "丸山との会話を深めよう。ひよりも聞いている。",
-        required_trust: base + 5,
-        required_understanding: base / 2,
-        required_empathy: base / 2,
-        reward_coins: 200 + week * 30,
-        reward_gems: 20 + week * 5,
-        success_text: "丸山が嬉しそうに笑った。「最近、よく来てくれるね」",
-        fail_text: "今週は少し忙しかった。でも、灯はいつでも待っている。",
-      }
-    }
-    1 => {
-      // 理解重視の週
-      {
-        id: "week_" + week.to_string(),
-        name: "理解の週",
-        description: "ひよりのことをもっと知ろう。小さな変化に目を向けて。",
-        required_trust: base / 2,
-        required_understanding: base + 5,
-        required_empathy: base / 2,
-        reward_coins: 200 + week * 30,
-        reward_gems: 20 + week * 5,
-        success_text: "ひよりが読んでいた本のジャンルが変わった。何かあったのかもしれない。",
-        fail_text: "今週は気づけなかったことがある。来週はもう少し注意深く。",
-      }
-    }
-    2 => {
-      // 共感重視の週
-      {
-        id: "week_" + week.to_string(),
-        name: "共感の週",
-        description: "同じものを食べ、同じ空気を吸う。それが共感の始まり。",
-        required_trust: base / 2,
-        required_understanding: base / 2,
-        required_empathy: base + 5,
-        reward_coins: 200 + week * 30,
-        reward_gems: 20 + week * 5,
-        success_text: "今日、初めてひよりと同じメニューを頼んだ。丸山がにやりと笑った。",
-        fail_text: "今週はすれ違いが多かった。でも、食事の味は覚えている。",
-      }
-    }
-    _ => {
-      // バランス週（全軸均等）
-      {
-        id: "week_" + week.to_string(),
-        name: "調和の週",
-        description: "信頼も理解も共感も。バランスよく関係を育てよう。",
-        required_trust: base,
-        required_understanding: base,
-        required_empathy: base,
-        reward_coins: 300 + week * 40,
-        reward_gems: 30 + week * 8,
-        success_text: "灯に来ると落ち着く。ここが、自分の居場所になりつつある。",
-        fail_text: "まだまだ道半ば。でも、少しずつ進んでいるのは確かだ。",
-      }
-    }
-  }
-}
-
-/// 週イベントのチェック・判定（週末日に呼ばれる）
-///
-/// その週の獲得パラメータ（week_start_*との差分）で判定する。
-pub fn check_weekly_event(state : GameState) -> Unit {
+/// 週チャレンジの判定
+pub fn check_weekly_challenge(state : GameState) -> Unit {
   let day = state.day.get()
   if !is_week_end(day) {
     return
   }
 
   let week = get_week_number(day)
-  let event = get_weekly_event(week)
-
-  // その週の獲得量を計算
   let trust_gained = state.trust.get() - state.week_start_trust.get()
   let understanding_gained = state.understanding.get() - state.week_start_understanding.get()
   let empathy_gained = state.empathy.get() - state.week_start_empathy.get()
 
-  let passed = trust_gained >= event.required_trust &&
-    understanding_gained >= event.required_understanding &&
-    empathy_gained >= event.required_empathy
+  let rank = evaluate_challenge_rank(trust_gained, understanding_gained, empathy_gained, week)
+  let rank_str = challenge_rank_to_string(rank)
 
-  // 結果を記録
-  state.weekly_event_results.update(fn(results) {
-    let new_results : Array[@data.WeeklyEventResult] = []
+  // 灯ポイント報酬（ランクに応じて）
+  let akari_reward = match rank {
+    @data.ChallengeRank::S => 15
+    @data.ChallengeRank::A => 10
+    @data.ChallengeRank::B => 5
+    @data.ChallengeRank::C => 2
+  }
+
+  state.akari_points.update(fn(p) { p + akari_reward })
+
+  // コイン報酬
+  let coin_reward = match rank {
+    @data.ChallengeRank::S => 200
+    @data.ChallengeRank::A => 100
+    @data.ChallengeRank::B => 50
+    @data.ChallengeRank::C => 20
+  }
+  state.coins.update(fn(c) { c + coin_reward })
+  state.today_coins_earned.update(fn(c) { c + coin_reward })
+
+  // 結果記録
+  state.challenge_results.update(fn(results) {
+    let new_results : Array[@data.ChallengeResult] = []
     for r in results {
       new_results.push(r)
     }
     new_results.push({
-      event_id: event.id,
       week_number: week,
-      passed,
-      trust_achieved: trust_gained,
-      understanding_achieved: understanding_gained,
-      empathy_achieved: empathy_gained,
+      rank,
+      trust_gained,
+      understanding_gained,
+      empathy_gained,
+      akari_points_earned: akari_reward,
     })
     new_results
   })
 
-  if passed {
-    // 成功: 報酬付与
-    state.coins.update(fn(c) { c + event.reward_coins })
-    state.gems.update(fn(g) { g + event.reward_gems })
-    state.today_coins_earned.update(fn(c) { c + event.reward_coins })
-    state.today_gems_earned.update(fn(g) { g + event.reward_gems })
-    state.today_scene_text.set(event.success_text)
-    add_message(state, "週イベント「" + event.name + "」達成！ +" + event.reward_coins.to_string() + "コイン +" + event.reward_gems.to_string() + "星石")
+  add_message(state, "週末チャレンジ: " + rank_str + "ランク！ +" + akari_reward.to_string() + "灯P +" + coin_reward.to_string() + "コイン")
+}
+
+/// チャレンジランク判定
+///
+/// 週が進むにつれて要求値が上がる（成長を実感できる設計）。
+fn evaluate_challenge_rank(
+  trust : Int,
+  understanding : Int,
+  empathy : Int,
+  week : Int
+) -> @data.ChallengeRank {
+  // 週に応じた基準値（序盤は緩め、後半はきつめ）
+  let base = 10 + week * 3
+  let total = trust + understanding + empathy
+
+  // S: 3軸すべてバランスよく高い
+  if trust >= base && understanding >= base && empathy >= base {
+    @data.ChallengeRank::S
+  } else if total >= base * 3 - 10 {
+    @data.ChallengeRank::A
+  } else if total >= base * 2 {
+    @data.ChallengeRank::B
   } else {
-    // 失敗: 慰めテキストのみ
-    state.today_scene_text.set(event.fail_text)
-    add_message(state, "週イベント「" + event.name + "」未達成。来週また頑張ろう。")
+    @data.ChallengeRank::C
   }
 }
 
-/// 週の開始パラメータをスナップショット
+/// チャレンジランクの文字列表示
+pub fn challenge_rank_to_string(rank : @data.ChallengeRank) -> String {
+  match rank {
+    S => "S"
+    A => "A"
+    B => "B"
+    C => "C"
+  }
+}
+
+/// 週の開始時パラメータを記録
 pub fn snapshot_week_start(state : GameState) -> Unit {
+  state.week_start_day.set(state.day.get())
   state.week_start_trust.set(state.trust.get())
   state.week_start_understanding.set(state.understanding.get())
   state.week_start_empathy.set(state.empathy.get())
 }
 
-/// 今週の目標表示テキスト（ホーム画面用）
+/// 週チャレンジ目標の表示テキスト
 pub fn get_weekly_goal_display(state : GameState) -> String {
   let day = state.day.get()
   let week = get_week_number(day)
-  let event = get_weekly_event(week)
-  let days_left = 7 - ((day - 1) % 7)
+  let days_in_week = (day - 1) % 7 + 1
+  let days_left = 7 - days_in_week
 
-  // 現在の週獲得量
   let trust_gained = state.trust.get() - state.week_start_trust.get()
   let understanding_gained = state.understanding.get() - state.week_start_understanding.get()
   let empathy_gained = state.empathy.get() - state.week_start_empathy.get()
 
-  let trust_ok = if trust_gained >= event.required_trust { "✓" } else { "…" }
-  let understanding_ok = if understanding_gained >= event.required_understanding { "✓" } else { "…" }
-  let empathy_ok = if empathy_gained >= event.required_empathy { "✓" } else { "…" }
-
-  event.name + " (あと" + days_left.to_string() + "日) " +
-    trust_ok + "信" + trust_gained.to_string() + "/" + event.required_trust.to_string() + " " +
-    understanding_ok + "理" + understanding_gained.to_string() + "/" + event.required_understanding.to_string() + " " +
-    empathy_ok + "共" + empathy_gained.to_string() + "/" + event.required_empathy.to_string()
+  let base = 10 + week * 3
+  "第" + week.to_string() + "週（残り" + days_left.to_string() + "日）S目標: 各" + base.to_string() + " / 現在 信" + trust_gained.to_string() + " 理" + understanding_gained.to_string() + " 共" + empathy_gained.to_string()
 }

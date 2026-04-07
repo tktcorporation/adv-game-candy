@@ -1,15 +1,14 @@
-// メインUI — 定食屋「灯」に通うADV
+// メインUI — 2層アーキテクチャ版
 //
-// カードシステムUI。手札から行動カードを選んでプレイする。
-// Title → Story(ch0) → Home → ActionSelect(手札) → Scene → Home のサイクル。
-// ヘッダーに3軸パラメータ・季節・天候を表示。
+// Layer 1（ひよりの日常）: Home → DailyAction → DailyScene → Home
+// Layer 2（灯でご飯）: Home → Visit → VisitScene → Home
 //
 // ファイル構成:
 //   app.mbt          — エントリポイント + ヘッダー + タイトル
-//   app_home.mbt     — Home ビュー
-//   app_action.mbt   — ActionSelect + 手札カードUI
-//   app_scene.mbt    — Scene + Story ビュー
-//   app_album.mbt    — Album ビュー（全タブ）
+//   app_home.mbt     — Home ビュー（日常 / 灯に行く / デッキ）
+//   app_action.mbt   — DailyAction + 手札カードUI（バフ表示付き）
+//   app_scene.mbt    — DailyScene + VisitScene + Story ビュー
+//   app_album.mbt    — Album ビュー
 //   app_day_result.mbt — DayResult + メッセージログ
 
 /// 季節に対応するCSSクラス名を返す
@@ -53,12 +52,16 @@ pub fn app(state : @game.GameState) -> @dom.DomNode {
             fn() { render_home_view(state) },
           ),
           @dom.show(
-            fn() { state.phase.get() == @data.GamePhase::ActionSelect },
-            fn() { render_action_select_view(state) },
+            fn() { state.phase.get() == @data.GamePhase::DailyAction },
+            fn() { render_daily_action_view(state) },
           ),
           @dom.show(
-            fn() { state.phase.get() == @data.GamePhase::Scene },
-            fn() { render_scene_view(state) },
+            fn() { state.phase.get() == @data.GamePhase::DailyScene },
+            fn() { render_daily_scene_view(state) },
+          ),
+          @dom.show(
+            fn() { state.phase.get() == @data.GamePhase::Visit },
+            fn() { render_visit_view(state) },
           ),
           @dom.show(
             fn() { state.phase.get() == @data.GamePhase::Story },
@@ -84,8 +87,6 @@ pub fn app(state : @game.GameState) -> @dom.DomNode {
 // =========================================================================
 
 /// ヘッダー — ステータス表示
-///
-/// Title フェーズ以外で表示。3軸パラメータ・季節・天候・AP を常時表示。
 fn render_header(state : @game.GameState) -> @dom.DomNode {
   @dom.header_(
     class="game-header",
@@ -94,7 +95,6 @@ fn render_header(state : @game.GameState) -> @dom.DomNode {
         class="header-title",
         [
           @dom.h1(class="title", [@dom.text("灯")]),
-          // 季節・天候・日数
           @dom.span(
             class="subtitle",
             [@dom.text_dyn(fn() {
@@ -102,27 +102,26 @@ fn render_header(state : @game.GameState) -> @dom.DomNode {
               let season = @data.get_season(day)
               let weather = @data.get_weather(day)
               let day_in_season = @data.get_day_in_season(day)
-              let s = @data.season_to_string(season) + " " + day_in_season.to_string() + "日目 " + @data.weather_to_icon(weather)
-              s
+              @data.season_to_string(season) + " " + day_in_season.to_string() + "日目 " + @data.weather_to_icon(weather)
             })],
           ),
         ],
       ),
-      // ♡親密度Lv + AP（簡素化: 3軸数値はHome画面に移動）
       @dom.div(
         class="header-stats",
         [
+          // 灯ポイント
           @dom.span(
-            class="stat stat-affection",
+            class="stat stat-akari",
             [@dom.text_dyn(fn() {
-              let level = @game.get_affection_level(state.intimacy.get())
-              "♡Lv" + level.to_string()
+              "灯P " + state.akari_points.get().to_string()
             })],
           ),
+          // 心の余裕
           @dom.span(
-            class="stat stat-ap",
+            class="stat stat-stamina",
             [@dom.text_dyn(fn() {
-              "AP " + state.ap.get().to_string() + "/" + @game.get_max_ap(state).to_string()
+              "余裕 " + state.stamina.get().to_string() + "/" + @game.base_stamina.to_string()
             })],
           ),
         ],
@@ -135,7 +134,6 @@ fn render_header(state : @game.GameState) -> @dom.DomNode {
 // Title ビュー
 // =========================================================================
 
-/// タイトル画面 — 初回起動時のみ表示
 fn render_title_view(state : @game.GameState) -> @dom.DomNode {
   @dom.div(
     class="title-view",
@@ -146,7 +144,7 @@ fn render_title_view(state : @game.GameState) -> @dom.DomNode {
       ),
       @dom.div(
         class="title-tagline",
-        [@dom.text("定食屋の片隅で、少しずつ近づく二人の物語")],
+        [@dom.text("ひよりの日常と、定食屋の片隅の物語")],
       ),
       @dom.button(
         class="btn btn-primary btn-large",

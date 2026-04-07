@@ -1,53 +1,42 @@
-// Scene ビュー — 行動結果のテキスト + 獲得値 + リアクション表示
+// Scene ビュー — DailyScene + VisitScene + Story
 //
-// 学マス参考: カード使用後に「何が得られたか」を明示。
-// シーンテキスト → 結果（パラメータ・通貨） → リアクション → ボタン の順。
+// DailyScene: 行動結果テキスト + バフ獲得/消費 + パラメータ変化
+// VisitScene: 灯でのストーリーシーン（Layer 2）
+// Story: メインストーリーADV
 
-/// Scene ビュー — 行動結果のテキスト + 獲得値 + リアクション表示
-fn render_scene_view(state : @game.GameState) -> @dom.DomNode {
+/// DailyScene ビュー — 行動結果表示
+fn render_daily_scene_view(state : @game.GameState) -> @dom.DomNode {
   @dom.div(
     class="scene-view",
     [
-      // グレード表示（PERFECT/GOOD）— 学マス参考
+      // バフ効果表示
       @dom.show(
-        fn() { state.last_play_grade.get() != @data.PlayGrade::Normal },
+        fn() { state.last_card_result.get().buff_consumed },
         fn() {
-          let grade_class = match state.last_play_grade.get() {
-            Perfect => "grade-display grade-perfect"
-            Good => "grade-display grade-good"
-            Normal => "grade-display"
-          }
           @dom.div(
-            class=grade_class,
-            [@dom.text_dyn(fn() { @game.grade_to_string(state.last_play_grade.get()) })],
+            class="buff-effect-display",
+            [@dom.text("✦ バフ消費 → 効果1.5倍！")],
           )
         },
       ),
-      // コンボ表示
       @dom.show(
-        fn() { state.last_combo_bonus.get().name != "" },
+        fn() { state.last_card_result.get().buff_gained != "" },
         fn() {
           @dom.div(
-            class="combo-result",
+            class="buff-gained-display",
             [@dom.text_dyn(fn() {
-              let bonus = state.last_combo_bonus.get()
-              let chain = state.combo_chain.get()
-              "CHAIN x" + chain.to_string() + " — " + bonus.name
+              let buff = state.last_card_result.get().buff_gained
+              @game.buff_to_icon(buff) + " " + @game.buff_to_string(buff) + " を獲得！"
             })],
           )
         },
-      ),
-      // メニュー名
-      @dom.div(
-        class="scene-menu",
-        [@dom.text_dyn(fn() { state.today_menu.get() })],
       ),
       // シーンテキスト
       @dom.div(
         class="scene-text",
         [@dom.text_dyn(fn() { state.today_scene_text.get() })],
       ),
-      // 結果セクション（獲得値・報酬・リアクション）
+      // 結果セクション
       @dom.div(
         class="scene-result",
         [
@@ -55,7 +44,7 @@ fn render_scene_view(state : @game.GameState) -> @dom.DomNode {
             class="scene-result-header",
             [@dom.text("─── 結果 ───")],
           ),
-          // パラメータ獲得値 + ♡合計
+          // パラメータ獲得値
           @dom.div(
             class="scene-gains",
             [@dom.text_dyn(fn() {
@@ -72,18 +61,6 @@ fn render_scene_view(state : @game.GameState) -> @dom.DomNode {
               }
               let total = r.trust_gain + r.understanding_gain + r.empathy_gain
               s = s + "♡ +" + total.to_string()
-              s
-            })],
-          ),
-          // 通貨・EXP報酬
-          @dom.div(
-            class="scene-rewards",
-            [@dom.text_dyn(fn() {
-              let r = state.last_card_result.get()
-              let mut s = "+" + r.coin_reward.to_string() + " コイン  +" + r.exp_reward.to_string() + " EXP"
-              if r.gem_reward > 0 {
-                s = s + "  +" + r.gem_reward.to_string() + " 星石"
-              }
               s
             })],
           ),
@@ -107,22 +84,113 @@ fn render_scene_view(state : @game.GameState) -> @dom.DomNode {
         [
           @dom.button(
             class="btn btn-primary",
-            on=@dom.events().click(fn(_e) { @game.finish_scene(state) }),
+            on=@dom.events().click(fn(_e) { @game.finish_daily_scene(state) }),
             [@dom.text_dyn(fn() {
-              // 次の章が解放可能かチェック
-              let current = state.current_chapter.get()
-              let chapters = @data.get_chapters()
-              if current + 1 < chapters.length() {
-                let next = chapters[current + 1]
-                if state.player_level.get() >= next.unlock_player_level {
-                  "ストーリーが解放されました"
-                } else {
-                  "ごちそうさまでした"
-                }
+              if state.stamina.get() > 0 {
+                "次の行動へ"
               } else {
-                "ごちそうさまでした"
+                "今日はここまで"
               }
             })],
+          ),
+        ],
+      ),
+    ],
+  )
+}
+
+/// Visit ビュー — 灯でご飯（Layer 2）
+///
+/// 簡易実装: 灯に入ってメニューを見てストーリーシーン。
+fn render_visit_view(state : @game.GameState) -> @dom.DomNode {
+  @dom.div(
+    class="visit-view",
+    [
+      @dom.div(
+        class="visit-header",
+        [@dom.text("── 定食屋「灯」 ──")],
+      ),
+      // 今日のメニュー
+      @dom.div(
+        class="visit-menu",
+        [@dom.text_dyn(fn() {
+          let menu = @data.get_today_menu(state.day.get())
+          "今日の日替わり: " + menu.name
+        })],
+      ),
+      @dom.div(
+        class="visit-menu-desc",
+        [@dom.text_dyn(fn() {
+          let menu = @data.get_today_menu(state.day.get())
+          menu.description
+        })],
+      ),
+      // 席の位置
+      @dom.div(
+        class="visit-seat",
+        [@dom.text_dyn(fn() {
+          let seat = state.current_seat.get()
+          match seat {
+            FarTable => "いつものテーブル席に座る。"
+            CounterEnd => "カウンターの端に座る。"
+            CounterMiddle => "カウンターの真ん中に座る。"
+            NextSeat => "ひよりの隣に座る。"
+          }
+        })],
+      ),
+      // ストーリーが解放されているか
+      @dom.div(
+        class="visit-story",
+        [@dom.text_dyn(fn() {
+          let current = state.current_chapter.get()
+          let chapters = @data.get_chapters()
+          let visits = state.total_visits.get()
+          if current + 1 < chapters.length() {
+            let next = chapters[current + 1]
+            if visits >= next.unlock_visit_count {
+              "新しい物語が読めそうだ。"
+            } else {
+              "いつもの灯の景色。"
+            }
+          } else {
+            "ここは変わらない。それが嬉しい。"
+          }
+        })],
+      ),
+      // ボタン
+      @dom.div(
+        class="visit-actions",
+        [
+          // ストーリー解放されていれば読める
+          @dom.show(
+            fn() {
+              let current = state.current_chapter.get()
+              let chapters = @data.get_chapters()
+              let visits = state.total_visits.get()
+              if current + 1 < chapters.length() {
+                visits >= chapters[current + 1].unlock_visit_count
+              } else {
+                false
+              }
+            },
+            fn() {
+              @dom.button(
+                class="btn btn-primary",
+                on=@dom.events().click(fn(_e) {
+                  let current = state.current_chapter.get()
+                  state.current_chapter.set(current + 1)
+                  state.scene_index.set(0)
+                  state.line_index.set(0)
+                  state.phase.set(@data.GamePhase::Story)
+                }),
+                [@dom.text("ストーリーを読む")],
+              )
+            },
+          ),
+          @dom.button(
+            class="btn btn-secondary",
+            on=@dom.events().click(fn(_e) { @game.leave_visit(state) }),
+            [@dom.text("ごちそうさまでした")],
           ),
         ],
       ),
@@ -135,7 +203,6 @@ fn render_story_view(state : @game.GameState) -> @dom.DomNode {
   @dom.div(
     class="story-view",
     [
-      // 章タイトル
       @dom.div(
         class="chapter-header",
         [@dom.text_dyn(fn() {
@@ -145,11 +212,9 @@ fn render_story_view(state : @game.GameState) -> @dom.DomNode {
           }
         })],
       ),
-      // テキスト表示エリア
       @dom.div(
         class="story-text-area",
         [
-          // 話者名
           @dom.div(
             class="speaker-name",
             [@dom.text_dyn(fn() {
@@ -159,7 +224,6 @@ fn render_story_view(state : @game.GameState) -> @dom.DomNode {
               }
             })],
           ),
-          // テキスト本文
           @dom.div(
             class="story-text",
             [@dom.text_dyn(fn() {
@@ -171,7 +235,6 @@ fn render_story_view(state : @game.GameState) -> @dom.DomNode {
           ),
         ],
       ),
-      // 進行ボタン
       @dom.div(
         class="story-controls",
         [

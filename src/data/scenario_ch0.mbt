@@ -30,7 +30,7 @@ pub fn get_chapter_0() -> Chapter {
     id: 0,
     title: "第零章",
     subtitle: "いつもの席",
-    unlock_player_level: 0,
+    unlock_visit_count: 0,
     scenes: [
       // --- Scene 0: 灯 ---
       // 前提: 平日の昼。晴がいつもの店に来る

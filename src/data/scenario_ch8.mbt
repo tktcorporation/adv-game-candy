@@ -30,7 +30,7 @@ pub fn get_chapter_8() -> Chapter {
     id: 8,
     title: "第八章",
     subtitle: "休み",
-    unlock_player_level: 30,
+    unlock_visit_count: 13,
     scenes: [
       // --- Scene 0: 1日目 ---
       // 前提: いつもの昼。ひよりが来ない

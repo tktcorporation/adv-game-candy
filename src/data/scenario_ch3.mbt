@@ -29,7 +29,7 @@ pub fn get_chapter_3() -> Chapter {
     id: 3,
     title: "第三章",
     subtitle: "雨の日",
-    unlock_player_level: 8,
+    unlock_visit_count: 3,
     scenes: [
       // --- Scene 0: 雨 ---
       // 前提: 雨の日。客が少ない。静かな店内
