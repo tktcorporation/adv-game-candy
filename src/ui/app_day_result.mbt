@@ -117,6 +117,78 @@ fn render_day_result_view(state : @game.GameState) -> @dom.DomNode {
   )
 }
 
+/// ログインボーナス画面
+///
+/// advance_to_next_day() → check_login_bonus() が true のとき遷移。
+/// 報酬テーブルは7日サイクル（progression_system.mbt の get_login_bonus_rewards()）。
+/// 「受け取る」ボタンで claim_login_bonus() → Home へ。
+fn render_login_bonus_view(state : @game.GameState) -> @dom.DomNode {
+  @dom.div(
+    class="login-bonus-view",
+    [
+      @dom.div(
+        class="login-bonus-title",
+        [@dom.text("── ログインボーナス ──")],
+      ),
+      // 連続ログイン日数
+      @dom.div(
+        class="login-bonus-streak",
+        [@dom.text_dyn(fn() {
+          let streak = state.login_streak.get()
+          streak.to_string() + "日連続ログイン！"
+        })],
+      ),
+      // 報酬内容の表示
+      @dom.div(
+        class="login-bonus-reward",
+        [@dom.text_dyn(fn() {
+          let streak = state.login_streak.get()
+          let rewards = @game.get_login_bonus_rewards()
+          let mut desc = ""
+          for reward in rewards {
+            if reward.day == streak {
+              desc = "本日の報酬: " + reward.description
+              break
+            }
+          }
+          if desc == "" {
+            "本日の報酬: ボーナス！"
+          } else {
+            desc
+          }
+        })],
+      ),
+      // 7日サイクルの進捗表示
+      @dom.div(
+        class="login-bonus-cycle",
+        [@dom.text_dyn(fn() {
+          let streak = state.login_streak.get()
+          let mut dots = ""
+          for i in 1..=7 {
+            if i <= streak {
+              dots = dots + "●"
+            } else {
+              dots = dots + "○"
+            }
+          }
+          dots + " (" + streak.to_string() + "/7)"
+        })],
+      ),
+      // 受け取るボタン
+      @dom.div(
+        class="login-bonus-btn",
+        [
+          @dom.button(
+            class="btn btn-primary btn-large",
+            on=@dom.events().click(fn(_e) { @game.claim_login_bonus(state) }),
+            [@dom.text("受け取る")],
+          ),
+        ],
+      ),
+    ],
+  )
+}
+
 /// メッセージログ
 fn render_message_log(state : @game.GameState) -> @dom.DomNode {
   @dom.div(

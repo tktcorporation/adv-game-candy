@@ -55,10 +55,53 @@ fn render_daily_action_view(state : @game.GameState) -> @dom.DomNode {
           "心の余裕 " + dots + " (" + stamina.to_string() + "/" + max.to_string() + ")"
         })],
       ),
-      // 週チャレンジ目標（ミニ）
+      // 週チャレンジ目標 — 学マスの「Sライン」表示
       @dom.div(
-        class="weekly-goal-mini",
-        [@dom.text_dyn(fn() { @game.get_weekly_goal_display(state) })],
+        class="exam-panel",
+        [
+          @dom.div(
+            class="exam-header",
+            [@dom.text_dyn(fn() {
+              "── " + @game.get_exam_header(state) + " ──"
+            })],
+          ),
+          // 3軸ゲージ
+          @dom.div(
+            class="exam-gauges",
+            [
+              @dom.div(
+                class="exam-gauge-row",
+                [@dom.text_dyn(fn() {
+                  let s_line = @game.get_exam_s_line(state)
+                  let (t, _, _) = @game.get_weekly_gains(state)
+                  @game.build_axis_gauge("信頼", t, s_line)
+                })],
+              ),
+              @dom.div(
+                class="exam-gauge-row",
+                [@dom.text_dyn(fn() {
+                  let s_line = @game.get_exam_s_line(state)
+                  let (_, u, _) = @game.get_weekly_gains(state)
+                  @game.build_axis_gauge("理解", u, s_line)
+                })],
+              ),
+              @dom.div(
+                class="exam-gauge-row",
+                [@dom.text_dyn(fn() {
+                  let s_line = @game.get_exam_s_line(state)
+                  let (_, _, e) = @game.get_weekly_gains(state)
+                  @game.build_axis_gauge("共感", e, s_line)
+                })],
+              ),
+            ],
+          ),
+          @dom.div(
+            class="exam-s-line",
+            [@dom.text_dyn(fn() {
+              "───── S: 各" + @game.get_exam_s_line(state).to_string() + " ─────"
+            })],
+          ),
+        ],
       ),
       // ── 手札カード ──
       @dom.div(
@@ -134,10 +177,11 @@ fn render_action_card(
             } else {
               @dom.text("")
             },
-            // カードヘッダー
+            // カードヘッダー（メインステータスアイコン付き）
             @dom.div(
               class="card-header",
               [
+                @dom.span(class="card-main-axis", [@dom.text(get_main_axis_icon(card))]),
                 @dom.span(class="card-name", [@dom.text(card.name)]),
                 @dom.span(
                   class="card-cost",
@@ -150,38 +194,10 @@ fn render_action_card(
               class="card-desc",
               [@dom.text(card.description)],
             ),
-            // 3軸パラメータ
+            // 3軸パラメータ（メインを◆で強調）
             @dom.div(
               class="card-params",
-              [
-                @dom.show(
-                  fn() { card.trust_gain > 0 },
-                  fn() {
-                    @dom.span(
-                      class="card-param param-trust",
-                      [@dom.text("信+" + card.trust_gain.to_string())],
-                    )
-                  },
-                ),
-                @dom.show(
-                  fn() { card.understanding_gain > 0 },
-                  fn() {
-                    @dom.span(
-                      class="card-param param-understanding",
-                      [@dom.text("理+" + card.understanding_gain.to_string())],
-                    )
-                  },
-                ),
-                @dom.show(
-                  fn() { card.empathy_gain > 0 },
-                  fn() {
-                    @dom.span(
-                      class="card-param param-empathy",
-                      [@dom.text("共+" + card.empathy_gain.to_string())],
-                    )
-                  },
-                ),
-              ],
+              [@dom.text(format_card_params(card))],
             ),
             // バフ情報
             @dom.div(
@@ -221,4 +237,56 @@ fn render_action_card(
       },
     ],
   )
+}
+
+/// カードのメインステータス（最も高い値）を判定してアイコンを返す
+///
+/// 学マスのレッスン選択で「Voレッスン」「Daレッスン」と明示されるのと同様に、
+/// 「このカードは信頼メインだ」が即座にわかるようにする。
+fn get_main_axis_icon(card : @data.ActionCard) -> String {
+  let t = card.trust_gain
+  let u = card.understanding_gain
+  let e = card.empathy_gain
+  if t >= u && t >= e {
+    "▸信"
+  } else if u >= t && u >= e {
+    "▸理"
+  } else {
+    "▸共"
+  }
+}
+
+/// カードパラメータをフォーマット（メインを◆で強調）
+///
+/// 例: 「◆信頼 +4  理+1 共+1」
+fn format_card_params(card : @data.ActionCard) -> String {
+  let t = card.trust_gain
+  let u = card.understanding_gain
+  let e = card.empathy_gain
+  let mut s = ""
+  let main_is_trust = t >= u && t >= e
+  let main_is_understanding = u > t && u >= e
+
+  if t > 0 {
+    if main_is_trust {
+      s = s + "◆信頼 +" + t.to_string()
+    } else {
+      s = s + " 信+" + t.to_string()
+    }
+  }
+  if u > 0 {
+    if main_is_understanding {
+      s = s + "◆理解 +" + u.to_string()
+    } else {
+      s = s + " 理+" + u.to_string()
+    }
+  }
+  if e > 0 {
+    if !main_is_trust && !main_is_understanding {
+      s = s + "◆共感 +" + e.to_string()
+    } else {
+      s = s + " 共+" + e.to_string()
+    }
+  }
+  s
 }

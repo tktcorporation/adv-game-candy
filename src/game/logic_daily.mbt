@@ -56,9 +56,11 @@ pub fn advance_to_next_day(state : GameState) -> Unit {
     }
   }
 
-  // 2. 翌日へ
+  // 2. 翌日へ（スタミナmodを適用して回復）
   state.day.update(fn(d) { d + 1 })
-  state.stamina.set(base_stamina)
+  let stamina_mod = state.next_week_stamina_mod.get()
+  let effective_stamina = base_stamina + stamina_mod
+  state.stamina.set(effective_stamina)
   state.today_actions.set([])
   state.daily_missions.set(create_daily_missions())
 
@@ -77,6 +79,8 @@ pub fn advance_to_next_day(state : GameState) -> Unit {
   let new_day = state.day.get()
   if (new_day - 1) % 7 == 0 {
     snapshot_week_start(state)
+    // 週が切り替わったのでスタミナmodをリセット
+    state.next_week_stamina_mod.set(0)
   }
 
   // 季節・天候情報

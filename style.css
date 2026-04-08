@@ -2080,3 +2080,153 @@ body::before {
   border-top: var(--border-whisper);
   border-bottom: var(--border-whisper);
 }
+
+/* ─── 灯Pゲージ（インライン） ─── */
+
+.akari-gauge-inline {
+  text-align: center;
+  font-family: monospace;
+  font-size: 0.78em;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  padding: var(--space-1) 0;
+  opacity: 0.7;
+}
+
+/* ─── ログインボーナス ─── */
+
+.login-bonus-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-6);
+  text-align: center;
+}
+
+.login-bonus-title {
+  font-family: var(--font-serif);
+  font-size: 1.2em;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.1em;
+}
+
+.login-bonus-streak {
+  font-size: 1.4em;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.login-bonus-reward {
+  font-size: 1em;
+  padding: var(--space-4);
+  background: var(--accent-soft);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.login-bonus-cycle {
+  font-family: monospace;
+  font-size: 1.1em;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+}
+
+.login-bonus-btn {
+  margin-top: var(--space-4);
+}
+
+/* ─── Home: 追加要素のアニメーション遅延 ─── */
+
+.home-view > *:nth-child(8) { animation-delay: 0.42s; }
+.home-view > *:nth-child(9) { animation-delay: 0.48s; }
+
+/* ─── 試験パネル（週チャレンジの3軸ゲージ） ─── */
+
+.exam-panel {
+  background: var(--bg-subtle);
+  border-radius: var(--radius);
+  border: var(--border-whisper);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.exam-header {
+  font-family: var(--font-serif);
+  font-size: 0.88em;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: var(--space-2);
+  letter-spacing: 0.1em;
+}
+
+.exam-gauges {
+  font-family: monospace;
+  font-size: 0.82em;
+  line-height: 1.6;
+}
+
+.exam-gauge-row {
+  color: var(--text);
+  letter-spacing: 0.03em;
+  white-space: pre;
+}
+
+.exam-s-line {
+  text-align: center;
+  font-size: 0.75em;
+  color: var(--accent);
+  margin-top: var(--space-2);
+  letter-spacing: 0.15em;
+  font-weight: 600;
+}
+
+/* ─── Home: 試験の不足分表示 ─── */
+
+.weekly-goal-diff {
+  font-family: monospace;
+  font-size: 0.82em;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: var(--space-1);
+  letter-spacing: 0.05em;
+}
+
+/* ─── カード: メインステータスラベル ─── */
+
+.card-main-axis {
+  font-weight: 700;
+  color: var(--accent);
+  margin-right: 0.3em;
+  font-size: 0.85em;
+}
+
+/* ─── COMBO演出 ─── */
+
+.combo-display {
+  text-align: center;
+  padding: var(--space-4) var(--space-3);
+  margin-bottom: var(--space-3);
+  background: var(--accent-soft);
+  border-radius: var(--radius);
+  border: 2px solid var(--accent);
+}
+
+.combo-burst {
+  font-size: 1.4em;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-3);
+  text-shadow: 0 0 12px rgba(212, 105, 61, 0.3);
+}
+
+.combo-calc {
+  font-family: monospace;
+  font-size: 0.88em;
+  line-height: 1.8;
+  color: var(--text);
+  white-space: pre-line;
+}

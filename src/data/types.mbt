@@ -330,10 +330,17 @@ pub(all) struct DayResultData {
 }
 
 /// カードプレイ結果（DailyScene 表示用）
+///
+/// COMBO演出のために、バフ倍率適用前の「base値」も保持する。
+/// 表示例: 「信頼 8 → ×1.5 → 12！」
 pub(all) struct CardResult {
   trust_gain : Int
   understanding_gain : Int
   empathy_gain : Int
+  /// バフ倍率適用前の基礎値（COMBO演出で計算過程を表示するため）
+  base_trust : Int
+  base_understanding : Int
+  base_empathy : Int
   buff_gained : String        // 獲得バフ名（"" = なし）
   buff_consumed : Bool        // バフ消費したか
   multiplier_applied : Bool   // 倍率が適用されたか
