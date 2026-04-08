@@ -65,7 +65,29 @@ pub fn check_weekly_challenge(state : GameState) -> Unit {
     new_results
   })
 
-  add_message(state, "週末チャレンジ: " + rank_str + "ランク！ +" + akari_reward.to_string() + "灯P +" + coin_reward.to_string() + "コイン")
+  // スタミナmod（学マスの試験合否に対応する緊張感）
+  // Week 1-2 は免除（チュートリアル期間）
+  if week >= 3 {
+    let stamina_mod = match rank {
+      @data.ChallengeRank::S => 1     // 翌週スタミナ+1: 好調ボーナス
+      @data.ChallengeRank::A => 0
+      @data.ChallengeRank::B => 0
+      @data.ChallengeRank::C => -1    // 翌週スタミナ-1: 疲労ペナルティ
+    }
+    state.next_week_stamina_mod.set(stamina_mod)
+  }
+
+  let mut msg = "週末チャレンジ: " + rank_str + "ランク！ +" + akari_reward.to_string() + "灯P +" + coin_reward.to_string() + "コイン"
+  if week >= 3 {
+    match rank {
+      @data.ChallengeRank::S =>
+        msg = msg + " ★来週の余裕+1！"
+      @data.ChallengeRank::C =>
+        msg = msg + " …来週の余裕-1"
+      _ => ()
+    }
+  }
+  add_message(state, msg)
 }
 
 /// チャレンジランク判定
@@ -111,17 +133,63 @@ pub fn snapshot_week_start(state : GameState) -> Unit {
   state.week_start_empathy.set(state.empathy.get())
 }
 
-/// 週チャレンジ目標の表示テキスト
-pub fn get_weekly_goal_display(state : GameState) -> String {
+/// 週チャレンジ目標のヘッダー行（「第1週 試験まで4日」）
+pub fn get_exam_header(state : GameState) -> String {
   let day = state.day.get()
   let week = get_week_number(day)
   let days_in_week = (day - 1) % 7 + 1
   let days_left = 7 - days_in_week
+  "第" + week.to_string() + "週 試験まで" + days_left.to_string() + "日"
+}
 
-  let trust_gained = state.trust.get() - state.week_start_trust.get()
-  let understanding_gained = state.understanding.get() - state.week_start_understanding.get()
-  let empathy_gained = state.empathy.get() - state.week_start_empathy.get()
+/// Sランク目標値（その週の基準値）
+pub fn get_exam_s_line(state : GameState) -> Int {
+  let week = get_week_number(state.day.get())
+  10 + week * 3
+}
 
-  let base = 10 + week * 3
-  "第" + week.to_string() + "週（残り" + days_left.to_string() + "日）S目標: 各" + base.to_string() + " / 現在 信" + trust_gained.to_string() + " 理" + understanding_gained.to_string() + " 共" + empathy_gained.to_string()
+/// 今週の各軸獲得量を取得
+pub fn get_weekly_gains(state : GameState) -> (Int, Int, Int) {
+  let t = state.trust.get() - state.week_start_trust.get()
+  let u = state.understanding.get() - state.week_start_understanding.get()
+  let e = state.empathy.get() - state.week_start_empathy.get()
+  (t, u, e)
+}
+
+/// 3軸ゲージ1行分を生成（DailyAction画面のSライン表示用）
+///
+/// 例: 「信頼  ████████░░░░░  12/13」
+/// 目標達成時: 「信頼  █████████████  13/13 ▲」
+pub fn build_axis_gauge(label : String, current : Int, target : Int) -> String {
+  let width = 13
+  let filled = if target > 0 {
+    let f = current * width / target
+    if f > width { width } else { f }
+  } else {
+    0
+  }
+  let mut bar = ""
+  for i in 0..<width {
+    if i < filled {
+      bar = bar + "█"
+    } else {
+      bar = bar + "░"
+    }
+  }
+  let status = if current >= target { " ▲" } else { "" }
+  label + " " + bar + " " + current.to_string() + "/" + target.to_string() + status
+}
+
+/// Home画面用: 不足分表示テキスト（「信▲OK 理△-5 共△-6」）
+pub fn get_exam_diff_display(state : GameState) -> String {
+  let s_line = get_exam_s_line(state)
+  let (t, u, e) = get_weekly_gains(state)
+  fn diff_text(label : String, current : Int, target : Int) -> String {
+    if current >= target {
+      label + "▲OK"
+    } else {
+      label + "△-" + (target - current).to_string()
+    }
+  }
+  diff_text("信", t, s_line) + " " + diff_text("理", u, s_line) + " " + diff_text("共", e, s_line)
 }

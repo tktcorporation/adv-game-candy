@@ -4,23 +4,46 @@
 // VisitScene: 灯でのストーリーシーン（Layer 2）
 // Story: メインストーリーADV
 
-/// DailyScene ビュー — 行動結果表示
+/// DailyScene ビュー — 行動結果表示（COMBO演出対応）
 fn render_daily_scene_view(state : @game.GameState) -> @dom.DomNode {
   @dom.div(
     class="scene-view",
     [
-      // バフ効果表示
+      // COMBO演出（バフ消費時）— 学マスの「Perfect!」に対応
       @dom.show(
         fn() { state.last_card_result.get().buff_consumed },
         fn() {
           @dom.div(
-            class="buff-effect-display",
-            [@dom.text("✦ バフ消費 → 効果1.5倍！")],
+            class="combo-display",
+            [
+              // バフ弾けた演出
+              @dom.div(
+                class="combo-burst",
+                [@dom.text_dyn(fn() {
+                  let r = state.last_card_result.get()
+                  let buff_icon = if r.buff_gained != "" {
+                    @game.buff_to_icon(r.buff_gained)
+                  } else {
+                    "✦"
+                  }
+                  buff_icon + " COMBO！"
+                })],
+              ),
+              // 計算過程（8 → ×1.5 → 12！）
+              @dom.div(
+                class="combo-calc",
+                [@dom.text_dyn(fn() { build_combo_text(state) })],
+              ),
+            ],
           )
         },
       ),
+      // バフ獲得表示（バフ付与時）
       @dom.show(
-        fn() { state.last_card_result.get().buff_gained != "" },
+        fn() {
+          let r = state.last_card_result.get()
+          r.buff_gained != "" && !r.buff_consumed
+        },
         fn() {
           @dom.div(
             class="buff-gained-display",
@@ -42,7 +65,13 @@ fn render_daily_scene_view(state : @game.GameState) -> @dom.DomNode {
         [
           @dom.div(
             class="scene-result-header",
-            [@dom.text("─── 結果 ───")],
+            [@dom.text_dyn(fn() {
+              if state.last_card_result.get().buff_consumed {
+                "────── COMBO ──────"
+              } else {
+                "─── 結果 ───"
+              }
+            })],
           ),
           // パラメータ獲得値
           @dom.div(
@@ -97,6 +126,25 @@ fn render_daily_scene_view(state : @game.GameState) -> @dom.DomNode {
       ),
     ],
   )
+}
+
+/// COMBO演出テキスト生成（base → ×1.5 → 最終値！）
+///
+/// バフ消費時にカードの計算過程を可視化。
+/// 学マスで「好調 → 集中 → Perfect! スコア×3」と見せるのと同じ設計。
+fn build_combo_text(state : @game.GameState) -> String {
+  let r = state.last_card_result.get()
+  let mut lines = ""
+  if r.base_trust > 0 {
+    lines = lines + "信頼 " + r.base_trust.to_string() + " → ×1.5 → " + r.trust_gain.to_string() + "！\n"
+  }
+  if r.base_understanding > 0 {
+    lines = lines + "理解 " + r.base_understanding.to_string() + " → ×1.5 → " + r.understanding_gain.to_string() + "！\n"
+  }
+  if r.base_empathy > 0 {
+    lines = lines + "共感 " + r.base_empathy.to_string() + " → ×1.5 → " + r.empathy_gain.to_string() + "！"
+  }
+  lines
 }
 
 /// Visit ビュー — 灯でご飯（Layer 2）

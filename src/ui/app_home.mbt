@@ -30,17 +30,26 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
           ),
         ],
       ),
-      // ── 今週の目標（週チャレンジ） ──
+      // ── 週チャレンジ「試験」表示（学マスのSライン可視化） ──
       @dom.div(
         class="weekly-event-goal",
         [
           @dom.div(
             class="weekly-goal-header",
-            [@dom.text("── 今週の目標 ──")],
+            [@dom.text_dyn(fn() {
+              "── " + @game.get_exam_header(state) + " ──"
+            })],
           ),
           @dom.div(
             class="weekly-goal-content",
-            [@dom.text_dyn(fn() { @game.get_weekly_goal_display(state) })],
+            [@dom.text_dyn(fn() {
+              let s_line = @game.get_exam_s_line(state)
+              "S目標: 信" + s_line.to_string() + " 理" + s_line.to_string() + " 共" + s_line.to_string()
+            })],
+          ),
+          @dom.div(
+            class="weekly-goal-diff",
+            [@dom.text_dyn(fn() { @game.get_exam_diff_display(state) })],
           ),
         ],
       ),

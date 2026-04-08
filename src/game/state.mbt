@@ -96,6 +96,8 @@ pub(all) struct GameState {
   week_start_empathy : @signals.Signal[Int]
   /// 週チャレンジ結果の履歴
   challenge_results : @signals.Signal[Array[@data.ChallengeResult]]
+  /// 翌週のスタミナ増減（S=+1, C=-1, 他=0。Week3以降有効）
+  next_week_stamina_mod : @signals.Signal[Int]
 
   // =========================================================================
   // 共通システム
@@ -190,6 +192,7 @@ pub fn create_game_state() -> GameState {
     week_start_understanding: @signals.signal(0),
     week_start_empathy: @signals.signal(0),
     challenge_results: @signals.signal([]),
+    next_week_stamina_mod: @signals.signal(0),
     // 共通
     daily_missions: @signals.signal(create_daily_missions()),
     discoveries: @signals.signal([]),
@@ -211,6 +214,7 @@ pub fn create_game_state() -> GameState {
     }),
     last_card_result: @signals.signal({
       trust_gain: 0, understanding_gain: 0, empathy_gain: 0,
+      base_trust: 0, base_understanding: 0, base_empathy: 0,
       buff_gained: "", buff_consumed: false, multiplier_applied: false,
       reaction_text: "",
     }),
