@@ -2071,16 +2071,6 @@ body::before {
   line-height: 1.6;
 }
 
-.weekly-goal-mini {
-  font-size: 0.78em;
-  color: var(--text-secondary);
-  text-align: center;
-  padding: var(--space-2) 0;
-  margin-bottom: var(--space-2);
-  border-top: var(--border-whisper);
-  border-bottom: var(--border-whisper);
-}
-
 /* ─── 灯Pゲージ（インライン） ─── */
 
 .akari-gauge-inline {
