@@ -2242,31 +2242,73 @@ body::before {
   height: 100%;
 }
 
-/* HUD — 拠点HP + コスト */
+/* HUD — 拠点HP（グラデーションバー）+ コスト */
 .battle-hud {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 6px;
   padding: var(--space-2);
   background: var(--bg-subtle);
   border-radius: var(--radius-m);
   font-size: 0.85em;
 }
 
-.base-hp-bar, .enemy-hp-bar {
+.hud-hp-section, .hud-cost-section {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 8px;
 }
 
-.hp-label { font-weight: 600; }
-.hp-value { font-family: monospace; }
+.hp-icon { font-size: 1.2em; }
+.hp-text { font-family: monospace; font-size: 0.85em; min-width: 36px; text-align: right; }
 
-.cost-gauge {
+.hud-hp-bar-bg {
+  flex: 1;
+  height: 12px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.hud-hp-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.15s ease-out;
+}
+
+.ally-hp-fill {
+  background: linear-gradient(90deg, #66bb6a, #43a047);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+.enemy-hp-fill {
+  background: linear-gradient(90deg, #ef5350, #c62828);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+.hud-cost-bar-bg {
+  flex: 1;
+  height: 10px;
+  background: rgba(0,0,0,0.08);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.hud-cost-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #ffb74d, #ff9800);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+  transition: width 0.1s linear;
+}
+
+.cost-text {
   font-family: monospace;
-  font-size: 0.9em;
+  font-size: 0.85em;
   color: var(--accent);
   font-weight: 600;
+  min-width: 56px;
+  text-align: right;
 }
 
 /* 戦場フィールド */

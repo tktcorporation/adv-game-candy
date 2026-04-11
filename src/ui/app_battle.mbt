@@ -1,8 +1,8 @@
-// バトル画面UI — ディフェンスゲームのメイン画面
+// バトル画面UI — Pixi.js v8 レンダラー連携版
 //
-// 上部: 拠点HPバー
-// 中央: フィールド（味方・敵ユニットが移動）
-// 下部: コストゲージ + 出撃ボタン
+// 戦場フィールドはPixi.js (WebGL) で描画。
+// HUD（拠点HP、コスト）と出撃パネルはDOM (luna.mbt)。
+// 毎tickでMoonBitのゲームロジック→FFI→Pixi.js描画を同期。
 
 /// ゲームループのタイマーID（停止用）
 let game_timer_id : Ref[Int] = { val: 0 }
@@ -13,105 +13,92 @@ fn render_battle_view(state : @game.GameState) -> @dom.DomNode {
     class="battle-view",
     [
       render_battle_hud(state),
-      render_battlefield(state),
+      // Pixi.jsのCanvas配置用コンテナ
+      @dom.div(class="battlefield", id="pixi-battlefield", []),
       render_deploy_panel(state),
     ],
   )
 }
 
-/// HUD — 拠点HP + コスト + タイマー
+/// HUD — 拠点HP + コスト（テキストゲージ表示）
 fn render_battle_hud(state : @game.GameState) -> @dom.DomNode {
   @dom.div(
     class="battle-hud",
     [
       // 灯HP
       @dom.div(
-        class="base-hp-bar",
+        class="hud-hp-section",
         [
-          @dom.span(class="hp-label", [@dom.text("灯 ")]),
+          @dom.span(class="hp-icon", [@dom.text("\u{1F3E0}")]),
           @dom.span(
-            class="hp-value",
+            class="hp-bar-text",
             [@dom.text_dyn(fn() {
               let snap = state.battle.get()
-              snap.base_hp.to_string() + "/" + @game.base_hp.to_string()
+              build_bar(snap.base_hp, @game.base_hp, 15, true)
             })],
           ),
         ],
       ),
       // 敵拠点HP
       @dom.div(
-        class="enemy-hp-bar",
+        class="hud-hp-section",
         [
-          @dom.span(class="hp-label", [@dom.text("敵 ")]),
+          @dom.span(class="hp-icon", [@dom.text("\u{1F47E}")]),
           @dom.span(
-            class="hp-value",
+            class="hp-bar-text",
             [@dom.text_dyn(fn() {
               let snap = state.battle.get()
-              snap.enemy_base_hp.to_string()
+              let stage_id = state.current_stage_id.get()
+              let max_hp = match @data.get_stage_by_id(stage_id) {
+                Some(s) => s.enemy_base_hp
+                None => 1
+              }
+              build_bar(snap.enemy_base_hp, max_hp, 15, false)
             })],
           ),
         ],
       ),
       // コストゲージ
       @dom.div(
-        class="cost-gauge",
+        class="hud-cost-section",
         [@dom.text_dyn(fn() {
           let snap = state.battle.get()
           let cost = snap.cost_milli / 1000
-          "コスト: " + cost.to_string() + "/" + @game.max_cost.to_string()
+          let pct = cost * 10 / @game.max_cost
+          let mut bar = "COST "
+          for i in 0..<10 {
+            if i < pct { bar = bar + "\u{2593}" } else { bar = bar + "\u{2591}" }
+          }
+          bar + " " + cost.to_string()
         })],
       ),
     ],
   )
 }
 
-/// 戦場フィールド — ユニット描画
-fn render_battlefield(state : @game.GameState) -> @dom.DomNode {
-  @dom.div(
-    class="battlefield",
-    [
-      // 灯の城
-      @dom.div(class="base-icon base-ally", [@dom.text("\u{1F3E0}")]),
-      // 敵の城
-      @dom.div(class="base-icon base-enemy", [@dom.text("\u{1F47E}")]),
-      // 味方ユニット
-      @dom.for_each(
-        fn() { state.battle.get().allies },
-        fn(unit, _i) { render_battle_unit(unit, true) },
-      ),
-      // 敵ユニット
-      @dom.for_each(
-        fn() { state.battle.get().enemies },
-        fn(unit, _i) { render_battle_unit(unit, false) },
-      ),
-    ],
-  )
-}
-
-/// 個別ユニット描画
-fn render_battle_unit(unit : @data.BattleUnit, is_ally : Bool) -> @dom.DomNode {
-  let cls = if is_ally { "battle-unit ally-unit" } else { "battle-unit enemy-unit" }
-  // x座標をパーセンテージに変換（0-480px → 0-100%）
-  let pct = unit.x * 100 / @game.field_width
-  let style = "left:" + pct.to_string() + "%"
-  @dom.div(
-    class=cls,
-    style~,
-    [
-      @dom.span(class="unit-emoji", [@dom.text(unit.emoji)]),
-      // HPバー（簡易表示）
-      @dom.div(
-        class="unit-hp-bar",
-        [
-          @dom.div(
-            class="unit-hp-fill",
-            style="width:" + (unit.hp * 100 / unit.max_hp).to_string() + "%",
-            [],
-          ),
-        ],
-      ),
-    ],
-  )
+/// HPバーをテキストで描画（▓▓▓░░░ 形式）
+fn build_bar(
+  current : Int,
+  max : Int,
+  width : Int,
+  is_ally : Bool
+) -> String {
+  let filled = if max > 0 {
+    let f = current * width / max
+    if f > width { width } else if f < 0 { 0 } else { f }
+  } else {
+    0
+  }
+  let mut bar = ""
+  for i in 0..<width {
+    if i < filled {
+      bar = bar + "\u{2593}"
+    } else {
+      bar = bar + "\u{2591}"
+    }
+  }
+  let label = if is_ally { "" } else { "" }
+  label + bar + " " + current.to_string() + "/" + max.to_string()
 }
 
 /// 出撃パネル — 編成キャラのボタン
@@ -138,7 +125,6 @@ fn render_deploy_panel(state : @game.GameState) -> @dom.DomNode {
           ),
         ],
       ),
-      // 撤退ボタン
       @dom.div(
         class="battle-controls",
         [
@@ -193,33 +179,32 @@ fn render_deploy_button(
   )
 }
 
-/// バトル開始
+/// バトル開始 — Pixi.jsレンダラー初期化 + ゲームループ開始
 pub fn start_battle(state : @game.GameState, stage_id : Int) -> Unit {
   match @data.get_stage_by_id(stage_id) {
     Some(stage) => {
       state.current_stage_id.set(stage_id)
       state.battle.set(@game.create_battle_snapshot(stage))
       state.phase.set(@data.GamePhase::Battle)
-      // ゲームループ開始（約60FPS: 16ms間隔）
-      let timer = set_interval_ffi(
-        fn() { tick_game_loop(state) },
-        16,
-      )
+      // Pixi.jsレンダラー初期化
+      init_renderer_ffi("pixi-battlefield")
+      // ゲームループ開始
+      let timer = set_interval_ffi(fn() { tick_game_loop(state) }, 16)
       game_timer_id.val = timer
     }
     None => ()
   }
 }
 
-/// ゲームループ1tick（setIntervalから呼ばれる）
+/// ゲームループ1tick — ロジック更新 + Pixi.js描画同期
 fn tick_game_loop(state : @game.GameState) -> Unit {
   let stage_id = state.current_stage_id.get()
   match @data.get_stage_by_id(stage_id) {
     Some(stage) => {
-      let snap = state.battle.get()
-      let new_snap = @game.tick_battle(snap, stage)
+      let old_snap = state.battle.get()
+      let new_snap = @game.tick_battle(old_snap, stage)
       state.battle.set(new_snap)
-      // 勝敗判定
+      sync_renderer(old_snap, new_snap)
       if new_snap.result != @data.BattleResult::InProgress {
         clear_interval_ffi(game_timer_id.val)
         handle_battle_end(state, stage, new_snap)
@@ -229,12 +214,52 @@ fn tick_game_loop(state : @game.GameState) -> Unit {
   }
 }
 
-/// バトル終了処理
+/// Pixi.jsとの描画同期（差分検出で生成/更新/削除）
+fn sync_renderer(
+  old_snap : @game.BattleSnapshot,
+  new_snap : @game.BattleSnapshot
+) -> Unit {
+  sync_units(old_snap.allies, new_snap.allies, true)
+  sync_units(old_snap.enemies, new_snap.enemies, false)
+}
+
+/// ユニット配列の差分同期
+fn sync_units(
+  old_units : Array[@data.BattleUnit],
+  new_units : Array[@data.BattleUnit],
+  is_ally : Bool
+) -> Unit {
+  // 新規: newにいてoldにいない → spawn
+  for nu in new_units {
+    let mut found = false
+    for ou in old_units {
+      if ou.uid == nu.uid { found = true; break }
+    }
+    if !found {
+      spawn_unit_ffi(nu.uid, nu.emoji, nu.x, is_ally)
+    }
+  }
+  // 更新: newにいる全ユニット → update
+  for nu in new_units {
+    let hp_ratio = nu.hp.to_double() / nu.max_hp.to_double()
+    update_unit_ffi(nu.uid, nu.x, hp_ratio)
+  }
+  // 削除: oldにいてnewにいない → remove
+  for ou in old_units {
+    let mut found = false
+    for nu in new_units {
+      if nu.uid == ou.uid { found = true; break }
+    }
+    if !found { remove_unit_ffi(ou.uid) }
+  }
+}
+
 fn handle_battle_end(
   state : @game.GameState,
   stage : @data.StageDef,
   snap : @game.BattleSnapshot
 ) -> Unit {
+  destroy_renderer_ffi()
   match snap.result {
     Victory => @game.grant_battle_reward(state, stage, snap.tick)
     Defeat => @game.add_message(state, "敗北…編成を見直そう。")
@@ -243,9 +268,9 @@ fn handle_battle_end(
   state.phase.set(@data.GamePhase::BattleResult)
 }
 
-/// 撤退（バトル中断）
 fn stop_battle(state : @game.GameState) -> Unit {
   clear_interval_ffi(game_timer_id.val)
+  destroy_renderer_ffi()
   @game.add_message(state, "撤退した。")
   state.phase.set(@data.GamePhase::Home)
 }

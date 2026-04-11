@@ -10,11 +10,15 @@
   <link rel="stylesheet" href="style.css">
   <!-- anime.js v4 CDN — カード演出・パラメータカウントアップ・思い出獲得エフェクトに使用 -->
   <script src="https://cdn.jsdelivr.net/npm/animejs@4.0.2/lib/anime.iife.min.js"></script>
+  <!-- Pixi.js v8 CDN — 戦場フィールドのWebGL描画に使用 -->
+  <script src="https://cdn.jsdelivr.net/npm/pixi.js@8/dist/pixi.min.js"></script>
 </head>
 <body>
   <div id="app"></div>
   <!-- SVG イラスト + anime.js ヘルパー — MoonBit FFI から呼び出すグローバル関数群 -->
   <script src="animations.js"></script>
+  <!-- 戦場レンダラー — Pixi.js ベースの描画層。MoonBit FFI からグローバル関数で呼ぶ -->
+  <script src="battle_renderer.js"></script>
   <script type="module" src="./_build/js/release/build/main/main.js"></script>
 </body>
 </html>
