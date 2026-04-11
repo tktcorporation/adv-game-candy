@@ -98,14 +98,22 @@ fn render_home_view(state : @game.GameState) -> @dom.DomNode {
       @dom.div(
         class="home-actions",
         [
-          // Layer 1: 日常行動
+          // ディフェンスゲーム（Layer 1 の新メイン）
+          @dom.button(
+            class="btn btn-primary btn-large",
+            on=@dom.events().click(fn(_e) {
+              state.phase.set(@data.GamePhase::StageSelect)
+            }),
+            [@dom.text("出撃する")],
+          ),
+          // 旧Layer 1: 日常行動（残存、サブ導線）
           @dom.show(
             fn() { state.stamina.get() > 0 },
             fn() {
               @dom.button(
-                class="btn btn-primary btn-large",
+                class="btn btn-secondary btn-small",
                 on=@dom.events().click(fn(_e) { @game.go_to_daily_action(state) }),
-                [@dom.text("今日の行動")],
+                [@dom.text("日常行動")],
               )
             },
           ),

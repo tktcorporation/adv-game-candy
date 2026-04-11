@@ -30,6 +30,10 @@ pub(all) enum GamePhase {
   DeckEdit        // デッキ管理画面
   Gacha           // ガチャ（行動カード獲得）
   LoginBonus      // ログインボーナス
+  // --- ディフェンスゲーム（Layer 1 の新メイン） ---
+  StageSelect     // ステージ選択画面
+  Battle          // バトル中
+  BattleResult    // バトル結果画面
 } derive(Eq)
 
 // =========================================================================
