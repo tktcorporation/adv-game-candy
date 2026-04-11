@@ -2230,3 +2230,283 @@ body::before {
   color: var(--text);
   white-space: pre-line;
 }
+
+/* =========================================================================
+ * ディフェンスゲーム — 食材 vs 空腹モンスター
+ * ========================================================================= */
+
+.battle-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  height: 100%;
+}
+
+/* HUD — 拠点HP（グラデーションバー）+ コスト */
+.battle-hud {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--space-2);
+  background: var(--bg-subtle);
+  border-radius: var(--radius-m);
+  font-size: 0.85em;
+}
+
+.hud-hp-section, .hud-cost-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hp-icon { font-size: 1.2em; }
+.hp-text { font-family: monospace; font-size: 0.85em; min-width: 36px; text-align: right; }
+
+.hud-hp-bar-bg {
+  flex: 1;
+  height: 12px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.hud-hp-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.15s ease-out;
+}
+
+.ally-hp-fill {
+  background: linear-gradient(90deg, #66bb6a, #43a047);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+.enemy-hp-fill {
+  background: linear-gradient(90deg, #ef5350, #c62828);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+.hud-cost-bar-bg {
+  flex: 1;
+  height: 10px;
+  background: rgba(0,0,0,0.08);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.hud-cost-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #ffb74d, #ff9800);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+  transition: width 0.1s linear;
+}
+
+.cost-text {
+  font-family: monospace;
+  font-size: 0.85em;
+  color: var(--accent);
+  font-weight: 600;
+  min-width: 56px;
+  text-align: right;
+}
+
+/* 戦場フィールド */
+.battlefield {
+  position: relative;
+  height: 180px;
+  background: linear-gradient(to bottom, var(--bg-subtle) 60%, #e0d5c5 100%);
+  border-radius: var(--radius-m);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.base-icon {
+  position: absolute;
+  bottom: 40px;
+  font-size: 32px;
+  z-index: 1;
+}
+
+.base-ally { left: 2%; }
+.base-enemy { right: 2%; }
+
+/* ユニット */
+.battle-unit {
+  position: absolute;
+  bottom: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(-50%);
+  z-index: 2;
+  transition: left 0.08s linear;
+}
+
+.unit-emoji { font-size: 24px; }
+
+.enemy-unit .unit-emoji {
+  transform: scaleX(-1);
+}
+
+.unit-hp-bar {
+  width: 28px;
+  height: 3px;
+  background: #ddd;
+  border-radius: 2px;
+  margin-top: 2px;
+}
+
+.unit-hp-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.1s;
+}
+
+.ally-unit .unit-hp-fill { background: #4caf50; }
+.enemy-unit .unit-hp-fill { background: #e53935; }
+
+/* 出撃パネル */
+.deploy-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.deploy-buttons {
+  display: flex;
+  gap: var(--space-1);
+  overflow-x: auto;
+  padding: var(--space-1) 0;
+}
+
+.deploy-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-2);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  cursor: pointer;
+  min-width: 72px;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.deploy-btn:active {
+  transform: scale(0.92);
+  background: var(--bg-hover);
+}
+
+.deploy-emoji { font-size: 24px; }
+.deploy-name { font-size: 0.7em; white-space: nowrap; }
+.deploy-cost { font-size: 0.75em; color: var(--accent); font-weight: 600; }
+
+.battle-controls {
+  display: flex;
+  justify-content: center;
+}
+
+/* ステージ選択 */
+.stage-select-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.stage-header {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 1.1em;
+  color: var(--text);
+}
+
+.formation-display {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--bg-subtle);
+  border-radius: var(--radius-m);
+}
+
+.formation-label { font-size: 0.85em; color: var(--text-secondary); }
+.formation-icons { font-size: 1.3em; letter-spacing: 0.2em; }
+
+.stage-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.stage-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-m);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+  width: 100%;
+  text-align: left;
+  background: var(--bg-elevated);
+  font-family: var(--font-body);
+  font-size: 0.95em;
+  color: var(--text);
+}
+
+.stage-item.unlocked:hover { background: var(--bg-hover); }
+.stage-item.unlocked:active { transform: scale(0.98); }
+
+.stage-item.locked {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.stage-id {
+  font-weight: 700;
+  font-size: 1.1em;
+  min-width: 24px;
+}
+
+.stage-name { flex: 1; }
+.stage-stars { color: var(--accent); letter-spacing: 0.05em; }
+
+.stage-footer { text-align: center; }
+
+/* バトル結果画面 */
+.battle-result-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-3);
+}
+
+.result-header {
+  font-family: var(--font-display);
+  font-size: 1.8em;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.result-stars {
+  font-size: 2em;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+}
+
+.result-stage-name {
+  font-size: 1em;
+  color: var(--text-secondary);
+}
+
+.result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 280px;
+}

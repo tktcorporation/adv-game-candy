@@ -140,6 +140,21 @@ pub(all) struct GameState {
   message_log : @signals.Signal[Array[String]]
   album_tab : @signals.Signal[Int]
   story_complete : @signals.Signal[Bool]
+
+  // =========================================================================
+  // ディフェンスゲーム（Layer 1 の新メイン）
+  // =========================================================================
+
+  /// バトルのランタイム状態（毎tick更新）
+  battle : @signals.Signal[BattleSnapshot]
+  /// 現在プレイ中のステージID
+  current_stage_id : @signals.Signal[Int]
+  /// 出撃編成（最大5体のally_id）
+  formation : @signals.Signal[@data.BattleFormation]
+  /// 所持キャラ一覧
+  owned_allies : @signals.Signal[Array[@data.OwnedAlly]]
+  /// ステージクリア記録
+  stage_records : @signals.Signal[Array[@data.StageClearRecord]]
 }
 
 /// デイリーミッションの初期値を生成
@@ -225,5 +240,23 @@ pub fn create_game_state() -> GameState {
     message_log: @signals.signal([]),
     album_tab: @signals.signal(0),
     story_complete: @signals.signal(false),
+    // ディフェンスゲーム
+    battle: @signals.signal(create_battle_snapshot(
+      { id: 0, name: "", description: "", enemy_base_hp: 100,
+        cost_speed: 100, waves: [], reward_akari: 0, reward_coins: 0,
+        star_thresholds: [] },
+    )),
+    current_stage_id: @signals.signal(0),
+    formation: @signals.signal(
+      ({ ally_ids: @data.get_starter_allies() } : @data.BattleFormation),
+    ),
+    owned_allies: @signals.signal({
+      let starters : Array[@data.OwnedAlly] = []
+      for id in @data.get_starter_allies() {
+        starters.push({ ally_id: id, level: 1 })
+      }
+      starters
+    }),
+    stage_records: @signals.signal([]),
   }
 }

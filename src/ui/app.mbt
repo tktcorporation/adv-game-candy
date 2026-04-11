@@ -79,6 +79,19 @@ pub fn app(state : @game.GameState) -> @dom.DomNode {
             fn() { state.phase.get() == @data.GamePhase::LoginBonus },
             fn() { render_login_bonus_view(state) },
           ),
+          // --- ディフェンスゲーム ---
+          @dom.show(
+            fn() { state.phase.get() == @data.GamePhase::StageSelect },
+            fn() { render_stage_select_view(state) },
+          ),
+          @dom.show(
+            fn() { state.phase.get() == @data.GamePhase::Battle },
+            fn() { render_battle_view(state) },
+          ),
+          @dom.show(
+            fn() { state.phase.get() == @data.GamePhase::BattleResult },
+            fn() { render_battle_result_view(state) },
+          ),
         ],
       ),
       render_message_log(state),

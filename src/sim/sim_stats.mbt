@@ -224,5 +224,8 @@ fn phase_to_string(p : @data.GamePhase) -> String {
     Album => "Album"
     Gacha => "Gacha"
     DeckEdit => "DeckEdit"
+    StageSelect => "StageSelect"
+    Battle => "Battle"
+    BattleResult => "BattleResult"
   }
 }
