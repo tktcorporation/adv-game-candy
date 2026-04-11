@@ -331,10 +331,21 @@ window.createUmbrellaSvg = function(size) {
  * 季節の装飾をbodyに追加するヘルパー
  * メインアプリの初期化後に呼ばれ、季節に応じた浮遊するSVG粒子を挿入
  *
+ * パフォーマンス最適化:
+ *   - 同じ季節なら DOM を再生成しない（_currentSeason でキャッシュ）
+ *   - パーティクル数を削減（6→4, 5→3, 4→3）
+ *   - will-change: transform で合成レイヤーを確保
+ *
  * DOM要素は createElement + DOM API で安全に構築。
  * SVG文字列の挿入には DOMParser を使用（XSS安全）。
  */
+var _currentSeason = null;
+
 window.addSeasonalDecoration = function(season) {
+  // 同じ季節なら何もしない（日替わりで不要な DOM チャーンを回避）
+  if (_currentSeason === season) return;
+  _currentSeason = season;
+
   // 既存の装飾を除去
   var existing = document.getElementById('seasonal-deco');
   if (existing) existing.remove();
@@ -345,31 +356,32 @@ window.addSeasonalDecoration = function(season) {
 
   var particles = [];
   if (season === 'spring') {
-    for (var i = 0; i < 6; i++) {
+    for (var i = 0; i < 4; i++) {
       particles.push({
         svg: createSakuraSvg(14 + Math.random() * 12),
         x: Math.random() * 100,
         delay: Math.random() * 8,
-        dur: 10 + Math.random() * 8
+        dur: 12 + Math.random() * 8
       });
     }
   } else if (season === 'autumn') {
-    for (var j = 0; j < 5; j++) {
+    for (var j = 0; j < 3; j++) {
       var leaf = document.createElement('div');
       leaf.style.cssText = 'position:absolute;width:8px;height:8px;border-radius:50% 0 50% 0;' +
         'background:rgba(255,140,0,' + (0.15 + Math.random() * 0.1) + ');' +
         'left:' + (Math.random() * 100) + '%;top:-10px;' +
-        'animation:leafFall ' + (12 + Math.random() * 8) + 's linear ' + (Math.random() * 10) + 's infinite;' +
+        'will-change:transform;' +
+        'animation:leafFall ' + (14 + Math.random() * 8) + 's linear ' + (Math.random() * 10) + 's infinite;' +
         'transform:rotate(' + (Math.random() * 360) + 'deg);';
       container.appendChild(leaf);
     }
   } else if (season === 'winter') {
-    for (var k = 0; k < 4; k++) {
+    for (var k = 0; k < 3; k++) {
       particles.push({
         svg: createSnowflakeSvg(10 + Math.random() * 10),
         x: Math.random() * 100,
         delay: Math.random() * 12,
-        dur: 15 + Math.random() * 10
+        dur: 18 + Math.random() * 10
       });
     }
   }
@@ -380,6 +392,7 @@ window.addSeasonalDecoration = function(season) {
     var svgNode = parseSvgString(p.svg);
     el.appendChild(document.importNode(svgNode, true));
     el.style.cssText = 'position:absolute;left:' + p.x + '%;top:-20px;' +
+      'will-change:transform;' +
       'animation:particleFall ' + p.dur + 's linear ' + p.delay + 's infinite;' +
       'opacity:0.5;';
     container.appendChild(el);

@@ -116,20 +116,25 @@ body {
   overflow-x: hidden;
 }
 
-/* ─── 幾何学背景パターン（和柄・麻の葉風） ─── */
+/* ─── 幾何学背景パターン（和柄・麻の葉風） ───
+ *
+ * 元は 200%×200% の要素を120秒で回転させていたが、
+ * 巨大レイヤーの連続回転は毎フレーム GPU 再合成を強いるため
+ * モバイルでのフレームドロップの最大原因だった。
+ * 静的パターンに変更し、季節変化時は CSS 変数の色切り替えのみで対応。
+ */
 
 body::before {
   content: "";
   position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   z-index: 0;
   pointer-events: none;
   opacity: var(--season-pattern-opacity);
   background-image:
-    /* 三角形を組み合わせた麻の葉風パターン */
     repeating-linear-gradient(
       60deg,
       transparent,
@@ -151,12 +156,7 @@ body::before {
       var(--season-primary) 20px,
       var(--season-primary) 21px
     );
-  animation: patternDrift 120s linear infinite;
-}
-
-@keyframes patternDrift {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  /* 回転アニメーションを廃止 — 静的パターンで十分な装飾効果 */
 }
 
 #app {
@@ -233,11 +233,14 @@ body::before {
 
 /* ─── Main Content ─── */
 
+/* contain: layout style で子要素の変更が親や兄弟に波及しないよう分離。
+ * Signal 更新で text_dyn が変わるたびに発生するレイアウト再計算の範囲を限定。 */
 .main-content {
   flex: 1;
   padding: 0 24px 24px;
   display: flex;
   flex-direction: column;
+  contain: layout style;
 }
 
 /* ─── Title View ─── */
@@ -274,6 +277,7 @@ body::before {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  contain: layout style;
 }
 
 .home-date {
@@ -415,6 +419,7 @@ body::before {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  contain: layout style;
 }
 
 .action-header {
@@ -499,6 +504,7 @@ body::before {
   min-height: 50dvh;
   justify-content: center;
   gap: 16px;
+  contain: layout style;
 }
 
 .scene-menu {
@@ -939,27 +945,32 @@ body::before {
   box-shadow: var(--shadow-sm), 0 0 8px rgba(245, 158, 11, 0.15);
 }
 
-/* レアカードの微細な光沢アニメーション */
+/* レアカードの微細な光沢
+ *
+ * 常時アニメーションを廃止。ホバー時のみ1回再生で CPU 節約。
+ * 200%×200% の要素サイズも 100%×100% に縮小。
+ */
 .hand-card.rarity-rare::before {
   content: "";
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background: linear-gradient(
     45deg,
     transparent 40%,
     rgba(245, 158, 11, 0.05) 50%,
     transparent 60%
   );
-  animation: cardShimmer 3s ease-in-out infinite;
+  opacity: 0;
   pointer-events: none;
+  will-change: opacity;
+  transition: opacity 0.3s ease;
 }
 
-@keyframes cardShimmer {
-  0%, 100% { transform: translateX(-100%) rotate(0deg); }
-  50% { transform: translateX(100%) rotate(0deg); }
+.hand-card.rarity-rare:hover::before {
+  opacity: 1;
 }
 
 .hand-card:hover:not(.disabled) {
@@ -1090,12 +1101,7 @@ body::before {
   font-weight: 700;
   color: var(--text);
   letter-spacing: 0.3em;
-  animation: titlePulse 3s ease-in-out infinite;
-}
-
-@keyframes titlePulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  /* タイトルパルス — 無限ループ廃止。静的表示で十分 */
 }
 
 /* ─── ボタンのリップル ─── */
@@ -1159,7 +1165,11 @@ body::before {
 
 /* ─── 天候エフェクト（オーバーレイ） ─── */
 
-/* 雨の日: 細い縦線が流れる */
+/* 雨の日: 細い縦線が流れる
+ *
+ * will-change: transform で専用合成レイヤーを確保。
+ * ループ速度を 0.8s → 2s に緩和（視覚的に十分で CPU 負荷が大幅減）。
+ */
 .weather-rainy .main-content::before {
   content: "";
   position: fixed;
@@ -1169,6 +1179,7 @@ body::before {
   height: 100%;
   pointer-events: none;
   z-index: 0;
+  will-change: transform;
   background-image:
     repeating-linear-gradient(
       to bottom,
@@ -1177,7 +1188,7 @@ body::before {
       rgba(120, 160, 200, 0.03) 20px,
       rgba(120, 160, 200, 0.03) 22px
     );
-  animation: rainFall 0.8s linear infinite;
+  animation: rainFall 2s linear infinite;
 }
 
 @keyframes rainFall {
@@ -1185,29 +1196,32 @@ body::before {
   100% { transform: translateY(0); }
 }
 
-/* 雪の日: ゆっくり浮遊する粒 */
+/* 雪の日: ゆっくり浮遊する粒
+ *
+ * radial-gradient を 5→3 に削減。
+ * height を 120% → 100% に縮小して合成コスト削減。
+ */
 .weather-snowy .main-content::before {
   content: "";
   position: fixed;
-  top: -10%;
+  top: 0;
   left: 0;
   width: 100%;
-  height: 120%;
+  height: 100%;
   pointer-events: none;
   z-index: 0;
+  will-change: transform;
   background-image:
     radial-gradient(2px 2px at 20% 30%, rgba(200, 210, 220, 0.3), transparent),
-    radial-gradient(2px 2px at 40% 70%, rgba(200, 210, 220, 0.2), transparent),
-    radial-gradient(1.5px 1.5px at 60% 10%, rgba(200, 210, 220, 0.3), transparent),
-    radial-gradient(1px 1px at 80% 50%, rgba(200, 210, 220, 0.25), transparent),
-    radial-gradient(2px 2px at 10% 80%, rgba(200, 210, 220, 0.2), transparent);
+    radial-gradient(1.5px 1.5px at 60% 10%, rgba(200, 210, 220, 0.25), transparent),
+    radial-gradient(2px 2px at 80% 70%, rgba(200, 210, 220, 0.2), transparent);
   background-size: 100% 100%;
-  animation: snowDrift 8s linear infinite;
+  animation: snowDrift 10s linear infinite;
 }
 
 @keyframes snowDrift {
-  0% { transform: translateY(-10%); }
-  100% { transform: translateY(10%); }
+  0% { transform: translateY(-5%); }
+  100% { transform: translateY(5%); }
 }
 
 /* ─── 章タイトル解放演出 ─── */
@@ -1238,11 +1252,10 @@ body::before {
     0 0 48px rgba(212, 105, 61, 0.08);
 }
 
-/* ガラスモーフィズム風のメニューカード — 控えめな透過で品のある仕上がり */
+/* メニューカード — backdrop-filter: blur は GPU 負荷が高いため
+ * 高い不透明度の背景色で代替（視覚的にほぼ同等） */
 .daily-menu-card {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.4);
   animation: menuCardIn 0.5s ease-out both;
 }
@@ -1312,6 +1325,7 @@ body::before {
   border: 2px solid var(--rarity-rare);
 }
 
+/* レアカードのオーロラ — ホバー時のみ微光で演出 */
 .hand-card.rarity-rare::after {
   content: "";
   position: absolute;
@@ -1323,13 +1337,13 @@ body::before {
     rgba(245, 158, 11, 0.08) 50%,
     transparent 70%
   );
-  animation: cardAurora 4s ease-in-out infinite;
+  opacity: 0;
   pointer-events: none;
+  transition: opacity 0.4s ease;
 }
 
-@keyframes cardAurora {
-  0%, 100% { opacity: 0; transform: translateX(-100%); }
-  50% { opacity: 1; transform: translateX(100%); }
+.hand-card.rarity-rare:hover::after {
+  opacity: 1;
 }
 
 /* ─── パラメータ上昇のパルスエフェクト ─── */
@@ -1376,14 +1390,16 @@ body::before {
   animation: storyViewIn 0.6s ease-out both;
 }
 
+/* blur() はピクセル単位のぼかし計算が走り GPU 負荷が高いため、
+ * opacity + translateY のみのフェードインに変更。 */
 @keyframes storyViewIn {
   0% {
     opacity: 0;
-    filter: blur(4px);
+    transform: translateY(8px);
   }
   100% {
     opacity: 1;
-    filter: blur(0);
+    transform: translateY(0);
   }
 }
 
@@ -1573,8 +1589,6 @@ body::before {
 
 .daily-missions {
   border: var(--border-whisper);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
 }
 
 /* ─── 季節パーティクルのレイヤー ─── */
